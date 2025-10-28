@@ -165,8 +165,8 @@ BYPASS_EMAIL_VERIFICATION = os.environ.get("BYPASS_EMAIL_VERIFICATION", "false")
 # SMTP config (set these env vars in production)
 SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "587") or 587)
-SMTP_USER = os.environ.get("SMTP_USER", "hackathonproject.victoriors@gmail.com")
-SMTP_PASS = os.environ.get("SMTP_PASS", "xoin sfyk rbkf yjky")
+SMTP_USER = os.environ.get("SMTP_USER", "email.to.send@gmail.com")
+SMTP_PASS = os.environ.get("SMTP_PASS", "your app pass word here")
 FROM_EMAIL = os.environ.get("FROM_EMAIL", SMTP_USER or "no-reply@example.com")
 
 # Stripe Configuration
