@@ -18,7 +18,7 @@ print("\n📝 STEP 2: User submits payment verification")
 cursor.execute("""
     INSERT INTO pending_payments (user_email, plan_type, amount, transaction_id, message) 
     VALUES (?, ?, ?, ?, ?)
-""", ('customer@gmail.com', 'premium', 999.00, 'UPI123456789', 'Paid via PhonePe app'))
+""", ('customer@example.com', 'premium', 999.00, 'UPI123456789', 'Paid via PhonePe app'))
 
 payment_id = cursor.lastrowid
 conn.commit()

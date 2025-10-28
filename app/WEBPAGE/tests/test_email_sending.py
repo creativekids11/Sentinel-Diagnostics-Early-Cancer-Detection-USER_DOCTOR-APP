@@ -48,7 +48,8 @@ def send_email(recipient, subject, body):
 # Example usage
 if __name__ == "__main__":
     # Replace with actual recipient email for testing
-    recipient_email = "creativekids810@gmail.com"
+    # Test email - replace with actual recipient for testing
+    recipient_email = "test-recipient@example.com"
     subject = "Test Subject"
     body = "This is a test email."
 

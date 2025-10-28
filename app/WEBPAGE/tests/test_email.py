@@ -17,11 +17,11 @@ if __name__ == "__main__":
         print("📧 SMTP Settings:")
         print("   Host: smtp.gmail.com")
         print("   Port: 587 (TLS)")
-        print("   User: hackathonproject.victoriors@gmail.com")
+        print("   User: your-email@gmail.com")
         print()
         
         # Test basic email sending
-        test_email = "hackathonproject.victoriors@gmail.com"  # Send to self for testing
+        test_email = "test-recipient@example.com"  # Send to test recipient
         
         print(f"📤 Testing email send to: {test_email}")
         
