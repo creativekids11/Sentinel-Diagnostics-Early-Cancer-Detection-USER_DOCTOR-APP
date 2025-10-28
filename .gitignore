@@ -1,0 +1,109 @@
+# Sentinel Diagnostics - Security .gitignore
+# Team Victoriors - Protect sensitive configuration files
+
+# ==============================================================================
+# CRITICAL SECURITY FILES - NEVER COMMIT THESE
+# ==============================================================================
+
+# Environment variables with real API keys
+.env
+.env.local
+.env.production
+.env.development
+
+# Firebase configuration with real keys
+**/firebase-config.js
+!**/firebase-config.example.js
+
+# API key files
+**/*api*key*
+**/*secret*
+**/*config*.json
+!**/*example*
+
+# ==============================================================================
+# STANDARD IGNORES
+# ==============================================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+database.db
+
+# Logs
+*.log
+logs/
+app.log
+
+# Flask session files
+flask_session/
+instance/
+
+# AI Model files (large binaries)
+*.pt
+*.pkl
+*.h5
+*.weights
+models/*.pt
+models/*.pkl
+
+# Operating System
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Node modules (if any JavaScript dependencies)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==============================================================================
+# PROJECT SPECIFIC
+# ==============================================================================
+
+# Nginx temp files
+nginx_temp/
+
+# Medical data (patient privacy)
+patient_data/
+medical_images/
+test_images/
+uploads/
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.cert
+certificates/

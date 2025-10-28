@@ -1,13 +1,15 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
 import { getAuth ,GoogleAuthProvider , signInWithPopup} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
+  // SECURITY WARNING: Replace with your actual Firebase configuration
+  // Never commit real API keys to version control
   const firebaseConfig = {
-    apiKey: "AIzaSyDW0GFqn8-VUX0vn28OSqIsZeYtzi1AT7o",
-    authDomain: "login-system-69d80.firebaseapp.com",
-    projectId: "login-system-69d80",
-    storageBucket: "login-system-69d80.firebasestorage.app",
-    messagingSenderId: "118348051351",
-    appId: "1:118348051351:web:081b0aefad698042558ad2"
+    apiKey: window.FIREBASE_API_KEY || "your_firebase_api_key_here",
+    authDomain: "your-project.firebaseapp.com",
+    projectId: "your-project-id", 
+    storageBucket: "your-project.firebasestorage.app",
+    messagingSenderId: "your_sender_id",
+    appId: "your_app_id"
   };
 
 

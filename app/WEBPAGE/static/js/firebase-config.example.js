@@ -1,11 +1,12 @@
-// Firebase Configuration for Sentinel Diagnostics
-// This file contains Firebase SDK initialization and Google OAuth setup
+// Firebase Configuration Template for Sentinel Diagnostics
+// Copy this file to firebase-config.js and replace with your actual Firebase configuration
 
-// SECURITY NOTE: API keys should be loaded from environment variables
-// This is a template - replace with your actual Firebase configuration
+// SECURITY WARNING: Never commit actual API keys to version control
+// Use environment variables or secure configuration management
+
 const firebaseConfig = {
-    apiKey: window.FIREBASE_API_KEY || "your_firebase_api_key_here",
-    authDomain: "your-project.firebaseapp.com",
+    apiKey: "your_firebase_api_key_here",
+    authDomain: "your-project.firebaseapp.com", 
     projectId: "your-project-id",
     storageBucket: "your-project.firebasestorage.app",
     messagingSenderId: "your_sender_id",
