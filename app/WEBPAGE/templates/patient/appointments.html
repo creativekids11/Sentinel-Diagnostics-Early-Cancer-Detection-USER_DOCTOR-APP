@@ -1,0 +1,374 @@
+{% extends "layouts/patient.html" %}
+{% block title %}My Appointments{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+        <h1 style="font-size: 2.5rem; font-weight: bold;">My Appointments</h1>
+        <p style="font-size: 1.1rem; color: var(--drac-comment); margin-top: 5px;">Manage your medical consultations and follow-ups.</p>
+    </div>
+    <div id="doctorStatusBar" style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:12px; color:var(--drac-comment);">Doctor Status:</span>
+        <span id="doctorStatusChip" class="status-chip"><span>—</span></span>
+    </div>
+</div>
+
+    <script>
+    // Real-time doctor status fetcher
+    const doctorSelect = document.getElementById('doctor');
+    const statusChip = document.getElementById('doctorStatusChip');
+    let currentDoctorId = doctorSelect ? doctorSelect.value : null;
+
+    function updateDoctorStatusBar(docId) {
+        if (!docId) {
+            statusChip.innerHTML = '<span>—</span>';
+            return;
+        }
+        fetch(`/api/doctor/${docId}/status`).then(r => r.json()).then(data => {
+            let status = data.status || 'available';
+            let until = data.until;
+            let chipText = '';
+            
+            if (status === 'busy') {
+                chipText = `Busy${until ? ' until ' + until : ''}`;
+                statusChip.style.background = '#ffb86c';
+                statusChip.style.color = '#000';
+            } else if (status === 'emergency') {
+                chipText = `Emergency${until ? ' until ' + until : ''}`;
+                statusChip.style.background = '#ff5555';
+                statusChip.style.color = '#fff';
+            } else {
+                chipText = 'Available';
+                statusChip.style.background = '#50fa7b';
+                statusChip.style.color = '#000';
+            }
+            statusChip.innerHTML = `<span>${chipText}</span>`;
+        }).catch(() => {
+            statusChip.innerHTML = '<span>—</span>';
+            statusChip.style.background = '';
+            statusChip.style.color = '';
+        });
+    }
+
+    if (doctorSelect) {
+        doctorSelect.addEventListener('change', function() {
+            currentDoctorId = this.value;
+            updateDoctorStatusBar(currentDoctorId);
+        });
+        // Initial load
+        updateDoctorStatusBar(currentDoctorId);
+        // Removed auto-refresh to prevent continuous page refresh
+    }
+    </script>
+
+<div class="data-card" id="book" style="margin-bottom: 30px;">
+    <h2>Book a New Appointment</h2>
+    <form method="POST" action="{{ url_for('appointment_page') }}">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: end;">
+            <div>
+                <label for="doctor" style="display:block; margin-bottom: 5px;">Choose Doctor</label>
+                <select name="doctor_id" id="doctor" required class="select-themed">
+                        {% set selected_doctor = preselected_doctor or (doctors[0].id if doctors|length > 0 else None) %}
+                        <option value="">-- Select a doctor --</option>
+                        {% for d in doctors %}
+                        <option value="{{ d.id }}" {% if selected_doctor and selected_doctor|int == d.id %}selected{% endif %}>
+                            {{ d.fullname }} {% if d.qualifications %} — {{ d.qualifications }}{% endif %}
+                        </option>
+                        {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="scheduled_at" style="display:block; margin-bottom: 5px;">Date & Time</label>
+                <input type="datetime-local" name="scheduled_at" id="scheduled_at" required class="input-themed" style="color-scheme: dark;"/>
+            </div>
+            <div style="grid-column: span 2;">
+                <label for="reason" style="display:block; margin-bottom: 5px;">Reason (optional)</label>
+                <textarea id="reason" name="reason" rows="2" placeholder="e.g., Initial consultation, follow-up..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--drac-comment); background-color: var(--drac-card-alt); color: var(--drac-foreground);"></textarea>
+            </div>
+        </div>
+        <button type="submit" id="bookBtn" class="btn-primary" style="width: 100%; margin-top: 20px;">Request Appointment</button>
+    </form>
+</div>
+
+<script>
+// Function to check user's subscription before booking appointment
+async function checkAppointmentAccess() {
+    try {
+        // This will be checked on the backend, but we can show a preliminary check
+        // The backend will handle the final validation
+        return true;
+    } catch (error) {
+        console.error('Error checking appointment access:', error);
+        return false;
+    }
+}
+
+// Add event listener to form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const appointmentForm = document.querySelector('form[action*="appointments"]');
+    if (appointmentForm) {
+        appointmentForm.addEventListener('submit', async function(e) {
+            // The backend will handle the subscription check and show the flash message
+            // No need for client-side check since backend validation is sufficient
+        });
+    }
+});
+</script>
+
+<div class="data-card" style="margin-top: 30px;">
+    <h2>All Appointments</h2>
+    <table class="patient-table">
+    <thead>
+        <tr>
+            <th>Doctor</th>
+            <th>Date & Time</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for appt in appointments %}
+        <tr data-appointment-id="{{ appt.id }}">
+                <td>{{ doctors|selectattr('id', 'equalto', appt.doctor_id)|map(attribute='fullname')|first }}</td>
+                <td>
+                    {% if appt.scheduled_at.__class__.__name__ == 'str' %}
+                        {{ appt.scheduled_at }}
+                    {% else %}
+                        {{ appt.scheduled_at.strftime('%Y-%m-%d %I:%M %p') }}
+                    {% endif %}
+                </td>
+            <td>{{ appt.reason or 'N/A' }}</td>
+            <td>
+                {% if appt.status == 'confirmed' %}<span class="status-low">{{ appt.status|capitalize }}</span>
+                {% elif appt.status in ['rejected', 'cancelled'] %}<span class="status-high">{{ appt.status|capitalize }}</span>
+                {% else %}<span class="status-medium">{{ appt.status|capitalize }}</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if appt.status == 'confirmed' %}
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        {% if appt.meeting_url %}
+                            <a href="{{ appt.meeting_url }}" target="_blank" class="action-btn" style="padding: 5px 10px; background: linear-gradient(to right, var(--drac-pink), var(--drac-purple)); color: white;">Join Meeting</a>
+                            <a href="{{ url_for('open_meeting', appt_id=appt.id) }}" style="margin-left:10px; color:var(--drac-cyan);">Open In-App</a>
+                        {% endif %}
+                    </div>
+                {% elif appt.status == 'pending' %}
+                    <form method="POST" action="{{ url_for('cancel_appointment', appt_id=appt.id) }}" style="display:inline;">
+                        <button type="submit" class="logout-btn" style="padding: 5px 10px;">Cancel</button>
+                    </form>
+                {% elif appt.status in ['cancelled', 'resolved'] %}
+                    <form method="POST" action="{{ url_for('delete_patient_appointment', appt_id=appt.id) }}" style="display:inline;">
+                        <button type="submit" class="logout-btn" style="padding: 5px 10px;">Delete</button>
+                    </form>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;">You have no appointments yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const doctorSel = document.getElementById('doctor');
+    const whenInput = document.getElementById('scheduled_at');
+    const bookBtn = document.getElementById('bookBtn');
+    const chip = document.getElementById('doctorStatusChip');
+
+    function setChip(status, meta) {
+        chip.className = 'status-chip';
+        let label = '—';
+        let bgColor = '';
+        let textColor = '';
+        
+        if (status === 'available') { 
+            bgColor = '#50fa7b'; 
+            textColor = '#000'; 
+            label = 'Available'; 
+        } else if (status === 'busy') { 
+            bgColor = '#ffb86c'; 
+            textColor = '#000'; 
+            label = 'Busy'; 
+        } else if (status === 'emergency') { 
+            bgColor = '#ff5555'; 
+            textColor = '#fff'; 
+            label = 'Emergency'; 
+        }
+        
+        chip.innerHTML = `<span>${label}</span>${meta ? `<span style="color:${textColor === '#fff' ? '#ffaaaa' : '#666'}">${meta}</span>` : ''}`;
+        chip.style.background = bgColor;
+        chip.style.color = textColor;
+    }
+
+    async function refreshStatus() {
+        const docId = doctorSel.value;
+        if (!docId) { setChip('—'); return; }
+        try {
+            const res = await fetch(`/api/doctor/${docId}/status`);
+            const s = await res.json();
+            if (s.error) { setChip('—'); return; }
+            let meta = '';
+            if (s.status === 'busy' || s.status === 'emergency') meta = s.until ? `until ${s.until}` : '';
+            setChip(s.status, meta);
+            enforceDisable(s);
+        } catch(e) { /* ignore */ }
+    }
+
+    function enforceDisable(s) {
+        // Disable booking if chosen time falls in busy/emergency
+        const v = whenInput.value;
+        if (!v) { bookBtn.disabled = false; return; }
+        const dt = new Date(v);
+        let disabled = false;
+        if (s.status === 'busy' || s.status === 'emergency') {
+            if (s.set_at && s.until) {
+                const start = new Date(s.set_at.replace(' ', 'T'));
+                const until = new Date(s.until.replace(' ', 'T'));
+                if (dt >= start && dt <= until) disabled = true;
+            }
+        }
+        bookBtn.disabled = disabled;
+        bookBtn.textContent = disabled ? 'Doctor Unavailable for Selected Time' : 'Request Appointment';
+    }
+
+    doctorSel.addEventListener('change', refreshStatus);
+    whenInput.addEventListener('change', async () => {
+        await refreshStatus();
+    });
+
+    if (doctorSel.value) refreshStatus();
+        // Always refresh status on page load
+        setTimeout(refreshStatus, 100);
+});
+</script>
+<script>
+// Ensure the status bar updates correctly on page load and refresh
+async function fetchDoctorStatusOnLoad() {
+    const doctorSelect = document.getElementById('doctor');
+    const statusChip = document.getElementById('doctorStatusChip');
+
+    if (!doctorSelect || !statusChip) return;
+
+    const doctorId = doctorSelect.value;
+    if (!doctorId) {
+        statusChip.innerHTML = '<span>—</span>';
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/doctor/${doctorId}/status`);
+        const data = await response.json();
+
+        if (data.error) {
+            statusChip.innerHTML = '<span>—</span>';
+            statusChip.style.background = '';
+            statusChip.style.color = '';
+            return;
+        }
+
+        let statusText = data.status || 'available';
+        let meta = '';
+
+        if (statusText === 'busy' || statusText === 'emergency') {
+            meta = data.until ? ` until ${data.until}` : '';
+        }
+
+        let bgColor = '';
+        let textColor = '';
+        
+        if (statusText === 'busy') {
+            bgColor = '#ffb86c';
+            textColor = '#000';
+            statusText = 'Busy';
+        } else if (statusText === 'emergency') {
+            bgColor = '#ff5555';
+            textColor = '#fff';
+            statusText = 'Emergency';
+        } else {
+            bgColor = '#50fa7b';
+            textColor = '#000';
+            statusText = 'Available';
+        }
+
+        statusChip.innerHTML = `<span>${statusText}${meta}</span>`;
+        statusChip.style.background = bgColor;
+        statusChip.style.color = textColor;
+    } catch (error) {
+        console.error('Error fetching doctor status:', error);
+        statusChip.innerHTML = '<span>—</span>';
+        statusChip.style.background = '';
+        statusChip.style.color = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', fetchDoctorStatusOnLoad);
+
+// Socket.IO event handling for real-time updates
+const socket = io();
+
+// Join user-specific room when connected
+socket.on('connect', function() {
+    {% if session.user_id %}
+    socket.emit('join', {
+        username: '{{ session.user_fullname or "User" }}',
+        room: 'user_{{ session.user_id }}'
+    });
+    {% endif %}
+});
+
+socket.on('appointment_deleted', function(data) {
+    const appointmentId = data.appointment_id;
+    // Remove the appointment row from the patient's view
+    const row = document.querySelector(`tr[data-appointment-id="${appointmentId}"]`);
+    if (row) {
+        row.remove();
+        // Show notification
+        if (typeof notifications !== 'undefined') {
+            notifications.success('An appointment has been removed by your doctor.');
+        }
+    }
+});
+
+// Listen for appointment creation (when patient creates new appointment)
+socket.on('appointment_created', function(data) {
+    // Refresh to show the new appointment
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+});
+
+// Listen for appointment confirmations
+socket.on('appointment_confirmed', function(data) {
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+    if (typeof notifications !== 'undefined') {
+        notifications.success('Your appointment has been confirmed!');
+    }
+});
+
+// Listen for appointment rejections  
+socket.on('appointment_rejected', function(data) {
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+    if (typeof notifications !== 'undefined') {
+        notifications.warning('Your appointment has been rejected.');
+    }
+});
+
+// Listen for doctor status updates
+socket.on('doctor_status_update', function(data) {
+    const currentDoctorId = doctorSelect ? doctorSelect.value : null;
+    if (currentDoctorId && parseInt(currentDoctorId) === parseInt(data.doctor_id)) {
+        // Update the status bar for the currently selected doctor
+        refreshStatus();
+    }
+});
+</script>
+{% endblock %}

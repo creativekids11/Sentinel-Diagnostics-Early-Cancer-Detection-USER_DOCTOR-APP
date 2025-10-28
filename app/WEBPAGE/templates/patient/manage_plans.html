@@ -1,0 +1,1208 @@
+{% extends "layouts/patient.html" %}
+
+{% block content %}
+<div class="modern-plans-container">
+    <div class="plans-header">
+        <div class="plans-title-section">
+            <div class="plans-icon">
+                <i class="fas fa-credit-card"></i>
+            </div>
+            <div class="plans-title-content">
+                <h1 class="plans-main-title">Manage Credits & Trial</h1>
+                <p class="plans-subtitle">Add credits for AI scanner usage or activate your free trial</p>
+                
+                <!-- Current Status -->
+                <div class="current-status">
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <span class="status-label">Current Plan:</span>
+                            <span class="status-value {{ current_plan }}">{{ current_plan.title() }}</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Balance:</span>
+                            <span class="status-value balance">₹{{ "%.2f"|format(balance or 0) }}</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Outstanding:</span>
+                            <span class="status-value outstanding">₹{{ "%.2f"|format(total_outstanding or 0) }}</span>
+                        </div>
+                        {% if is_trial_active %}
+                        <div class="status-item">
+                            <span class="status-label">Trial Expires:</span>
+                            <span class="status-value trial">{{ expires_at[:10] if expires_at else 'N/A' }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="plans-grid">
+        <!-- Trial Option -->
+        <div class="plan-card trial-plan">
+            <div class="plan-header">
+                <div class="plan-badge">7 Days Free</div>
+                <h3 class="plan-name">Free Trial</h3>
+                <p class="plan-description">Try our AI scanner for free</p>
+                <div class="plan-price">
+                    <span class="currency">₹</span>
+                    <span class="amount">0</span>
+                    <span class="period">/7 days</span>
+                </div>
+            </div>
+            <div class="plan-features">
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>Up to 5 AI scans</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>Basic cancer detection</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>Standard accuracy reports</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>Email support</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-times feature-icon unavailable"></i>
+                    <span>No priority processing</span>
+                </div>
+            </div>
+            <div class="plan-footer">
+                {% if is_trial_active %}
+                <button class="plan-button current-plan-btn" disabled>
+                    <i class="fas fa-check"></i>
+                    Trial Active
+                </button>
+                {% else %}
+                <button type="button" class="plan-button trial-btn" onclick="activateTrial()">
+                    <i class="fas fa-play"></i>
+                    Start Free Trial
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Add Credit Option -->
+        <div class="plan-card credit-plan">
+            <div class="plan-header">
+                <div class="plan-badge">Pay as you use</div>
+                <h3 class="plan-name">Add Credits</h3>
+                <p class="plan-description">Purchase credits for AI scanner usage</p>
+                <div class="plan-price">
+                    <span class="currency">₹</span>
+                    <span class="amount">99</span>
+                    <span class="period">/scan</span>
+                </div>
+            </div>
+            <div class="plan-features">
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon unlimited"></i>
+                    <span>Unlimited AI scans</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon advanced"></i>
+                    <span>Advanced cancer detection</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon instant"></i>
+                    <span>High accuracy reports</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon priority"></i>
+                    <span>Priority support</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon instant"></i>
+                    <span>Instant processing</span>
+                </div>
+            </div>
+            <div class="plan-footer">
+                <button type="button" class="plan-button credit-btn" onclick="showAddCreditModal()">
+                    <i class="fas fa-credit-card"></i>
+                    Add Credits
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Payments Section -->
+    {% if pending_payments %}
+    <div class="pending-section">
+        <h3 class="section-title">
+            <i class="fas fa-clock"></i>
+            Pending Credit Payments
+        </h3>
+        <div class="pending-table">
+            <div class="table-responsive">
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Amount</th>
+                            <th>Payment Method</th>
+                            <th>Transaction ID</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in pending_payments %}
+                        <tr>
+                            <td>₹{{ "%.2f"|format(payment.amount) }}</td>
+                            <td>{{ payment.payment_method }}</td>
+                            <td><code>{{ payment.upi_transaction_id }}</code></td>
+                            <td>{{ payment.submitted_at[:16] }}</td>
+                            <td>
+                                <span class="status-badge pending">{{ payment.status.title() }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Outstanding Balances Section -->
+    {% if outstanding_balances %}
+    <div class="outstanding-section">
+        <h3 class="section-title">
+            <i class="fas fa-exclamation-triangle"></i>
+            Outstanding Balances
+        </h3>
+        <div class="outstanding-table">
+            <div class="table-responsive">
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for balance in outstanding_balances %}
+                        <tr>
+                            <td>{{ balance.description }}</td>
+                            <td>₹{{ "%.2f"|format(balance.amount) }}</td>
+                            <td>{{ balance.created_at[:16] }}</td>
+                            <td>
+                                <a href="{{ url_for('patient_outstanding_balances') }}" class="action-btn">
+                                    Pay Now
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Help Section -->
+    <div class="help-section">
+        <div class="help-card">
+            <div class="help-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="help-content">
+                <h4>Credit Payment Verification</h4>
+                <p>All credit payments are manually verified by our admin team within 24 hours to ensure security and accuracy.</p>
+                <button class="help-button" onclick="alert('Contact support at support@aimedical.com for assistance')">
+                    <i class="fas fa-envelope"></i>
+                    Contact Support
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Credit Modal -->
+<div class="modal fade" id="addCreditModal" tabindex="-1" role="dialog" aria-labelledby="addCreditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content dark-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCreditModalLabel">
+                    <i class="fas fa-credit-card me-2"></i>Add Credits
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCreditForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="creditAmount" class="form-label">Credit Amount (₹)</label>
+                            <select class="form-select dark-select" id="creditAmount" required>
+                                <option value="">Select amount</option>
+                                <option value="500">₹500 (5 scans)</option>
+                                <option value="1000">₹1000 (10 scans)</option>
+                                <option value="2000">₹2000 (20 scans)</option>
+                                <option value="5000">₹5000 (50 scans)</option>
+                                <option value="custom">Custom amount</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3" id="customAmountDiv" style="display: none;">
+                            <label for="customAmount" class="form-label">Custom Amount (₹)</label>
+                            <input type="number" class="form-control dark-input" id="customAmount" min="99" step="1">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="paymentMethod" class="form-label">Payment Method</label>
+                            <select class="form-select dark-select" id="paymentMethod" required>
+                                <option value="">Select payment method</option>
+                                <option value="UPI">UPI</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Card">Credit/Debit Card</option>
+                                <option value="Digital Wallet">Digital Wallet</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="transactionId" class="form-label">Transaction ID</label>
+                            <input type="text" class="form-control dark-input" id="transactionId" required 
+                                   placeholder="Enter transaction/reference ID">
+                        </div>
+                    </div>
+                    <div class="alert alert-info dark-alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Important:</strong> Your credit payment will be verified by our admin team within 24 hours. 
+                        Please ensure you have completed the payment and entered the correct transaction ID.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitCreditPayment()">
+                    <i class="fas fa-paper-plane me-2"></i>Submit for Verification
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Credit Verification Success Modal -->
+<div class="modal fade" id="creditVerificationModal" tabindex="-1" role="dialog" aria-labelledby="creditVerificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content dark-modal">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="creditVerificationModalLabel">
+                    <i class="fas fa-check-circle me-2"></i>Credit Payment Submitted Successfully
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="success-icon mb-4">
+                    <i class="fas fa-clock fa-4x text-warning"></i>
+                </div>
+                <h4 class="mb-3">Payment Under Review</h4>
+                <p class="mb-3">Your credit payment has been submitted and is now under review by our admin team.</p>
+                
+                <div class="alert alert-warning dark-alert mb-4">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Processing Time:</strong> Your payment will be verified within <strong>24 hours</strong> during business days.
+                    You will receive an email notification once your credits are approved and added to your account.
+                </div>
+                
+                <div class="verification-details">
+                    <h6>What happens next?</h6>
+                    <ul class="text-start list-unstyled">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Admin team reviews your payment details</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Credits are added to your account upon approval</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> You receive a confirmation email</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Balance updates automatically across all pages</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="location.reload()">
+                    <i class="fas fa-check me-2"></i>Got it, Check Status
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showAddCreditModal() {
+    const modal = new bootstrap.Modal(document.getElementById('addCreditModal'));
+    modal.show();
+}
+
+document.getElementById('creditAmount').addEventListener('change', function() {
+    const customDiv = document.getElementById('customAmountDiv');
+    if (this.value === 'custom') {
+        customDiv.style.display = 'block';
+    } else {
+        customDiv.style.display = 'none';
+    }
+});
+
+function submitCreditPayment() {
+    const amountSelect = document.getElementById('creditAmount').value;
+    const customAmount = document.getElementById('customAmount').value;
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const transactionId = document.getElementById('transactionId').value;
+    
+    let amount = 0;
+    if (amountSelect === 'custom') {
+        amount = parseFloat(customAmount);
+    } else if (amountSelect) {
+        amount = parseFloat(amountSelect);
+    }
+    
+    if (!amount || amount < 99) {
+        alert('Please enter a valid amount (minimum ₹99)');
+        return;
+    }
+    
+    if (!paymentMethod) {
+        alert('Please select a payment method');
+        return;
+    }
+    
+    if (!transactionId.trim()) {
+        alert('Please enter transaction ID');
+        return;
+    }
+    
+    // Submit payment for verification
+    fetch('/patient/submit-credit-payment', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            amount: amount,
+            payment_method: paymentMethod,
+            transaction_id: transactionId.trim()
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close the add credit modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addCreditModal'));
+            modal.hide();
+            
+            // Show success notification modal
+            showCreditVerificationModal(amount);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error submitting payment: ' + error.message);
+    });
+}
+
+function activateTrial() {
+    if (confirm('Are you sure you want to activate your 7-day free trial? This can only be done once per account.')) {
+        fetch('/patient/activate-trial', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error activating trial: ' + error.message);
+        });
+    }
+}
+
+function showCreditVerificationModal(amount) {
+    // Update modal content with the submitted amount
+    const modal = new bootstrap.Modal(document.getElementById('creditVerificationModal'));
+    modal.show();
+}
+
+// SocketIO real-time balance updates
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize SocketIO connection
+    const socket = io();
+    
+    socket.on('connect', function() {
+        console.log('Connected to SocketIO server');
+    });
+    
+    socket.on('disconnect', function() {
+        console.log('Disconnected from SocketIO server');
+    });
+    
+    socket.on('system', function(data) {
+        console.log('System message:', data.msg);
+    });
+    
+    // Listen for balance updates
+    socket.on('balance_update', function(data) {
+        console.log('Balance update received:', data);
+        
+        // Update balance display in the status section
+        const balanceElement = document.querySelector('.status-value.balance');
+        if (balanceElement && typeof data.new_balance !== 'undefined') {
+            balanceElement.textContent = '₹' + data.new_balance.toFixed(2);
+            
+            // Add a visual highlight effect
+            balanceElement.style.transition = 'all 0.3s ease';
+            balanceElement.style.background = 'rgba(80, 250, 123, 0.4)';
+            balanceElement.style.transform = 'scale(1.05)';
+            
+            // Remove highlight after animation
+            setTimeout(() => {
+                balanceElement.style.background = 'rgba(80, 250, 123, 0.2)';
+                balanceElement.style.transform = 'scale(1)';
+            }, 2000);
+        }
+        
+        // Update outstanding balance display
+        const outstandingElement = document.querySelector('.status-value.outstanding');
+        if (outstandingElement && typeof data.total_outstanding !== 'undefined') {
+            outstandingElement.textContent = '₹' + data.total_outstanding.toFixed(2);
+            
+            // Add a visual highlight effect
+            outstandingElement.style.transition = 'all 0.3s ease';
+            outstandingElement.style.background = 'rgba(255, 184, 108, 0.4)';
+            outstandingElement.style.transform = 'scale(1.05)';
+            
+            // Remove highlight after animation
+            setTimeout(() => {
+                outstandingElement.style.background = 'rgba(255, 184, 108, 0.2)';
+                outstandingElement.style.transform = 'scale(1)';
+            }, 2000);
+        }
+        
+        // Show a toast notification
+        showBalanceUpdateToast(data);
+    });
+});
+
+function showBalanceUpdateToast(data) {
+    // Create toast notification
+    const toast = document.createElement('div');
+    toast.className = 'balance-update-toast';
+    
+    let message = '';
+    if (data.total_outstanding !== undefined && data.total_outstanding === 0) {
+        message = `Payment processed! Outstanding balances cleared.`;
+    } else if (data.total_outstanding !== undefined && data.total_outstanding > 0) {
+        message = `Payment processed! Outstanding: ₹${data.total_outstanding.toFixed(2)} remaining.`;
+    } else {
+        message = `₹${data.amount_added.toFixed(2)} has been added to your balance`;
+    }
+    
+    toast.innerHTML = `
+        <div class="toast-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="toast-content">
+            <div class="toast-title">Payment Processed!</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    // Add to page
+    document.body.appendChild(toast);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.remove();
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+/* Modern Plans Container */
+.modern-plans-container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    background: var(--drac-bg);
+    min-height: 100vh;
+}
+
+/* Plans Header */
+.plans-header {
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.plans-title-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.plans-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #50fa7b, #2ecc71);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    box-shadow: 0 10px 30px rgba(80, 250, 123, 0.3);
+}
+
+.plans-main-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--drac-foreground);
+    margin: 0;
+    background: linear-gradient(135deg, #50fa7b, #8be9fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.plans-subtitle {
+    color: var(--drac-comment);
+    font-size: 1.1rem;
+    margin: 0;
+    max-width: 600px;
+}
+
+/* Current Status */
+.current-status {
+    margin-top: 2rem;
+    background: rgba(68, 71, 90, 0.3);
+    border: 1px solid rgba(98, 114, 164, 0.2);
+    border-radius: 15px;
+    padding: 1.5rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.status-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.status-label {
+    font-size: 0.85rem;
+    color: var(--drac-comment);
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.status-value {
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+}
+
+.status-value.free {
+    background: rgba(98, 114, 164, 0.2);
+    color: var(--drac-comment);
+}
+
+.status-value.trial {
+    background: rgba(80, 250, 123, 0.2);
+    color: var(--drac-green);
+}
+
+.status-value.premium {
+    background: rgba(189, 147, 249, 0.2);
+    color: var(--drac-purple);
+}
+
+.status-value.balance {
+    background: rgba(80, 250, 123, 0.2);
+    color: var(--drac-green);
+}
+
+.status-value.outstanding {
+    background: rgba(255, 184, 108, 0.2);
+    color: var(--drac-orange);
+}
+
+/* Plans Grid */
+.plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+/* Plan Cards */
+.plan-card {
+    background: var(--drac-card);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.plan-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.plan-card.trial-plan {
+    background: linear-gradient(135deg, rgba(80, 250, 123, 0.1), rgba(46, 204, 113, 0.05));
+    border-color: rgba(80, 250, 123, 0.2);
+}
+
+.plan-card.credit-plan {
+    background: linear-gradient(135deg, rgba(189, 147, 249, 0.1), rgba(139, 233, 253, 0.05));
+    border-color: rgba(189, 147, 249, 0.2);
+}
+
+/* Plan Header */
+.plan-header {
+    padding: 2rem 2rem 1.5rem;
+    text-align: center;
+    position: relative;
+}
+
+.plan-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.plan-card.trial-plan .plan-badge {
+    background: linear-gradient(135deg, #50fa7b, #2ecc71);
+    color: #1a1a1a;
+    box-shadow: 0 4px 12px rgba(80, 250, 123, 0.3);
+}
+
+.plan-card.credit-plan .plan-badge {
+    background: linear-gradient(135deg, #bd93f9, #8be9fd);
+    color: #1a1a1a;
+    box-shadow: 0 4px 12px rgba(189, 147, 249, 0.3);
+}
+
+.plan-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--drac-foreground);
+    margin: 0.5rem 0 0.25rem;
+}
+
+.plan-description {
+    color: var(--drac-comment);
+    font-size: 1rem;
+    margin: 0 0 1rem 0;
+}
+
+.plan-price {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+    margin: 1rem 0;
+}
+
+.currency {
+    font-size: 1.25rem;
+    color: var(--drac-comment);
+    font-weight: 500;
+}
+
+.amount {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--drac-foreground);
+}
+
+.period {
+    font-size: 1rem;
+    color: var(--drac-comment);
+    font-weight: 500;
+}
+
+/* Plan Features */
+.plan-features {
+    padding: 0 2rem;
+    margin-bottom: 2rem;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.feature-item:last-child {
+    border-bottom: none;
+}
+
+.feature-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+.feature-icon.available {
+    background: rgba(80, 250, 123, 0.2);
+    color: var(--drac-green);
+}
+
+.feature-icon.unavailable {
+    background: rgba(255, 85, 85, 0.2);
+    color: var(--drac-red);
+}
+
+.feature-icon.unlimited {
+    background: linear-gradient(135deg, #bd93f9, #9b59b6);
+    color: white;
+}
+
+.feature-icon.advanced {
+    background: linear-gradient(135deg, #8be9fd, #17a2b8);
+    color: white;
+}
+
+.feature-icon.instant {
+    background: linear-gradient(135deg, #50fa7b, #2ecc71);
+    color: white;
+}
+
+.feature-icon.priority {
+    background: linear-gradient(135deg, #ffb86c, #e67e22);
+    color: white;
+}
+
+.feature-item span {
+    color: var(--drac-foreground);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* Plan Footer */
+.plan-footer {
+    padding: 0 2rem 2rem;
+}
+
+.plan-button {
+    width: 100%;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.current-plan-btn {
+    background: rgba(98, 114, 164, 0.2);
+    color: var(--drac-comment);
+    border: 1px solid rgba(98, 114, 164, 0.3);
+    cursor: not-allowed;
+}
+
+.trial-btn {
+    background: linear-gradient(135deg, #50fa7b, #2ecc71);
+    color: #1a1a1a;
+    box-shadow: 0 4px 15px rgba(80, 250, 123, 0.3);
+}
+
+.trial-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(80, 250, 123, 0.4);
+}
+
+.credit-btn {
+    background: linear-gradient(135deg, #bd93f9, #8be9fd);
+    color: #1a1a1a;
+    box-shadow: 0 4px 15px rgba(189, 147, 249, 0.3);
+}
+
+.credit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(189, 147, 249, 0.4);
+}
+
+/* Sections */
+.pending-section, .outstanding-section {
+    margin: 3rem 0;
+    background: var(--drac-card);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.section-title {
+    color: var(--drac-foreground);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-title i {
+    color: var(--drac-orange);
+}
+
+/* Tables */
+.table-responsive {
+    overflow-x: auto;
+}
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: transparent;
+}
+
+.styled-table th,
+.styled-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.styled-table th {
+    color: var(--drac-comment);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.styled-table td {
+    color: var(--drac-foreground);
+    font-size: 0.95rem;
+}
+
+.styled-table code {
+    background: rgba(68, 71, 90, 0.5);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: var(--drac-cyan);
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.pending {
+    background: rgba(255, 184, 108, 0.2);
+    color: var(--drac-orange);
+}
+
+.action-btn {
+    background: linear-gradient(135deg, #50fa7b, #2ecc71);
+    color: #1a1a1a;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(80, 250, 123, 0.3);
+    color: #1a1a1a;
+    text-decoration: none;
+}
+
+/* Help Section */
+.help-section {
+    margin-top: 3rem;
+}
+
+.help-card {
+    background: linear-gradient(135deg, rgba(139, 233, 253, 0.1), rgba(189, 147, 249, 0.05));
+    border: 1px solid rgba(139, 233, 253, 0.2);
+    border-radius: 20px;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    box-shadow: 0 10px 30px rgba(139, 233, 253, 0.1);
+}
+
+.help-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #8be9fd, #17a2b8);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.help-content {
+    flex: 1;
+}
+
+.help-content h4 {
+    color: var(--drac-foreground);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+}
+
+.help-content p {
+    color: var(--drac-comment);
+    font-size: 1rem;
+    margin: 0 0 1rem 0;
+    line-height: 1.5;
+}
+
+.help-button {
+    background: linear-gradient(135deg, #6272a4, #44475a);
+    color: var(--drac-foreground);
+    border: 1px solid rgba(98, 114, 164, 0.3);
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.help-button:hover {
+    background: linear-gradient(135deg, #44475a, #6272a4);
+    border-color: rgba(98, 114, 164, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Modal Styling */
+.dark-modal {
+    background: var(--drac-card);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+}
+
+.dark-modal .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-modal .modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-modal .modal-title {
+    color: var(--drac-foreground);
+}
+
+.dark-select, .dark-input {
+    background: rgba(68, 71, 90, 0.5);
+    border: 1px solid rgba(98, 114, 164, 0.3);
+    color: var(--drac-foreground);
+}
+
+.dark-select:focus, .dark-input:focus {
+    background: rgba(68, 71, 90, 0.7);
+    border-color: var(--drac-purple);
+    box-shadow: 0 0 0 0.2rem rgba(189, 147, 249, 0.25);
+    color: var(--drac-foreground);
+}
+
+.dark-alert {
+    background: rgba(139, 233, 253, 0.1);
+    border: 1px solid rgba(139, 233, 253, 0.3);
+    color: var(--drac-foreground);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .modern-plans-container {
+        padding: 1rem;
+    }
+
+    .plans-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .status-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .help-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+
+    .styled-table {
+        font-size: 0.85rem;
+    }
+
+    .styled-table th,
+    .styled-table td {
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .plans-main-title {
+        font-size: 2rem;
+    }
+
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .amount {
+        font-size: 2.5rem;
+    }
+}
+
+/* Credit Verification Modal */
+.success-icon {
+    color: var(--drac-green);
+    margin-bottom: 1rem;
+}
+
+.verification-details {
+    background: rgba(68, 71, 90, 0.3);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.verification-details h6 {
+    color: var(--drac-foreground);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.verification-details ul li {
+    color: var(--drac-comment);
+    margin-bottom: 0.5rem;
+}
+
+.verification-details ul li i {
+    width: 16px;
+}
+
+/* Balance Update Toast */
+.balance-update-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #50fa7b, #2ecc71);
+    color: #1a1a1a;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(80, 250, 123, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 9999;
+    animation: slideInRight 0.5s ease-out;
+    max-width: 400px;
+}
+
+.toast-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.toast-message {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: #1a1a1a;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+
+.toast-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+</style>
+{% endblock %}

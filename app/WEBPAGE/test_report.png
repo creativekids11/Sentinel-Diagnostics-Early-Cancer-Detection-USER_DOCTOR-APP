@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en" >
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Login</title>
+		<!-- Bootstrap CSS -->
+		<link
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+			rel="stylesheet"
+			integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+			crossorigin="anonymous" />
+		<!-- Font Awesome -->
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+			integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+			rel="stylesheet" />
+		<style>
+			:root {
+				color-scheme: light dark;
+			}
+			/* Theme override using attribute */
+			[data-theme="light"] {
+				color-scheme: light;
+				--drac-bg: #f8f8f2;
+				--drac-bg-darker: #e6e6e6;
+				--drac-bg-header: #dddddd;
+				--drac-card: #f2f2f2;
+				--drac-card-alt: #e0e0e0;
+				--drac-foreground: #282a36;
+				--drac-comment: #777799;
+				--drac-purple: #7557d9;
+				--drac-pink: #d85fa8;
+				--drac-green: #2cbf60;
+				--drac-red: #e64a4a;
+				--drac-orange: #e69a4a;
+				--drac-cyan: #33b1cc;
+				--metric-gradient-1: #e6e8f2;
+				--metric-gradient-2: #dcdce0;
+				--metric-gradient-3: #d2d3d8;
+				--metric-gradient-4: #e6e9f8;
+				--metric-gradient-5: #dfe6fb;
+				--metric-gradient-6: #f2f4ff;
+				--bg-other: #ffffff4a;
+			}
+			[data-theme="dark"] {
+				color-scheme: dark;
+				--drac-bg: #282a36;
+				--drac-bg-darker: #1e1f26;
+				--drac-bg-header: #333644;
+				--drac-card: #44475a;
+				--drac-card-alt: #5d6074;
+				--drac-foreground: #f8f8f2;
+				--drac-comment: #6272a4;
+				--drac-purple: #bd93f9;
+				--drac-pink: #ff79c6;
+				--drac-green: #50fa7b;
+				--drac-red: #ff5555;
+				--drac-orange: #ffb86c;
+				--drac-cyan: #8be9fd;
+				--metric-gradient-1: #353849;
+				--metric-gradient-2: #2a2c3a;
+				--metric-gradient-3: #1f2029;
+				--metric-gradient-4: #1a1a2e;
+				--metric-gradient-5: #16213e;
+				--metric-gradient-6: #0f0f23;
+				--bg-other: #515b778a;
+			}
+
+			* {
+				transition: all 0.3s ease;
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+				font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+					Roboto, Helvetica, Arial, sans-serif;
+			}
+
+			body {
+				background-color: var(--drac-bg);
+				color: var(--drac-foreground);
+				display: flex;
+				min-height: 100vh;
+				font-size: 16px;
+			}
+
+			a {
+				color: var(--drac-pink);
+				text-decoration: none;
+			}
+
+			.sidebar {
+				width: 250px;
+				background-color: var(--drac-bg-darker);
+				padding: 20px 0;
+				box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+			}
+
+			.logo {
+				font-size: 1.5rem;
+				font-weight: bold;
+				color: var(--drac-foreground);
+				margin-bottom: 30px;
+				padding: 0 20px;
+				text-align: center;
+			}
+
+			.logo-icon {
+				color: var(--drac-purple);
+				font-size: 2rem;
+				margin-right: 5px;
+				line-height: 1;
+			}
+
+			.logo-text {
+				display: block;
+				line-height: 1.1;
+				font-size: 1.2rem;
+			}
+
+			.nav-link-group {
+				width: 100%;
+				margin-bottom: 20px;
+			}
+
+			.nav-link {
+				display: flex;
+				align-items: center;
+				padding: 12px 20px;
+				color: var(--drac-comment);
+				text-decoration: none;
+				font-size: 1rem;
+				font-weight: 500;
+				transition: all 0.2s;
+				border-left: 3px solid transparent;
+			}
+
+			.nav-link:hover {
+				color: var(--drac-pink);
+				background-color: rgba(255, 121, 198, 0.05);
+			}
+
+			.nav-link-active {
+				color: var(--drac-foreground);
+				background-color: var(--drac-card);
+				border-left-color: var(--drac-pink);
+			}
+
+			.nav-icon {
+				margin-right: 15px;
+				font-size: 1.2rem;
+				width: 20px;
+				text-align: center;
+			}
+
+			.profile-section {
+				width: 100%;
+				padding: 15px 20px;
+				border-top: 1px solid var(--drac-card);
+				margin-top: auto;
+			}
+
+			.profile-info {
+				display: flex;
+				align-items: center;
+				margin-bottom: 10px;
+			}
+
+			.profile-avatar {
+				width: 35px;
+				height: 35px;
+				border-radius: 50%;
+				color: var(--drac-bg);
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				font-size: 1.2rem;
+				font-weight: bold;
+				margin-right: 10px;
+			}
+
+			.profile-name {
+				font-size: 0.9rem;
+				line-height: 1.2;
+			}
+
+			.profile-role {
+				font-size: 0.75rem;
+				color: var(--drac-comment);
+			}
+
+			.logout-btn {
+				display: flex;
+				align-items: center;
+				padding: 10px 15px;
+				background-color: var(--drac-red);
+				color: var(--drac-foreground);
+				border-radius: 8px;
+				text-decoration: none;
+				font-weight: 500;
+				border: none;
+				box-shadow: none;
+				cursor: pointer;
+			}
+
+			.main-content {
+				flex-grow: 1;
+				padding: 0 40px 40px 40px;
+				overflow-y: auto;
+			}
+
+			.header {
+				background-color: var(--drac-bg-header);
+				padding: 15px 30px;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+				display: flex;
+				justify-content: flex-end;
+				align-items: center;
+				gap: 15px;
+				margin: 0 -40px 30px -40px;
+				position: sticky;
+				top: 0;
+				z-index: 10;
+			}
+
+			.search-container {
+				display: flex;
+				align-items: center;
+				background-color: var(--drac-card);
+				border-radius: 8px;
+				padding: 8px 15px;
+				width: 300px;
+			}
+
+			.search-input {
+				background: none;
+				border: none;
+				color: var(--drac-foreground);
+				padding: 0;
+				flex-grow: 1;
+				outline: none;
+			}
+
+			.select-themed,
+			.input-themed {
+				appearance: none;
+				background-color: var(--drac-card);
+				border: 1px solid var(--drac-comment);
+				color: var(--drac-foreground);
+				padding: 8px 10px;
+				border-radius: 8px;
+				width: 100%;
+			}
+
+			.status-chip {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				padding: 4px 8px;
+				border-radius: 999px;
+				font-size: 12px;
+				border: 1px solid var(--drac-comment);
+				background: var(--drac-card);
+			}
+			.status-active {
+				color: var(--drac-green);
+			}
+			.status-busy {
+				color: var(--drac-orange);
+			}
+			.status-emergency {
+				color: var(--drac-red);
+			}
+			.status-holiday {
+				color: var(--drac-cyan);
+			}
+
+			.search-icon {
+				color: var(--drac-comment);
+				margin-right: 10px;
+			}
+
+			.action-btn,
+			.book-btn,
+			.btn-primary {
+				background-color: var(--drac-purple);
+				color: var(--drac-foreground);
+				border: none;
+				padding: 10px 20px;
+				border-radius: 8px;
+				font-weight: bold;
+				cursor: pointer;
+				text-decoration: none;
+				text-align: center;
+			}
+
+			.data-card {
+				background-color: var(--drac-card);
+				padding: 25px;
+				border-radius: 12px;
+				box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+			}
+
+			.data-card h2 {
+				font-size: 1.5rem;
+				color: var(--drac-foreground);
+				margin-top: 0;
+				margin-bottom: 20px;
+			}
+
+			.patient-table {
+				width: 100%;
+				border-collapse: separate;
+				border-spacing: 0 10px;
+			}
+
+			.patient-table th {
+				color: var(--drac-comment);
+				text-align: left;
+				padding: 5px 10px;
+				font-weight: 500;
+				font-size: 0.9rem;
+			}
+
+			.patient-table td {
+				background-color: var(--drac-card-alt);
+				padding: 12px 10px;
+				font-size: 0.95rem;
+				color: var(--drac-foreground);
+			}
+
+			.patient-table tr td:first-child {
+				border-top-left-radius: 8px;
+				border-bottom-left-radius: 8px;
+			}
+
+			.patient-table tr td:last-child {
+				border-top-right-radius: 8px;
+				border-bottom-right-radius: 8px;
+			}
+
+			.status-low {
+				color: var(--drac-green);
+				font-weight: bold;
+			}
+			.status-medium {
+				color: var(--drac-orange);
+				font-weight: bold;
+			}
+			.status-high {
+				color: var(--drac-red);
+				font-weight: bold;
+			}
+
+			.flash-messages {
+				list-style: none;
+				padding: 0;
+				margin-bottom: 20px;
+			}
+			.flash-success {
+				background-color: var(--drac-green);
+				color: var(--drac-bg);
+				padding: 15px;
+				border-radius: 8px;
+			}
+			.flash-error {
+				background-color: var(--drac-red);
+				color: var(--drac-foreground);
+				padding: 15px;
+				border-radius: 8px;
+			}
+
+			/* Notification System */
+			.notifications-container {
+				position: fixed;
+				top: 20px;
+				right: 20px;
+				z-index: 10000;
+				max-width: 400px;
+				pointer-events: none;
+			}
+
+			.notification {
+				background: var(--drac-card);
+				border-radius: 8px;
+				padding: 15px 20px;
+				margin-bottom: 10px;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+				border-left: 4px solid var(--drac-purple);
+				pointer-events: auto;
+				transform: translateX(420px);
+				transition: transform 0.3s ease;
+				display: flex;
+				align-items: flex-start;
+				gap: 12px;
+			}
+
+			.notification.show {
+				transform: translateX(0);
+			}
+
+			.notification.success {
+				border-left-color: var(--drac-green);
+			}
+
+			.notification.error {
+				border-left-color: var(--drac-red);
+			}
+
+			.notification.warning {
+				border-left-color: var(--drac-orange);
+			}
+
+			.notification.info {
+				border-left-color: var(--drac-cyan);
+			}
+
+			.notification-icon {
+				font-size: 1.2rem;
+				flex-shrink: 0;
+				margin-top: 2px;
+			}
+
+			.notification-content {
+				flex: 1;
+				font-size: 0.9rem;
+				line-height: 1.4;
+			}
+
+			.notification-close {
+				background: none;
+				border: none;
+				color: var(--drac-comment);
+				cursor: pointer;
+				font-size: 1.2rem;
+				padding: 0;
+				width: 20px;
+				height: 20px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+				margin-top: 2px;
+			}
+
+			.notification-close:hover {
+				color: var(--drac-foreground);
+			}
+
+			/* Virtual Assistant Widget */
+			.va-widget {
+				position: fixed;
+				right: 24px;
+				bottom: 24px;
+				z-index: 10050;
+				font-family: inherit;
+			}
+
+			.va-toggle {
+				width: 64px;
+				height: 64px;
+				border-radius: 16px; /* rounded square */
+				border: none;
+				background: linear-gradient(
+					135deg,
+					#36d399,
+					#0b7d3b
+				); /* green -> dark green */
+				color: var(--drac-foreground);
+				box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+				display: inline-flex;
+				align-items: center;
+				justify-content: center; /* center icon when collapsed */
+				cursor: pointer;
+				font-size: 0.95rem;
+				padding: 0 8px; /* small padding for icon-only */
+				transition: width 200ms cubic-bezier(0.2, 0.9, 0.2, 1),
+					transform 160ms ease;
+				overflow: hidden;
+				z-index: 10070; /* keep above most UI elements */
+			}
+
+			.va-toggle img {
+				display: block;
+				width: 44px;
+				height: 44px;
+			}
+
+			.va-toggle .va-label {
+				display: inline-block;
+				margin-left: 8px;
+				font-weight: 600;
+				font-size: 0.9rem;
+				color: var(--drac-bg);
+				opacity: 0;
+				transition: opacity 160ms ease, transform 160ms ease;
+				transform: translateX(6px);
+			}
+
+			/* expand to reveal label only on hover */
+			.va-toggle:hover {
+				width: 260px; /* expands to show full 'Sage AI Assistant' label */
+				transform: translateX(-6px);
+				justify-content: flex-start; /* align icon to left when expanded */
+				padding-left: 12px;
+			}
+
+			/* icon wrapper should not shrink */
+			.va-toggle > .va-icon {
+				flex: 0 0 56px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transform: translate(7px, -5px);
+				transition: transform 160ms ease;
+			}
+
+			/* hide label from layout using max-width so icon remains centered; animate max-width and opacity */
+			.va-toggle .va-label {
+				display: inline-block;
+				max-width: 0;
+				white-space: nowrap;
+				overflow: hidden;
+				opacity: 0;
+				transform: translateX(6px);
+				transition: max-width 200ms cubic-bezier(0.2, 0.9, 0.2, 1),
+					opacity 160ms ease, transform 160ms ease;
+			}
+
+			.va-toggle:hover .va-label {
+				max-width: 180px;
+				opacity: 1;
+				transform: translateX(0);
+			}
+
+			/* move icon back to aligned-left when expanded */
+			.va-toggle:hover > .va-icon {
+				transform: translate(0, 0);
+			}
+
+			.va-panel {
+				width: 320px;
+				max-width: calc(100vw - 48px);
+				background: linear-gradient(
+					180deg,
+					rgba(255, 255, 255, 0.03),
+					rgba(255, 255, 255, 0.01)
+				);
+				backdrop-filter: blur(6px);
+				border: 1px solid rgba(255, 255, 255, 0.04);
+				color: var(--drac-foreground);
+				border-radius: 12px;
+				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+				overflow: hidden;
+				transform: translateY(16px) scale(0.98);
+				opacity: 0;
+				transition: all 180ms ease;
+				margin-bottom: 10px;
+			}
+
+			.va-panel.open {
+				transform: translateY(0) scale(1);
+				opacity: 1;
+			}
+
+			.va-header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 12px 14px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+			}
+			.va-title {
+				font-weight: 700;
+				font-size: 0.95rem;
+			}
+			.va-close {
+				background: none;
+				border: none;
+				color: var(--drac-comment);
+				font-size: 1.2rem;
+				cursor: pointer;
+			}
+			.va-body {
+				padding: 12px 14px;
+				font-size: 0.9rem;
+				color: var(--drac-comment);
+				min-height: 80px;
+			}
+			.va-footer {
+				display: flex;
+				gap: 8px;
+				padding: 12px 14px;
+				border-top: 1px solid rgba(255, 255, 255, 0.02);
+				justify-content: flex-end;
+			}
+
+			/* Small Chat Window */
+			.sage-chat {
+				position: fixed;
+				right: 24px;
+				bottom: 90px; /* sits above the button */
+				width: 340px;
+				max-width: calc(100vw - 48px);
+				height: 420px;
+				background: var(--drac-card); /* solid theme background */
+				border-radius: 12px;
+				box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+				border: 1px solid rgba(255, 255, 255, 0.04);
+				opacity: 0;
+				transform: translateY(8px) scale(0.98);
+				transition: all 180ms ease;
+				overflow: hidden;
+				display: flex;
+				flex-direction: column;
+				z-index: 10060;
+			}
+
+			.sage-chat.open {
+				opacity: 1;
+				transform: translateY(0) scale(1);
+			}
+
+			.sage-chat-header {
+				padding: 12px 14px;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+			}
+			.sage-chat-body {
+				padding: 12px;
+				flex: 1;
+				overflow: auto;
+				background: transparent;
+				color: var(--drac-foreground);
+			}
+			/* Message bubbles contrast against the card background */
+			.sage-chat-body .message {
+				background: rgba(255, 255, 255, 0.02);
+				padding: 8px 10px;
+				border-radius: 8px;
+				margin-bottom: 8px;
+			}
+			.sage-chat-input {
+				display: flex;
+				gap: 8px;
+				padding: 10px;
+				border-top: 1px solid rgba(255, 255, 255, 0.02);
+			}
+			.sage-chat-input input {
+				flex: 1;
+				padding: 8px 10px;
+				border-radius: 8px;
+				border: 1px solid rgba(255, 255, 255, 0.04);
+				background: var(--drac-card);
+				color: var(--drac-foreground);
+			}
+			.sage-chat-input button {
+				padding: 8px 12px;
+				border-radius: 8px;
+				border: none;
+				background: linear-gradient(135deg, #36d399, #0b7d3b);
+				color: var(--drac-foreground);
+			}
+		</style>
+		
+<style>
+	body {
+		justify-content: center;
+		align-items: center;
+		padding: 40px 20px;
+	}
+	.container {
+		width: 100%;
+		max-width: 1200px;
+		background-color: #1e1e2f;
+		border-radius: 20px;
+		display: flex;
+		overflow: hidden;
+		box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
+	}
+	.left-panel,
+	.right-panel {
+		flex: 1 1 50%;
+		min-width: 350px;
+		padding: 80px 60px;
+	}
+	.left-panel {
+		background: url("/static/assets/linescircles1.png")
+			no-repeat center center;
+		background-size: cover;
+		color: white;
+	}
+	.left-panel h1 {
+		font-size: 40px;
+	}
+	.left-panel p {
+		margin-top: 25px;
+		color: #ccc;
+		font-size: 18px;
+	}
+	.right-panel {
+		background-color: #191a2d;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+	.right-panel h2 {
+		color: #dcdcdc;
+		margin-bottom: 40px;
+		font-size: 18px;
+		text-align: center;
+		letter-spacing: 1px;
+	}
+	.input-field {
+		width: 100%;
+		margin-bottom: 25px;
+	}
+	.input-field input {
+		width: 100%;
+		padding: 16px 22px;
+		border: none;
+		border-radius: 25px;
+		background: #3a3b50;
+		color: white;
+		font-size: 15px;
+		outline: none;
+	}
+	.login-button {
+		width: 100%;
+		padding: 16px;
+		border: none;
+		border-radius: 25px;
+		background: linear-gradient(to right, #ff416c, #9b42f4);
+		color: white;
+		font-size: 15px;
+		font-weight: bold;
+		cursor: pointer;
+		transition: opacity 0.3s;
+	}
+	.login-button:hover {
+		opacity: 0.9;
+	}
+	.remember-me {
+		margin-top: 20px;
+		display: flex;
+		align-items: center;
+		color: #aaa;
+		font-size: 14px;
+	}
+	.remember-me input {
+		margin-right: 10px;
+		accent-color: #9b42f4;
+	}
+	.hint {
+		text-align: center;
+		color: #aaa;
+		margin-top: 20px;
+	}
+	.google-button {
+		width: 100%;
+		padding: 16px;
+		border: 2px solid #4285f4;
+		border-radius: 25px;
+		background: white;
+		color: #4285f4;
+		font-size: 15px;
+		font-weight: bold;
+		cursor: pointer;
+		transition: all 0.3s;
+		margin-top: 15px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+	}
+	.google-button:hover {
+		background: #4285f4;
+		color: white;
+	}
+	.divider {
+		text-align: center;
+		margin: 20px 0;
+		position: relative;
+		color: #aaa;
+	}
+	.divider::before {
+		content: "";
+		position: absolute;
+		top: 50%;
+		left: 0;
+		right: 0;
+		height: 1px;
+		background: #444;
+	}
+	.divider span {
+		background: #191a2d;
+		padding: 0 15px;
+	}
+</style>
+
+	</head>
+	<body>
+		<!-- Notification Container -->
+		<div id="notifications-container" class="notifications-container"></div>
+
+		
+<div class="container">
+	<div class="left-panel">
+		<img
+			src="/static/assets/logo.png"
+			alt="Logo"
+			style="height: 60px; width: auto; margin-bottom: 20px" />
+		<h1>Welcome Back to<br />Our Platform</h1>
+		<p>Your platform for early cancer detection and rapid healing support.</p>
+	</div>
+	<div class="right-panel">
+		<h2>SIGN IN</h2>
+		 
+		<ul class="flash-messages" style="width: 100%">
+			
+			<li class="flash-error">Please log in to access this page.</li>
+			
+		</ul>
+		 
+		<form
+			method="POST"
+			action="/login"
+			style="width: 100%">
+			<div class="input-field">
+				<input type="text" name="username" placeholder="USERNAME" required />
+			</div>
+			<div class="input-field">
+				<input
+					type="password"
+					name="password"
+					id="password"
+					placeholder="PASSWORD"
+					required />
+			</div>
+			<div class="show_password">
+				<input
+					type="checkbox"
+					name="Show Password"
+					id="show_password"
+					onclick="
+				const password = document.getElementById('password');
+				password.type = password.type === 'password' ? 'text' : 'password';
+
+				" />
+				<label for="show_password" style="color: #aaa; font-size: 14px"
+					>Show Password</label
+				>
+			</div>
+			<div class="remember-me">
+				<input type="checkbox" id="remember" name="remember" value="1" />
+				<label for="remember">Remember me?</label>
+			</div>
+			<button class="login-button" type="submit" style="margin-top: 20px">
+				LOGIN
+			</button>
+
+			<div class="divider">
+				<span>OR</span>
+			</div>
+
+			<button type="button" class="google-button" id="googleSignInBtn">
+				<svg width="20" height="20" viewBox="0 0 24 24">
+					<path
+						fill="#4285f4"
+						d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+					<path
+						fill="#34a853"
+						d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+					<path
+						fill="#fbbc05"
+						d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+					<path
+						fill="#ea4335"
+						d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+				</svg>
+				Continue with Google
+			</button>
+
+			<div class="hint">
+				Don't have an account?
+				<a href="/signup">Sign up</a>
+			</div>
+		</form>
+
+		<!-- Firebase Scripts -->
+		<script type="module">
+			import { signInWithGoogle } from '/static/js/firebase-config.js';
+
+			document
+				.getElementById("googleSignInBtn")
+				.addEventListener("click", async () => {
+					const btn = document.getElementById("googleSignInBtn");
+					btn.disabled = true;
+					btn.innerHTML = "Signing in...";
+
+					try {
+						const result = await signInWithGoogle();
+
+						if (result.success) {
+							// Send Google user data to Flask backend
+							const response = await fetch("/auth/google/login", {
+								method: "POST",
+								headers: {
+									"Content-Type": "application/json",
+								},
+								body: JSON.stringify({
+									uid: result.user.uid,
+									email: result.user.email,
+									displayName: result.user.displayName,
+									photoURL: result.user.photoURL,
+									emailVerified: result.user.emailVerified,
+								}),
+							});
+
+							const data = await response.json();
+
+							if (data.success) {
+								window.location.href = data.redirect;
+							} else {
+								alert(data.message || "Login failed");
+							}
+						} else {
+							alert("Google sign-in failed: " + result.error);
+						}
+					} catch (error) {
+						console.error("Error:", error);
+						alert("An error occurred during sign-in");
+					} finally {
+						btn.disabled = false;
+						btn.innerHTML = `
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Continue with Google
+                    `;
+					}
+				});
+		</script>
+	</div>
+</div>
+
+
+		<!-- Bootstrap JS Bundle -->
+		<script
+			src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+			integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+			crossorigin="anonymous"></script>
+		<script>
+			// Theme handling (default: light).
+			// If server-side preference was rendered, use it as authoritative initial value.
+			const root = document.documentElement;
+			const profileToggle = document.getElementById('theme-toggle');
+			const headerToggleBtn = document.getElementById('themeToggleBtn');
+
+			function applyTheme(theme) {
+				root.setAttribute('data-theme', theme);
+				if (profileToggle) profileToggle.checked = theme === 'dark';
+				if (headerToggleBtn) headerToggleBtn.textContent = theme === 'dark' ? '🌙' : '🌤';
+			}
+
+			// Determine initial theme precedence:
+			// 1. server-side user preference injected as data-server-theme on <html>
+			// 2. client localStorage preference
+			// 3. system preference
+			const serverPref = document.documentElement.getAttribute('data-server-theme');
+			const stored = localStorage.getItem('theme');
+
+			if (serverPref && serverPref !== 'auto' && serverPref !== 'None') {
+				applyTheme(serverPref === 'dark' ? 'dark' : 'light');
+			} else if (stored === 'dark' || stored === 'light') {
+				applyTheme(stored);
+			} else {
+				const systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+				applyTheme(systemDark ? 'dark' : 'light');
+			}
+
+			// Listen for system preference changes only when neither server nor local preference is set
+			if (window.matchMedia) {
+				window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+					if (!document.documentElement.getAttribute('data-server-theme') && !localStorage.getItem('theme')) {
+						applyTheme(e.matches ? 'dark' : 'light');
+					}
+				});
+			}
+
+			// Helper: persist preference to server for logged-in users
+			async function persistPreferenceToServer(theme) {
+				try {
+					await fetch('/api/user/theme', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ theme: theme })
+					});
+				} catch (e) {
+					console.warn('Failed to persist theme to server', e);
+				}
+			}
+
+			// Click handler for header toggle button
+			if (headerToggleBtn) {
+				headerToggleBtn.addEventListener('click', async () => {
+					const current = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+					const next = current === 'dark' ? 'light' : 'dark';
+					localStorage.setItem('theme', next);
+					applyTheme(next);
+					// Try to persist for logged-in users (server will silently ignore if not authenticated)
+					await persistPreferenceToServer(next);
+				});
+			}
+
+			// Handler for the profile modal toggle checkbox (if present)
+			if (profileToggle) {
+				profileToggle.addEventListener('change', async () => {
+					const next = profileToggle.checked ? 'dark' : 'light';
+					localStorage.setItem('theme', next);
+					applyTheme(next);
+					await persistPreferenceToServer(next);
+				});
+			}
+
+			class NotificationSystem {
+				constructor() {
+					this.container = document.getElementById("notifications-container");
+					this.notifications = [];
+				}
+
+				show(message, type = "info", duration = 5000) {
+					const notification = document.createElement("div");
+					notification.className = `notification ${type}`;
+
+					const icons = {
+						success: "✓",
+						error: "✕",
+						warning: "⚠",
+						info: "ℹ",
+					};
+
+					notification.innerHTML = `
+					<div class="notification-icon">${icons[type] || icons.info}</div>
+					<div class="notification-content">${message}</div>
+					<button class="notification-close" onclick="notifications.hide(this.parentElement)">×</button>
+				`;
+
+					this.container.appendChild(notification);
+
+					// Trigger animation
+					setTimeout(() => notification.classList.add("show"), 10);
+
+					// Auto-hide
+					if (duration > 0) {
+						setTimeout(() => this.hide(notification), duration);
+					}
+
+					this.notifications.push(notification);
+					return notification;
+				}
+
+				hide(notification) {
+					notification.classList.remove("show");
+					setTimeout(() => {
+						if (notification.parentElement) {
+							notification.parentElement.removeChild(notification);
+						}
+						this.notifications = this.notifications.filter(
+							(n) => n !== notification
+						);
+					}, 300);
+				}
+
+				success(message, duration) {
+					return this.show(message, "success", duration);
+				}
+
+				error(message, duration) {
+					return this.show(message, "error", duration);
+				}
+
+				warning(message, duration) {
+					return this.show(message, "warning", duration);
+				}
+
+				info(message, duration) {
+					return this.show(message, "info", duration);
+				}
+			}
+
+			// Global notifications instance
+			const notifications = new NotificationSystem();
+
+			// Replace alert function globally
+			window.alert = function (message) {
+				notifications.error(message);
+			};
+		</script>
+	</body>
+</html>

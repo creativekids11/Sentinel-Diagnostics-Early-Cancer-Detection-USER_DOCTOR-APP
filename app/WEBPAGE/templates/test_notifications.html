@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Notification Test</title>
+</head>
+<body>
+    <h1>Notification API Test</h1>
+    <button onclick="testNotifications()">Test Notifications</button>
+    <button onclick="testUnreadCount()">Test Unread Count</button>
+    <div id="result"></div>
+
+    <script>
+        async function testNotifications() {
+            try {
+                const response = await fetch('/api/notifications');
+                const data = await response.json();
+                document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                document.getElementById('result').innerHTML = 'Error: ' + error.message;
+            }
+        }
+
+        async function testUnreadCount() {
+            try {
+                const response = await fetch('/api/notifications/unread-count');
+                const data = await response.json();
+                document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                document.getElementById('result').innerHTML = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

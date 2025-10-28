@@ -1,0 +1,794 @@
+<!-- Sage AI Assistant Chat Widget -->
+<!-- This file contains the complete chat interface for Sage AI Assistant -->
+
+<style>
+/* Sage AI Assistant Styles */
+.sage-chat {
+    position: fixed;
+    right: 24px;
+    bottom: 90px;
+    width: 380px;
+    height: 500px;
+    background: linear-gradient(145deg, #44475a, #282a36);
+    border: 1px solid var(--drac-purple);
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    display: none;
+    flex-direction: column;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.sage-chat.open {
+    display: flex;
+}
+
+.sage-chat-header {
+    background: linear-gradient(135deg, var(--drac-purple), #6272a4);
+    color: white;
+    padding: 16px 20px;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.va-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.va-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.sage-chat-body {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    background: #282a36;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sage-message {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.sage-message.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--drac-purple), #6272a4);
+    color: white;
+    margin-left: auto;
+}
+
+.sage-message.sage {
+    align-self: flex-start;
+    background: #44475a;
+    color: var(--drac-foreground);
+    border: 1px solid #6272a4;
+}
+
+.sage-message.system {
+    align-self: center;
+    background: rgba(139, 233, 253, 0.1);
+    color: var(--drac-cyan);
+    font-size: 0.85rem;
+    font-style: italic;
+    text-align: center;
+    border: 1px solid rgba(139, 233, 253, 0.3);
+}
+
+.sage-typing {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #44475a;
+    border-radius: 16px;
+    color: var(--drac-comment);
+    font-size: 0.9rem;
+    align-self: flex-start;
+    max-width: 85%;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.typing-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--drac-purple);
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+    0%, 80%, 100% { 
+        transform: scale(0);
+        opacity: 0.5;
+    }
+    40% { 
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.sage-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.suggestion-btn {
+    background: rgba(139, 233, 253, 0.1);
+    border: 1px solid var(--drac-cyan);
+    color: var(--drac-cyan);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.suggestion-btn:hover {
+    background: var(--drac-cyan);
+    color: #282a36;
+}
+
+.sage-chat-input {
+    padding: 16px;
+    background: #44475a;
+    border-radius: 0 0 16px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.sage-voice-btn {
+    background: linear-gradient(135deg, #50fa7b, #6272a4);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.sage-voice-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(80, 250, 123, 0.3);
+}
+
+.sage-voice-btn.listening {
+    background: linear-gradient(135deg, #ff5555, #6272a4);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.sage-chat-input input {
+    flex: 1;
+    background: #282a36;
+    border: 1px solid #6272a4;
+    border-radius: 20px;
+    padding: 12px 16px;
+    color: var(--drac-foreground);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.sage-chat-input input:focus {
+    border-color: var(--drac-purple);
+}
+
+.sage-chat-input input::placeholder {
+    color: var(--drac-comment);
+}
+
+.voice-btn {
+    background: linear-gradient(135deg, #50fa7b, #6272a4);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    font-size: 16px;
+    transition: all 0.2s;
+    margin-right: 8px;
+}
+
+.voice-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(80, 250, 123, 0.3);
+}
+
+.voice-btn.listening {
+    background: linear-gradient(135deg, #ff5555, #6272a4);
+    animation: pulse 1.5s infinite;
+}
+
+.sage-send-btn {
+    background: linear-gradient(135deg, var(--drac-purple), #6272a4);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.sage-send-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(189, 147, 249, 0.3);
+}
+
+.sage-send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Toggle button styles */
+.va-toggle {
+    background: linear-gradient(135deg, var(--drac-purple), #6272a4) !important;
+    border-radius: 28px !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.va-toggle:hover {
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 0 12px 24px rgba(189, 147, 249, 0.4) !important;
+}
+
+.va-icon img {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    transition: transform 0.2s;
+}
+
+.va-toggle:hover .va-icon img {
+    transform: rotate(10deg);
+}
+
+/* Scrollbar styling */
+.sage-chat-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sage-chat-body::-webkit-scrollbar-track {
+    background: #282a36;
+}
+
+.sage-chat-body::-webkit-scrollbar-thumb {
+    background: #6272a4;
+    border-radius: 3px;
+}
+
+.sage-chat-body::-webkit-scrollbar-thumb:hover {
+    background: var(--drac-purple);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .sage-chat {
+        right: 16px;
+        bottom: 80px;
+        width: calc(100vw - 32px);
+        max-width: 360px;
+    }
+    
+    .va-toggle {
+        right: 16px !important;
+        bottom: 16px !important;
+    }
+    
+    .va-label {
+        display: none !important;
+    }
+    
+    .va-toggle {
+        padding: 0 8px !important;
+    }
+}
+
+/* Animation for messages */
+.sage-message {
+    animation: messageSlideIn 0.3s ease-out;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Error message styling */
+.sage-message.error {
+    background: rgba(255, 85, 85, 0.1);
+    border: 1px solid var(--drac-red);
+    color: var(--drac-red);
+}
+
+/* Success message styling */
+.sage-message.success {
+    background: rgba(80, 250, 123, 0.1);
+    border: 1px solid var(--drac-green);
+    color: var(--drac-green);
+}
+</style>
+
+<script>
+class SageChat {
+    constructor() {
+        this.isOpen = false;
+        this.conversationHistory = [];
+        this.userRole = 'patient'; // Default role
+        this.isTyping = false;
+        this.detectedLanguage = null; // Store detected language persistently
+        this.ttsSupported = 'speechSynthesis' in window;
+        
+        this.initializeElements();
+        this.bindEvents();
+        this.loadSuggestions();
+        
+        // Welcome message
+        this.addMessage('system', '👋 Hi! I\'m Sage, your AI assistant. How can I help you navigate Sentinel Diagnostics today?');
+    }
+    
+    initializeElements() {
+        this.toggleBtn = document.querySelector('.va-toggle');
+        this.chatContainer = document.getElementById('sageChat');
+        this.closeBtn = document.getElementById('sageClose');
+        this.sendBtn = document.getElementById('sageSend');
+        this.voiceBtn = document.getElementById('sageVoice');
+        this.input = document.getElementById('sageInput');
+        this.chatBody = document.getElementById('sageBody');
+        
+        // Clear the initial placeholder content
+        if (this.chatBody) {
+            this.chatBody.innerHTML = '';
+        }
+    }
+    
+    bindEvents() {
+        if (this.toggleBtn) {
+            this.toggleBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.toggleChat();
+            });
+        }
+        
+        if (this.closeBtn) {
+            this.closeBtn.addEventListener('click', () => this.closeChat());
+        }
+        
+        if (this.sendBtn) {
+            this.sendBtn.addEventListener('click', () => this.sendMessage());
+        }
+        
+        if (this.voiceBtn) {
+            this.voiceBtn.addEventListener('click', () => this.startVoiceInput());
+        }
+        
+        if (this.input) {
+            this.input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.sendMessage();
+                }
+            });
+            
+            // Auto-resize input on typing
+            this.input.addEventListener('input', () => {
+                this.updateSendButtonState();
+            });
+        }
+        
+        // Close chat when clicking outside
+        document.addEventListener('click', (e) => {
+            if (this.isOpen && !this.chatContainer.contains(e.target) && !this.toggleBtn.contains(e.target)) {
+                this.closeChat();
+            }
+        });
+    }
+    
+    toggleChat() {
+        if (this.isOpen) {
+            this.closeChat();
+        } else {
+            this.openChat();
+        }
+    }
+    
+    openChat() {
+        if (this.chatContainer) {
+            this.chatContainer.classList.add('open');
+            this.chatContainer.setAttribute('aria-hidden', 'false');
+            this.isOpen = true;
+            
+            if (this.input) {
+                setTimeout(() => this.input.focus(), 100);
+            }
+            
+            this.scrollToBottom();
+        }
+    }
+    
+    closeChat() {
+        if (this.chatContainer) {
+            this.chatContainer.classList.remove('open');
+            this.chatContainer.setAttribute('aria-hidden', 'true');
+            this.isOpen = false;
+        }
+    }
+    
+    async sendMessage() {
+        const message = this.input?.value?.trim();
+        if (!message || this.isTyping) return;
+        
+        // Add user message
+        this.addMessage('user', message);
+        this.input.value = '';
+        this.updateSendButtonState();
+        
+        // Add to conversation history
+        this.conversationHistory.push({
+            role: 'user',
+            content: message
+        });
+        
+        // Show typing indicator
+        this.showTyping();
+        
+        try {
+            // Send to Sage API
+            const response = await this.sendToSage(message);
+            
+            // Hide typing indicator
+            this.hideTyping();
+            
+            if (response.success) {
+                // Store detected language for future requests
+                if (response.detected_language && !this.detectedLanguage) {
+                    this.detectedLanguage = response.detected_language;
+                    console.log(`Sage detected language: ${this.detectedLanguage}`);
+                }
+                
+                this.addMessage('sage', response.response);
+                
+                // Add to conversation history
+                this.conversationHistory.push({
+                    role: 'assistant',
+                    content: response.response
+                });
+                
+                // Speak the response in the detected language
+                if (this.ttsSupported && response.response) {
+                    this.speakResponse(response.response, this.detectedLanguage);
+                }
+            } else {
+                this.addMessage('error', response.error || 'Sorry, I encountered an error. Please try again.');
+            }
+            
+        } catch (error) {
+            this.hideTyping();
+            console.error('Chat error:', error);
+            this.addMessage('error', 'I\'m having trouble connecting right now. Please try again in a moment.');
+        }
+    }
+    
+    async sendToSage(message) {
+        const requestData = {
+            message: message,
+            user_role: this.userRole,
+            conversation_history: this.conversationHistory.slice(-10), // Last 10 messages for context
+            detected_language: this.detectedLanguage // Send stored language if available
+        };
+        
+        const response = await fetch('/api/sage/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return await response.json();
+    }
+    
+    addMessage(type, content) {
+        if (!this.chatBody) return;
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `sage-message ${type}`;
+        
+        if (type === 'sage') {
+            // Format Sage responses with better styling
+            messageDiv.innerHTML = this.formatSageResponse(content);
+        } else {
+            messageDiv.textContent = content;
+        }
+        
+        this.chatBody.appendChild(messageDiv);
+        this.scrollToBottom();
+    }
+    
+    formatSageResponse(content) {
+        // Basic markdown-like formatting for Sage responses
+        let formatted = content
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+            .replace(/\*(.*?)\*/g, '<em>$1</em>') // Italic
+            .replace(/`(.*?)`/g, '<code style="background: rgba(139, 233, 253, 0.1); padding: 2px 4px; border-radius: 4px; font-family: monospace;">$1</code>') // Code
+            .replace(/\n/g, '<br>'); // Line breaks
+        
+        return formatted;
+    }
+    
+    showTyping() {
+        if (this.isTyping) return;
+        
+        this.isTyping = true;
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'sage-typing';
+        typingDiv.id = 'sageTyping';
+        typingDiv.innerHTML = `
+            <span>Sage is typing</span>
+            <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        `;
+        
+        this.chatBody.appendChild(typingDiv);
+        this.scrollToBottom();
+    }
+    
+    hideTyping() {
+        this.isTyping = false;
+        const typingElement = document.getElementById('sageTyping');
+        if (typingElement) {
+            typingElement.remove();
+        }
+    }
+    
+    async loadSuggestions() {
+        try {
+            const response = await fetch(`/api/sage/suggestions?role=${this.userRole}`);
+            const data = await response.json();
+            
+            if (data.success && data.suggestions.length > 0) {
+                this.showSuggestions(data.suggestions);
+            }
+        } catch (error) {
+            console.log('Could not load suggestions:', error);
+        }
+    }
+    
+    showSuggestions(suggestions) {
+        if (!this.chatBody) return;
+        
+        const suggestionsDiv = document.createElement('div');
+        suggestionsDiv.className = 'sage-message system';
+        suggestionsDiv.innerHTML = `
+            <div>Quick suggestions:</div>
+            <div class="sage-suggestions">
+                ${suggestions.map(suggestion => 
+                    `<button class="suggestion-btn" onclick="sageChat.sendSuggestion('${suggestion.replace(/'/g, "\\\'")}')">${suggestion}</button>`
+                ).join('')}
+            </div>
+        `;
+        
+        this.chatBody.appendChild(suggestionsDiv);
+        this.scrollToBottom();
+    }
+    
+    sendSuggestion(suggestion) {
+        if (this.input) {
+            this.input.value = suggestion;
+            this.sendMessage();
+        }
+    }
+    
+    updateSendButtonState() {
+        if (this.sendBtn && this.input) {
+            const hasMessage = this.input.value.trim().length > 0;
+            this.sendBtn.disabled = !hasMessage || this.isTyping;
+        }
+    }
+    
+    speakResponse(text, language) {
+        if (!this.ttsSupported) return;
+        
+        try {
+            // Cancel any ongoing speech
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            // Set language based on detected language
+            if (language) {
+                // Map our language codes to speech synthesis language codes
+                const langMap = {
+                    'hi-IN': 'hi-IN',
+                    'mr-IN': 'mr-IN', 
+                    'kn-IN': 'kn-IN',
+                    'ml-IN': 'ml-IN',
+                    'pa-IN': 'pa-IN',
+                    'en-US': 'en-US',
+                    'en': 'en-US'
+                };
+                
+                const speechLang = langMap[language] || 'en-US';
+                utterance.lang = speechLang;
+                console.log(`Speaking in language: ${speechLang}`);
+            } else {
+                utterance.lang = 'en-US'; // Default to English
+            }
+            
+            // Adjust speech settings for better experience
+            utterance.rate = 0.9; // Slightly slower for clarity
+            utterance.pitch = 1.0;
+            utterance.volume = 0.8;
+            
+            speechSynthesis.speak(utterance);
+            
+        } catch (error) {
+            console.error('TTS error:', error);
+        }
+    }
+    
+    scrollToBottom() {
+        if (this.chatBody) {
+            setTimeout(() => {
+                this.chatBody.scrollTop = this.chatBody.scrollHeight;
+            }, 100);
+        }
+    }
+    
+    startVoiceInput() {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+            return;
+        }
+        
+        // Initialize speech recognition
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        // Configure recognition
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = this.detectedLanguage ? 
+            this.getSpeechLangCode(this.detectedLanguage) : 'en-US';
+        
+        // Visual feedback
+        if (this.voiceBtn) {
+            this.voiceBtn.classList.add('listening');
+            this.voiceBtn.innerHTML = '🎙️';
+        }
+        
+        // Show listening message
+        this.addMessage('system', `🎤 Listening in ${recognition.lang}... Speak now!`);
+        
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            console.log('Voice input:', transcript);
+            
+            // Set the input value and send message
+            if (this.input) {
+                this.input.value = transcript;
+                this.sendMessage();
+            }
+        };
+        
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            this.addMessage('system', `❌ Voice recognition failed: ${event.error}`);
+            this.resetVoiceButton();
+        };
+        
+        recognition.onend = () => {
+            this.resetVoiceButton();
+        };
+        
+        // Start recognition
+        try {
+            recognition.start();
+        } catch (error) {
+            console.error('Error starting speech recognition:', error);
+            this.addMessage('system', '❌ Could not start voice recognition');
+            this.resetVoiceButton();
+        }
+    }
+    
+    getSpeechLangCode(detectedLang) {
+        const langMap = {
+            'hi-IN': 'hi-IN',
+            'mr-IN': 'mr-IN', 
+            'kn-IN': 'kn-IN',
+            'ml-IN': 'ml-IN',
+            'pa-IN': 'pa-IN',
+            'en-US': 'en-US',
+            'en': 'en-US'
+        };
+        return langMap[detectedLang] || 'en-US';
+    }
+    
+    resetVoiceButton() {
+        if (this.voiceBtn) {
+            this.voiceBtn.classList.remove('listening');
+            this.voiceBtn.innerHTML = '🎤';
+        }
+    }
+}
+
+// Initialize Sage Chat when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Only initialize if chat elements exist
+    if (document.getElementById('sageChat')) {
+        window.sageChat = new SageChat();
+        
+        // Auto-detect user role if possible
+        // You can customize this based on your app's user role detection
+        const userRoleElement = document.querySelector('[data-user-role]');
+        if (userRoleElement) {
+            const role = userRoleElement.getAttribute('data-user-role');
+            window.sageChat.setUserRole(role);
+        }
+    }
+});
+</script>

@@ -1,0 +1,2023 @@
+{% extends "layouts/patient.html" %} {% block title %}Dashboard{% endblock %} {%
+block content %}
+
+<div class="modern-dashboard">
+	<!-- Welcome Header -->
+	<div class="welcome-header">
+		<div class="welcome-content">
+			<h1 class="welcome-title">
+				{% set current_hour = current_time.hour %} {% if current_hour < 12 %}
+				Good morning, {% elif current_hour < 18 %} Good afternoon, {% else %}
+				Good evening, {% endif %} {{ current_user.fullname.split()[0] if
+				current_user and current_user.fullname else 'User' }}!
+			</h1>
+			<p class="welcome-subtitle">
+				Here's what's happening with your health today
+			</p>
+		</div>
+		<div class="date-today">
+			<span class="date-day" id="currentDay">--</span>
+			<span class="date-month" id="currentMonth">--</span>
+		</div>
+	</div>
+
+	<!-- Health Snapshot Card (Inspired by reference) -->
+	<div class="health-snapshot-card">
+		<div class="snapshot-header">
+			<div class="snapshot-title">
+				<h2>My Health Snapshot</h2>
+				<button class="card-menu-btn">⋯</button>
+			</div>
+		</div>
+		<div class="snapshot-metrics">
+			<div class="snapshot-stat">
+				<div class="stat-value">
+					<span class="stat-number" id="totalVisits">0</span>
+					<span class="stat-unit">Visits</span>
+				</div>
+				<div class="stat-label">Total Consultations</div>
+			</div>
+			<div class="snapshot-stat">
+				<div class="stat-value">
+					<span class="stat-number" id="activeCases">0</span>
+					<span class="stat-unit">Active</span>
+				</div>
+				<div class="stat-label">Active Cases</div>
+			</div>
+			<div class="snapshot-stat">
+				<div class="stat-value">
+					<span class="stat-number" id="nextAppointmentDays">--</span>
+					<span class="stat-unit" id="nextAppointmentUnit">Days</span>
+				</div>
+				<div class="stat-label">Next Appointment</div>
+			</div>
+			<div class="snapshot-stat">
+				<div class="stat-value">
+					<span class="stat-number" id="riskPercentage">--</span>
+					<span class="stat-unit">%</span>
+				</div>
+				<div class="stat-label">Health Score</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Main Dashboard Grid -->
+	<div class="dashboard-grid">
+		<!-- Left Column -->
+		<div class="left-column">
+			<!-- Enhanced Calendar Card -->
+			<div class="dashboard-card calendar-card">
+				<div class="card-header">
+					<h2 class="card-title">Appointment Calendar</h2>
+					<button class="calendar-view-toggle">
+						<span class="view-option active" data-view="month">Month</span>
+						<span class="view-option" data-view="week">Week</span>
+					</button>
+				</div>
+				<div class="calendar-container">
+					<div class="calendar-header">
+						<button class="calendar-nav" id="dashPrevMonth">‹</button>
+						<h3 class="calendar-month" id="dashCalendarMonthYear">October 2025</h3>
+						<button class="calendar-nav" id="dashNextMonth">›</button>
+					</div>
+					<div class="calendar-weekdays">
+						<span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span
+						><span>Fri</span><span>Sat</span><span>Sun</span>
+					</div>
+					<div class="calendar-grid" id="dashCalendarGrid">
+						<!-- Calendar days will be generated here -->
+					</div>
+				</div>
+			</div>
+
+			<!-- Messages Preview Card -->
+			<div class="dashboard-card messages-card">
+				<div class="card-header">
+					<h2 class="card-title">Point Messages</h2>
+					<div class="message-indicators">
+						<span class="unread-count" id="unreadMessagesCount">0</span>
+						<a
+							class="compose-message-btn"
+							href="{{ url_for('messages') }}">
+							📝 Compose Message
+						</a>
+					</div>
+				</div>
+				<div class="card-content">
+					<div class="messages-list" id="messagesList">
+						<div class="loading-state">Loading messages...</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Right Column -->
+		<div class="right-column">
+			<!-- Upcoming Appointments -->
+			<div class="dashboard-card appointments-card">
+				<div class="card-header">
+					<h2 class="card-title">Upcoming Appointments</h2>
+					<div class="header-actions">
+						<button class="upload-btn">📤 Upload Analyze</button>
+						<button class="view-full-btn">View Full Report</button>
+					</div>
+				</div>
+				<div class="appointments-list" id="upcomingAppointments">
+					<div class="loading-state">Loading appointments...</div>
+				</div>
+			</div>
+
+			<!-- Health Progress Ring (Similar to reference) -->
+			<div class="dashboard-card progress-card">
+				<div class="card-header">
+					<h2 class="card-title">Health Progress Summary</h2>
+					<button class="card-menu-btn">⋯</button>
+				</div>
+				<div class="progress-container">
+					<div class="progress-ring-container">
+						<svg class="progress-ring" width="120" height="120">
+							<circle
+								class="progress-ring-circle"
+								stroke="rgba(139, 233, 253, 0.2)"
+								stroke-width="8"
+								fill="transparent"
+								r="52"
+								cx="60"
+								cy="60" />
+							<circle
+								class="progress-ring-circle progress-ring-fill"
+								stroke="#8be9fd"
+								stroke-width="8"
+								fill="transparent"
+								r="52"
+								cx="60"
+								cy="60"
+								id="healthProgressCircle" />
+						</svg>
+						<div class="progress-percentage" id="healthPercentage">97%</div>
+					</div>
+					<div class="progress-details">
+						<div class="progress-item">
+							<span class="progress-dot" style="background: #50fa7b"></span>
+							<span class="progress-label">Breast</span>
+							<span class="progress-value">90%</span>
+						</div>
+						<div class="progress-item">
+							<span class="progress-dot" style="background: #ffb86c"></span>
+							<span class="progress-label">Lung</span>
+							<span class="progress-value">85%</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Quick Actions Grid -->
+			<div class="dashboard-card quick-actions-card">
+				<div class="card-header">
+					<h2 class="card-title">Quick Actions</h2>
+				</div>
+				<div class="quick-actions-grid">
+					<a href="{{ url_for('appointment_page') }}" class="quick-action-item">
+						<div
+							class="action-icon"
+							style="background: linear-gradient(135deg, #bd93f9, #9b59b6)">
+							📅
+						</div>
+						<span class="action-label">Book Appointment</span>
+					</a>
+					<a
+						href="{{ url_for('risk_assessment_page') }}"
+						class="quick-action-item">
+						<div
+							class="action-icon"
+							style="background: linear-gradient(135deg, #50fa7b, #2ecc71)">
+							📊
+						</div>
+						<span class="action-label">Risk Assessment</span>
+					</a>
+					<a href="{{ url_for('messages') }}" class="quick-action-item">
+						<div
+							class="action-icon"
+							style="background: linear-gradient(135deg, #8be9fd, #3498db)">
+							💬
+						</div>
+						<span class="action-label">Messages</span>
+					</a>
+					<a href="{{ url_for('healing_nutrition') }}" class="quick-action-item">
+						<div
+							class="action-icon"
+							style="background: linear-gradient(135deg, #ffb86c, #e67e22)">
+							🥗
+						</div>
+						<span class="action-label">Nutrition</span>
+					</a>
+					<a href="{{ url_for('patient_reports') }}" class="quick-action-item">
+						<div
+							class="action-icon"
+							style="background: linear-gradient(135deg, #ff79c6, #e91e63)">
+							📄
+						</div>
+						<span class="action-label">Reports</span>
+					</a>
+					<a href="{{ url_for('patient_aiscanner_page') }}" class="quick-action-item">
+						<div
+							class="action-icon"
+							style="background: linear-gradient(135deg, #6272a4, #44475a)">
+							🔬
+						</div>
+						<span class="action-label">AI Scanner</span>
+					</a>
+					<a href="#" class="quick-action-item" onclick="showComingSoon()">
+						<div
+							class="action-icon"
+							style="background: linear-gradient(135deg, #6272a4, #44475a)">
+							🧪
+						</div>
+						<span class="action-label">Lab Results</span>
+					</a>
+				</div>
+			</div>
+
+			<!-- Healing Resources -->
+			<div class="dashboard-card resources-card">
+				<div class="card-header">
+					<h2 class="card-title">Healing Resources</h2>
+					<button class="card-menu-btn">⋮</button>
+				</div>
+				<div class="resources-grid">
+					<div class="resource-item">
+						<div class="resource-icon">📚</div>
+						<div class="resource-content">
+							<h4>Therapy Guides</h4>
+							<p>Evidence-based treatment plans</p>
+						</div>
+					</div>
+					<div class="resource-item">
+						<div class="resource-icon">🥗</div>
+						<div class="resource-content">
+							<h4>Nutrition Plans</h4>
+							<p>Personalized dietary recommendations</p>
+						</div>
+					</div>
+					<div class="resource-item">
+						<div class="resource-icon">👥</div>
+						<div class="resource-content">
+							<h4>Support Groups</h4>
+							<p>Connect with others on similar journeys</p>
+						</div>
+					</div>
+					<div class="resource-item">
+						<div class="resource-icon">🧘</div>
+						<div class="resource-content">
+							<h4>Wellness Tips</h4>
+							<p>Daily practices for better health</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Premium Features Section -->
+			{% if user_subscription and user_subscription.plan != 'free' %}
+			<div class="dashboard-card premium-features-card">
+				<div class="card-header">
+					<h2 class="card-title" style="display: flex; align-items: center; gap: 8px;">
+						<span class="premium-title-{{ user_subscription.plan }}">
+							👑 {{ user_subscription.plan.title() }} Features
+						</span>
+					</h2>
+				</div>
+				<div class="premium-features-grid">
+					{% if user_subscription.plan == 'premium' %}
+					<div class="premium-feature-item">
+						<div class="feature-icon" style="background: linear-gradient(135deg, #ff6b35, #ff8e53);">
+							🚀
+						</div>
+						<div class="feature-content">
+							<h4>Priority Support</h4>
+							<p>24/7 premium support with faster response times</p>
+						</div>
+					</div>
+					<div class="premium-feature-item">
+						<div class="feature-icon" style="background: linear-gradient(135deg, #ff6b35, #ff8e53);">
+							📊
+						</div>
+						<div class="feature-content">
+							<h4>Advanced Analytics</h4>
+							<p>Detailed health insights and trend analysis</p>
+						</div>
+					</div>
+					<div class="premium-feature-item">
+						<div class="feature-icon" style="background: linear-gradient(135deg, #ff6b35, #ff8e53);">
+							🔬
+						</div>
+						<div class="feature-content">
+							<h4>AI-Powered Reports</h4>
+							<p>Enhanced diagnostic reports with AI recommendations</p>
+						</div>
+					</div>
+					<div class="premium-feature-item">
+						<div class="feature-icon" style="background: linear-gradient(135deg, #ff6b35, #ff8e53);">
+							👨‍⚕️
+						</div>
+						<div class="feature-content">
+							<h4>Specialist Access</h4>
+							<p>Direct consultations with top specialists</p>
+						</div>
+					</div>
+					{% elif user_subscription.plan == 'pro' %}
+					<div class="premium-feature-item">
+						<div class="feature-icon" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);">
+							⚡
+						</div>
+						<div class="feature-content">
+							<h4>Extended Features</h4>
+							<p>Access to advanced risk assessment tools</p>
+						</div>
+					</div>
+					<div class="premium-feature-item">
+						<div class="feature-icon" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);">
+							📱
+						</div>
+						<div class="feature-content">
+							<h4>Mobile Sync</h4>
+							<p>Sync your data across all devices</p>
+						</div>
+					</div>
+					<div class="premium-feature-item">
+						<div class="feature-icon" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);">
+							📈
+						</div>
+						<div class="feature-content">
+							<h4>Progress Tracking</h4>
+							<p>Enhanced health monitoring and reports</p>
+						</div>
+					</div>
+					{% endif %}
+				</div>
+			</div>
+			{% else %}
+			<!-- Upgrade Prompt for Free Users -->
+			<div class="dashboard-card upgrade-prompt-card">
+				<div class="card-header">
+					<h2 class="card-title">🔒 Unlock Premium Features</h2>
+				</div>
+				<div class="upgrade-content">
+					<p>Upgrade to Pro or Premium for advanced features:</p>
+					<ul style="text-align: left; margin: 16px 0;">
+						<li>Priority support</li>
+						<li>Advanced analytics</li>
+						<li>AI-powered insights</li>
+						<li>Specialist consultations</li>
+					</ul>
+					<a href="{{ url_for('manage_plans') }}" class="upgrade-btn" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #8b5cf6, #a78bfa); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 8px;">
+						View Plans
+					</a>
+				</div>
+			</div>
+			{% endif %}
+		</div>
+	</div>
+</div>
+
+<!-- Appointment Popup -->
+<div id="appointmentPopup" class="appointment-popup">
+	<div class="popup-content">
+		<div class="popup-header">
+			<h3>Appointments on <span id="popupDate"></span></h3>
+			<button class="popup-close">&times;</button>
+		</div>
+		<div id="popupAppointments" class="popup-appointments">
+			<!-- appointments will be inserted here -->
+		</div>
+	</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+	let currentDate = new Date();
+	let calendarState = {
+		year: currentDate.getFullYear(),
+		month: currentDate.getMonth(),
+	};
+	let appointmentsData = [];
+
+	// Initialize dashboard
+	document.addEventListener("DOMContentLoaded", function () {
+		updateWelcomeDate();
+		updateGreeting(); // Add greeting update
+		renderCalendar();
+		updateDashboardData();
+
+		// Calendar navigation
+		document.getElementById("dashPrevMonth").addEventListener("click", function () {
+			calendarState.month--;
+			if (calendarState.month < 0) {
+				calendarState.month = 11;
+				calendarState.year--;
+			}
+			renderCalendar();
+		});
+
+		document.getElementById("dashNextMonth").addEventListener("click", function () {
+			calendarState.month++;
+			if (calendarState.month > 11) {
+				calendarState.month = 0;
+				calendarState.year++;
+			}
+			renderCalendar();
+		});
+
+		// View toggle
+		document.querySelectorAll(".view-option").forEach((option) => {
+			option.addEventListener("click", function () {
+				document
+					.querySelectorAll(".view-option")
+					.forEach((o) => o.classList.remove("active"));
+				this.classList.add("active");
+			});
+		});
+
+		// Popup close events
+		document.querySelector('.popup-close').addEventListener('click', () => {
+			closePopup();
+		});
+
+		document.getElementById('appointmentPopup').addEventListener('click', (e) => {
+			if (e.target === e.currentTarget) {
+				closePopup();
+			}
+		});
+	});
+
+	// Function to close popup with smooth animation
+	function closePopup() {
+		const popup = document.getElementById('appointmentPopup');
+		popup.classList.remove('show');
+		
+		// Hide popup after animation completes
+		setTimeout(() => {
+			popup.style.display = 'none';
+		}, 400); // Match the CSS transition duration
+	}
+
+	function updateGreeting() {
+		const now = new Date();
+		const hour = now.getHours();
+		let greeting;
+
+		if (hour < 12) {
+			greeting = "Good morning";
+		} else if (hour < 18) {
+			greeting = "Good afternoon";
+		} else {
+			greeting = "Good evening";
+		}
+
+		const welcomeTitle = document.querySelector(".welcome-title");
+		if (welcomeTitle) {
+			const namePart = welcomeTitle.textContent.split(",")[1] || ", User!";
+			welcomeTitle.innerHTML = `${greeting}, ${namePart.trim()}`;
+		}
+	}
+
+	function updateWelcomeDate() {
+		const today = new Date();
+		const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+		const monthNames = [
+			"Jan",
+			"Feb",
+			"Mar",
+			"Apr",
+			"May",
+			"Jun",
+			"Jul",
+			"Aug",
+			"Sep",
+			"Oct",
+			"Nov",
+			"Dec",
+		];
+
+		document.getElementById("currentDay").textContent = today.getDate();
+		document.getElementById("currentMonth").textContent =
+			monthNames[today.getMonth()];
+	}
+
+	function renderCalendar() {
+		const calendarGrid = document.getElementById("dashCalendarGrid");
+		const calendarMonthYear = document.getElementById("dashCalendarMonthYear");
+
+		const monthNames = [
+			"January",
+			"February",
+			"March",
+			"April",
+			"May",
+			"June",
+			"July",
+			"August",
+			"September",
+			"October",
+			"November",
+			"December",
+		];
+
+		calendarMonthYear.textContent = `${monthNames[calendarState.month]} ${
+			calendarState.year
+		}`;
+
+		const firstDay = new Date(calendarState.year, calendarState.month, 1);
+		const lastDay = new Date(calendarState.year, calendarState.month + 1, 0);
+		const daysInMonth = lastDay.getDate();
+		const startingDayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
+
+		let calendarHTML = "";
+
+		// Empty cells for days before the first day of the month
+		for (let i = 0; i < startingDayOfWeek; i++) {
+			calendarHTML += '<div class="calendar-day empty"></div>';
+		}
+
+		// Days of the month
+		for (let day = 1; day <= daysInMonth; day++) {
+			const date = new Date(calendarState.year, calendarState.month, day);
+			const isToday = date.toDateString() === new Date().toDateString();
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+			
+			// Get all future appointments for this day
+			const futureAppointments = appointmentsData.filter((appt) => {
+				const apptDate = new Date(appt.scheduled_at);
+				return apptDate.toDateString() === date.toDateString() && apptDate >= today;
+			});
+			
+			// Separate unresolved and resolved appointments
+			const unresolvedAppointments = futureAppointments.filter(appt => 
+				appt.status !== 'completed' && appt.status !== 'resolved' && appt.status !== 'deleted'
+			);
+			const resolvedAppointments = futureAppointments.filter(appt => 
+				appt.status === 'completed' || appt.status === 'resolved' || appt.status === 'deleted'
+			);
+			
+			const hasUnresolved = unresolvedAppointments.length > 0;
+			const hasResolved = resolvedAppointments.length > 0;
+
+			let dayClass = "";
+			if (isToday) {
+				if (futureAppointments.length > 0) {
+					dayClass = "has-appointment";
+				} else {
+					dayClass = "today";
+				}
+			} else {
+				if (hasUnresolved) {
+					dayClass = "has-appointment";
+				} else if (hasResolved) {
+					dayClass = "has-resolved-appointment";
+				}
+			}
+
+			// Create multiple dots for multiple unresolved appointments
+			let dotsHTML = "";
+			if (hasUnresolved) {
+				const dots = unresolvedAppointments.map((_, index) => 
+					`<div class="appointment-dot" data-index="${index}"></div>`
+				).join('');
+				dotsHTML = `<div class="appointment-dots">${dots}</div>`;
+			}
+
+			calendarHTML += `
+				<div class="calendar-day ${dayClass} ${isToday ? "today" : ""}" 
+					 data-date="${calendarState.year}-${String(calendarState.month + 1).padStart(
+				2,
+				"0"
+			)}-${String(day).padStart(2, "0")}">
+					${day}
+					${dotsHTML}
+				</div>
+			`;
+		}
+
+		calendarGrid.innerHTML = calendarHTML;
+
+		// Add click events to appointment dots
+		document.querySelectorAll(".appointment-dot").forEach((dot) => {
+			dot.addEventListener("click", function (e) {
+				e.stopPropagation();
+				const dayElement = this.closest('.calendar-day');
+				const date = dayElement.dataset.date;
+				if (date) {
+					showDayAppointments(date);
+				}
+			});
+		});
+	}
+
+	function showDayAppointments(date) {
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		
+		// Only show unresolved appointments in the popup
+		const dayAppointments = appointmentsData.filter((appt) => {
+			const apptDate = new Date(appt.scheduled_at);
+			return apptDate.toDateString() === new Date(date).toDateString() && 
+				   apptDate >= today && 
+				   appt.status !== 'completed' && 
+				   appt.status !== 'resolved' && 
+				   appt.status !== 'deleted';
+		});
+
+		if (dayAppointments.length > 0) {
+			document.getElementById('popupDate').textContent = new Date(date).toLocaleDateString();
+			const list = dayAppointments.map(appt => {
+				const time = new Date(appt.scheduled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+				return `<div class="popup-appointment">
+					<div class="appt-time">${time}</div>
+					<div class="appt-details">
+						<div class="appt-doctor">Dr. ${appt.doctor_name}</div>
+						<div class="appt-reason">${appt.reason || 'General Consultation'}</div>
+						<div class="appt-status">Status: ${appt.status}</div>
+					</div>
+				</div>`;
+			}).join('');
+			document.getElementById('popupAppointments').innerHTML = list;
+			
+			// Show popup with smooth animation
+			const popup = document.getElementById('appointmentPopup');
+			popup.style.display = 'flex';
+			// Force reflow to ensure display change is applied
+			popup.offsetHeight;
+			popup.classList.add('show');
+		}
+	}
+
+	async function updateDashboardData() {
+		try {
+			const response = await fetch("/api/patient_dashboard_data");
+			const data = await response.json();
+
+			// Update appointments data for calendar
+			appointmentsData = data.appointments || [];
+			renderCalendar();
+
+			// Update health snapshot
+			animateCounter(
+				document.getElementById("totalVisits"),
+				data.total_visits || 0
+			);
+			animateCounter(
+				document.getElementById("activeCases"),
+				data.active_cases || 0
+			);
+
+			// Update next appointment with dynamic unit (days/hours/minutes)
+			if (
+				data.next_appointment_value !== null &&
+				data.next_appointment_value !== undefined
+			) {
+				document.getElementById("nextAppointmentDays").textContent =
+					data.next_appointment_value;
+				document.getElementById("nextAppointmentUnit").textContent =
+					data.next_appointment_unit || "Days";
+			} else {
+				document.getElementById("nextAppointmentDays").textContent = "--";
+				document.getElementById("nextAppointmentUnit").textContent = "Days";
+			}
+
+			// Update health score
+			const healthScore = data.health_score || calculateHealthScore(data);
+			document.getElementById("riskPercentage").textContent = healthScore;
+			updateHealthProgressRing(healthScore);
+
+			// Update messages
+			updateMessagesList(data.recent_messages || []);
+			document.getElementById("unreadMessagesCount").textContent =
+				data.unread_messages || 0;
+
+			// Update upcoming appointments
+			updateUpcomingAppointments(data.upcoming_appointments || []);
+		} catch (error) {
+			console.error("Error fetching dashboard data:", error);
+		}
+	}
+
+	function calculateHealthScore(data) {
+		// Simple health score calculation based on available data
+		let score = 90; // Base score
+
+		if (data.latest_risk_assessment) {
+			const riskLevel = data.latest_risk_assessment.risk_level;
+			if (riskLevel === "low") score = Math.min(score, 95);
+			else if (riskLevel === "medium") score = Math.min(score, 75);
+			else if (riskLevel === "high") score = Math.min(score, 50);
+		}
+
+		return score;
+	}
+
+	function updateHealthProgressRing(percentage) {
+		const circle = document.getElementById("healthProgressCircle");
+		const percentageDisplay = document.getElementById("healthPercentage");
+
+		if (circle && percentageDisplay) {
+			const radius = 52;
+			const circumference = 2 * Math.PI * radius;
+			const offset = circumference - (percentage / 100) * circumference;
+
+			circle.style.strokeDasharray = circumference;
+			circle.style.strokeDashoffset = offset;
+
+			percentageDisplay.textContent = `${percentage}%`;
+		}
+	}
+
+	function updateMessagesList(messages) {
+		const messagesList = document.getElementById("messagesList");
+		if (!messages || messages.length === 0) {
+			messagesList.innerHTML =
+				'<div class="empty-state">No recent messages</div>';
+			return;
+		}
+
+		messagesList.innerHTML = messages
+			.slice(0, 4)
+			.map((message) => {
+				const date = new Date(message.timestamp || Date.now());
+				const timeStr = date.toLocaleDateString("en-US", {
+					month: "short",
+					day: "numeric",
+				});
+
+				return `
+				<div class="message-item ${!message.is_read ? "unread" : ""}">
+					<div class="message-avatar" style="background: ${getRandomColor()};">
+						${(message.sender_name || "Dr")[0].toUpperCase()}
+					</div>
+					<div class="message-content">
+						<div class="message-header">
+							<span class="message-sender">${message.sender_name || "Doctor"}</span>
+							<span class="message-time">${timeStr}</span>
+						</div>
+						<div class="message-text">${(message.content || "").substring(0, 50)}...</div>
+					</div>
+					${!message.is_read ? '<div class="unread-indicator"></div>' : ""}
+				</div>
+			`;
+			})
+			.join("");
+	}
+
+	function updateUpcomingAppointments(appointments) {
+		const appointmentsList = document.getElementById("upcomingAppointments");
+		if (!appointments || appointments.length === 0) {
+			appointmentsList.innerHTML = `
+				<div class="empty-state">
+					<div class="empty-icon">📅</div>
+					<div class="empty-text">No upcoming appointments</div>
+					<a href="{{ url_for('appointment_page') }}" class="book-appointment-btn">Book Appointment</a>
+				</div>
+			`;
+			return;
+		}
+
+		appointmentsList.innerHTML = appointments
+			.slice(0, 5)
+			.map((appointment) => {
+				const date = new Date(appointment.scheduled_at);
+				const dateStr = date.toLocaleDateString("en-US", {
+					month: "short",
+					day: "numeric",
+				});
+				const timeStr = date.toLocaleTimeString("en-US", {
+					hour: "2-digit",
+					minute: "2-digit",
+				});
+
+				return `
+				<div class="appointment-item">
+					<div class="appointment-icon">
+						<span class="appointment-date">${date.getDate()}</span>
+						<span class="appointment-month">${date.toLocaleDateString("en-US", {
+							month: "short",
+						})}</span>
+					</div>
+					<div class="appointment-details">
+						<div class="appointment-title">${
+							appointment.reason || "General Consultation"
+						}</div>
+						<div class="appointment-doctor">Dr. ${appointment.doctor_name || "TBA"}</div>
+						<div class="appointment-time">${timeStr}</div>
+					</div>
+					<div class="appointment-status">
+						<span class="status-badge status-${appointment.status}">${
+					appointment.status
+				}</span>
+					</div>
+				</div>
+			`;
+			})
+			.join("");
+	}
+
+	function animateCounter(element, targetValue, duration = 1000) {
+		if (!element) return;
+
+		const startValue = parseInt(element.textContent) || 0;
+		const difference = targetValue - startValue;
+		const startTime = performance.now();
+
+		function updateCounter(currentTime) {
+			const elapsed = currentTime - startTime;
+			const progress = Math.min(elapsed / duration, 1);
+
+			const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+			const currentValue = Math.round(startValue + difference * easeOutQuart);
+
+			element.textContent = currentValue;
+
+			if (progress < 1) {
+				requestAnimationFrame(updateCounter);
+			}
+		}
+
+		requestAnimationFrame(updateCounter);
+	}
+
+	function getRandomColor() {
+		const colors = ["#bd93f9", "#50fa7b", "#8be9fd", "#ffb86c", "#ff79c6"];
+		return colors[Math.floor(Math.random() * colors.length)];
+	}
+
+	function showComingSoon() {
+		alert("This feature is coming soon!");
+	}
+
+	// Refresh data every 30 seconds
+	setInterval(updateDashboardData, 30000);
+
+	// Update greeting every minute
+	setInterval(updateGreeting, 60000);
+</script>
+
+<script>
+	const socket = io();
+
+	socket.on("health_snapshot_update", (data) => {
+		if (data.totalVisits !== undefined) {
+			document.getElementById("totalVisits").textContent = data.totalVisits;
+		}
+		if (data.nextAppointmentValue !== undefined) {
+			document.getElementById("nextAppointmentDays").textContent =
+				data.nextAppointmentValue;
+		}
+		if (data.nextAppointmentUnit !== undefined) {
+			document.getElementById("nextAppointmentUnit").textContent =
+				data.nextAppointmentUnit;
+		}
+	});
+
+	socket.on("health_score_update", (data) => {
+		if (data.health_score !== undefined) {
+			document.getElementById("riskPercentage").textContent = data.health_score;
+			updateHealthProgressRing(data.health_score);
+		}
+	});
+</script>
+
+<style>
+	/* Modern Dashboard Styles */
+	.modern-dashboard {
+		padding: 1.5rem;
+		max-width: 1400px;
+		margin: 0 auto;
+		background: var(--drac-bg);
+		min-height: 100vh;
+	}
+
+	/* Welcome Header */
+	.welcome-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 2rem;
+		padding: 1.5rem 2rem;
+		background: linear-gradient(
+			135deg,
+			rgba(189, 147, 249, 0.1),
+			rgba(139, 233, 253, 0.05)
+		);
+		border-radius: 20px;
+		border: 1px solid rgba(189, 147, 249, 0.2);
+	}
+
+	.welcome-title {
+		font-size: 2.5rem;
+		font-weight: 700;
+		color: #fff;
+		margin: 0 0 0.5rem 0;
+		background: linear-gradient(135deg, #bd93f9, #8be9fd);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+
+	.welcome-subtitle {
+		color: #9ca3af;
+		font-size: 1.1rem;
+		margin: 0;
+	}
+
+	.date-today {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		background: linear-gradient(135deg, #50fa7b, #2ecc71);
+		border-radius: 16px;
+		padding: 1rem;
+		color: #0b1f13;
+		min-width: 80px;
+	}
+
+	.date-day {
+		font-size: 2.5rem;
+		font-weight: 900;
+		line-height: 1;
+	}
+
+	.date-month {
+		font-size: 1rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 1px;
+	}
+
+	/* Health Snapshot Card */
+	.health-snapshot-card {
+		background: linear-gradient(135deg, #a855f7 0%, #ec4899 60%, #f97316 100%);
+		border-radius: 24px;
+		padding: 2rem;
+		margin-bottom: 2rem;
+		position: relative;
+		overflow: hidden;
+		color: white;
+		box-shadow: 0 20px 40px rgba(168, 85, 247, 0.3);
+	}
+
+	/* Smooth, responsive radial light for the snapshot card */
+	.health-snapshot-card::before {
+		content: "";
+		position: absolute;
+		top: -10%;
+		right: -5%;
+		/* percentage sizing so the effect scales with the card */
+		width: 55%;
+		height: 160%;
+		background: radial-gradient(
+			circle at 70% 25%,
+			rgba(255, 255, 255, 0.14) 0%,
+			rgba(255, 255, 255, 0.08) 18%,
+			rgba(255, 255, 255, 0.04) 36%,
+			transparent 60%
+		);
+		/* soften edges so it doesn't look like a hard curved square */
+		border-radius: 30%;
+		/* blurred to create a soft glow that scales nicely */
+		filter: blur(18px);
+		opacity: 0.9;
+		transform: translate(0, 0) scale(1);
+		transition: transform 420ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 420ms ease, filter 420ms ease;
+		will-change: transform, opacity, filter;
+		pointer-events: none;
+	}
+
+	/* Slightly enlarge and brighten the radial on hover for a smooth interactive feel */
+	.health-snapshot-card:hover::before {
+		transform: translate(-2%, -3%) scale(1.06);
+		opacity: 1;
+		filter: blur(16px);
+	}
+
+	/* Tweak sizes on smaller screens so the glow remains proportional */
+	@media (max-width: 768px) {
+		.health-snapshot-card::before {
+			right: -12%;
+			top: -20%;
+			width: 80%;
+			height: 140%;
+			filter: blur(14px);
+		}
+	}
+
+	.snapshot-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 2rem;
+		position: relative;
+		z-index: 2;
+	}
+
+	.snapshot-title h2 {
+		font-size: 1.5rem;
+		font-weight: 700;
+		margin: 0;
+		color: white;
+	}
+
+	.snapshot-metrics {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: 1.5rem;
+		position: relative;
+		z-index: 2;
+	}
+
+	.snapshot-stat {
+		background: rgba(255, 255, 255, 0.15);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		border-radius: 16px;
+		padding: 1.5rem;
+		text-align: center;
+	}
+
+	.stat-value {
+		display: flex;
+		align-items: baseline;
+		justify-content: center;
+		gap: 0.5rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.stat-number {
+		font-size: 2.5rem;
+		font-weight: 900;
+		line-height: 1;
+	}
+
+	.stat-unit {
+		font-size: 1rem;
+		font-weight: 600;
+		opacity: 0.8;
+	}
+
+	.stat-label {
+		font-size: 0.875rem;
+		font-weight: 500;
+		opacity: 0.9;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
+
+	/* Dashboard Grid */
+	.dashboard-grid {
+		display: grid;
+		grid-template-columns: 1.2fr 0.8fr;
+		gap: 2rem;
+	}
+
+	.left-column,
+	.right-column {
+		display: flex;
+		flex-direction: column;
+		gap: 2rem;
+	}
+
+	/* Dashboard Cards */
+	.dashboard-card {
+		background: var(--drac-current);
+		border-radius: 20px;
+		padding: 1.5rem;
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		transition: all 0.3s ease;
+		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+	}
+
+	.dashboard-card:hover {
+		transform: translateY(-5px);
+		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+		border-color: rgba(189, 147, 249, 0.3);
+	}
+
+	.card-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1.5rem;
+	}
+
+	.card-title {
+		font-size: 1.25rem;
+		font-weight: 700;
+		color: #fff;
+		margin: 0;
+	}
+
+	.card-menu-btn {
+		width: 36px;
+		height: 36px;
+		border-radius: 10px;
+		background: rgba(255, 255, 255, 0.05);
+		border: none;
+		color: #9ca3af;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.2s;
+		font-size: 1.5rem;
+	}
+
+	.card-menu-btn:hover {
+		background: rgba(255, 255, 255, 0.1);
+		color: #fff;
+	}
+
+	/* Calendar Styling */
+	.calendar-card {
+		min-height: 450px;
+	}
+
+	.calendar-view-toggle {
+		display: flex;
+		background: rgba(255, 255, 255, 0.05);
+		border-radius: 10px;
+		padding: 0.25rem;
+		border: none;
+	}
+
+	.view-option {
+		padding: 0.5rem 1rem;
+		border-radius: 8px;
+		background: transparent;
+		color: #9ca3af;
+		cursor: pointer;
+		font-size: 0.875rem;
+		font-weight: 500;
+		transition: all 0.2s;
+	}
+
+	.view-option.active {
+		background: linear-gradient(135deg, #bd93f9, #9b59b6);
+		color: white;
+	}
+
+	.calendar-container {
+		margin-top: 1rem;
+	}
+
+	.calendar-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1rem;
+	}
+
+	.calendar-month {
+		font-size: 1.25rem;
+		font-weight: 700;
+		color: #fff;
+		margin: 0;
+	}
+
+	.calendar-nav {
+		width: 40px;
+		height: 40px;
+		border-radius: 12px;
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		color: #fff;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1.25rem;
+		transition: all 0.2s;
+	}
+
+	.calendar-nav:hover {
+		background: rgba(189, 147, 249, 0.2);
+		border-color: rgba(189, 147, 249, 0.4);
+	}
+
+	.calendar-weekdays {
+		display: grid;
+		grid-template-columns: repeat(7, 1fr);
+		gap: 0.5rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.calendar-weekdays span {
+		text-align: center;
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: #6b7280;
+		padding: 0.5rem;
+	}
+
+	.calendar-grid {
+		display: grid;
+		grid-template-columns: repeat(7, 1fr);
+		gap: 30px;
+	}
+
+	.calendar-day {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 12px;
+		background: var(--drac-current);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		color: #e5e7eb;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s;
+		position: relative;
+		min-width: 80px;
+		min-height: 80px;
+	}
+
+	.calendar-day:hover {
+		background: rgba(255, 255, 255, 0.08);
+		transform: scale(1.05);
+	}
+
+	.calendar-day.empty {
+		opacity: 0.3;
+		cursor: default;
+	}
+
+	.calendar-day.today {
+		background: #3498db;
+		color: #ffffff;
+		font-weight: 700;
+		box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+	}
+
+	.calendar-day.has-appointment {
+		background: linear-gradient(135deg, #50fa7b, #2ecc71);
+		color: #0b1f13;
+		font-weight: 700;
+	}
+
+	.calendar-day.has-resolved-appointment {
+		background: var(--drac-current);
+		color: #e5e7eb;
+		font-weight: 600;
+	}
+
+	.appointment-dot {
+		width: 6px;
+		height: 6px;
+		background: #ff5555;
+		border-radius: 50%;
+		cursor: pointer;
+		flex-shrink: 0;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		transform: scale(1);
+		box-shadow: 0 0 0 rgba(255, 85, 85, 0.4);
+	}
+
+	.appointment-dot:hover {
+		transform: scale(1.5);
+		background: #ff6b6b;
+		box-shadow: 0 0 8px rgba(255, 85, 85, 0.6);
+	}
+
+	.appointment-dot:active {
+		transform: scale(1.2);
+		transition: all 0.1s ease-out;
+	}
+
+	.appointment-dots {
+		position: absolute;
+		bottom: 4px;
+		right: 4px;
+		display: flex;
+		flex-direction: row;
+		gap: 2px;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		max-width: calc(100% - 8px);
+		max-height: 12px;
+		overflow: visible;
+		z-index: 10;
+	}
+
+	.appointment-dots:hover {
+		overflow: visible;
+		z-index: 20;
+	}
+
+	/* Appointment Popup */
+	.appointment-popup {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: rgba(0, 0, 0, 0.8);
+		backdrop-filter: blur(10px);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		z-index: 1000;
+		opacity: 0;
+		visibility: hidden;
+		transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.appointment-popup.show {
+		opacity: 1;
+		visibility: visible;
+	}
+
+	.popup-content {
+		background: #1e1e2e;
+		border-radius: 20px;
+		padding: 2rem;
+		max-width: 500px;
+		width: 90%;
+		max-height: 80vh;
+		overflow-y: auto;
+		border: 1px solid rgba(189, 147, 249, 0.3);
+		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+		transform: scale(0.8) translateY(20px);
+		transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.appointment-popup.show .popup-content {
+		transform: scale(1) translateY(0);
+	}
+
+	.popup-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1.5rem;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		padding-bottom: 1rem;
+	}
+
+	.popup-header h3 {
+		color: #fff;
+		margin: 0;
+		font-size: 1.25rem;
+		font-weight: 700;
+	}
+
+	.popup-close {
+		background: none;
+		border: none;
+		color: #9ca3af;
+		font-size: 1.5rem;
+		cursor: pointer;
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.2s;
+	}
+
+	.popup-close:hover {
+		background: rgba(255, 255, 255, 0.1);
+		color: #fff;
+	}
+
+	.popup-appointments {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.popup-appointment {
+		display: flex;
+		align-items: flex-start;
+		gap: 1rem;
+		padding: 1rem;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		border-radius: 12px;
+		opacity: 0;
+		transform: translateY(10px);
+		animation: slideInUp 0.3s ease-out forwards;
+	}
+
+	.popup-appointment:nth-child(1) { animation-delay: 0.1s; }
+	.popup-appointment:nth-child(2) { animation-delay: 0.15s; }
+	.popup-appointment:nth-child(3) { animation-delay: 0.2s; }
+	.popup-appointment:nth-child(4) { animation-delay: 0.25s; }
+	.popup-appointment:nth-child(5) { animation-delay: 0.3s; }
+
+	@keyframes slideInUp {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.appt-time {
+		font-weight: 700;
+		color: #8be9fd;
+		font-size: 1rem;
+		min-width: 60px;
+	}
+
+	.appt-details {
+		flex: 1;
+	}
+
+	.appt-doctor {
+		font-weight: 600;
+		color: #fff;
+		margin-bottom: 0.25rem;
+	}
+
+	.appt-reason {
+		color: #9ca3af;
+		font-size: 0.875rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.appt-status {
+		color: #6b7280;
+		font-size: 0.75rem;
+		text-transform: capitalize;
+	}
+
+	/* Messages Card */
+	.message-indicators {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.unread-count {
+		background: linear-gradient(135deg, #ff5555, #d63031);
+		color: white;
+		padding: 0.25rem 0.75rem;
+		border-radius: 12px;
+		font-size: 0.875rem;
+		font-weight: 700;
+		min-width: 24px;
+		text-align: center;
+	}
+
+	.compose-message-btn {
+		background: linear-gradient(135deg, #bd93f9, #9b59b6);
+		color: white;
+		padding: 0.5rem 1rem;
+		border-radius: 10px;
+		border: none;
+		font-size: 0.875rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.compose-message-btn:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(189, 147, 249, 0.4);
+	}
+
+	.messages-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		max-height: 300px;
+		overflow-y: auto;
+	}
+
+	.message-item {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		border-radius: 12px;
+		transition: all 0.2s;
+		position: relative;
+	}
+
+	.message-item:hover {
+		background: rgba(255, 255, 255, 0.06);
+		border-color: rgba(189, 147, 249, 0.2);
+	}
+
+	.message-item.unread {
+		border-color: rgba(80, 250, 123, 0.3);
+		background: rgba(80, 250, 123, 0.05);
+	}
+
+	.message-avatar {
+		width: 40px;
+		height: 40px;
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: white;
+		font-weight: 700;
+		font-size: 1rem;
+	}
+
+	.message-content {
+		flex: 1;
+	}
+
+	.message-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 0.25rem;
+	}
+
+	.message-sender {
+		font-weight: 600;
+		color: #fff;
+		font-size: 0.875rem;
+	}
+
+	.message-time {
+		font-size: 0.75rem;
+		color: #6b7280;
+	}
+
+	.message-text {
+		color: #9ca3af;
+		font-size: 0.875rem;
+		line-height: 1.4;
+	}
+
+	.unread-indicator {
+		position: absolute;
+		top: 0.75rem;
+		right: 0.75rem;
+		width: 8px;
+		height: 8px;
+		background: #50fa7b;
+		border-radius: 50%;
+	}
+
+	/* Appointments List */
+	.appointments-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.header-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.upload-btn,
+	.view-full-btn {
+		padding: 0.5rem 1rem;
+		border-radius: 8px;
+		border: none;
+		font-size: 0.75rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.upload-btn {
+		background: rgba(255, 184, 108, 0.2);
+		color: #ffb86c;
+		border: 1px solid rgba(255, 184, 108, 0.3);
+	}
+
+	.view-full-btn {
+		background: rgba(139, 233, 253, 0.2);
+		color: #8be9fd;
+		border: 1px solid rgba(139, 233, 253, 0.3);
+	}
+
+	.appointment-item {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		border-radius: 12px;
+		transition: all 0.2s;
+	}
+
+	.appointment-item:hover {
+		background: rgba(255, 255, 255, 0.06);
+		border-color: rgba(189, 147, 249, 0.2);
+	}
+
+	.appointment-icon {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		background: linear-gradient(135deg, #ffb86c, #e67e22);
+		color: #1a1a1a;
+		padding: 0.75rem;
+		border-radius: 12px;
+		min-width: 60px;
+	}
+
+	.appointment-date {
+		font-size: 1.25rem;
+		font-weight: 900;
+		line-height: 1;
+	}
+
+	.appointment-month {
+		font-size: 0.75rem;
+		font-weight: 600;
+		text-transform: uppercase;
+	}
+
+	.appointment-details {
+		flex: 1;
+	}
+
+	.appointment-title {
+		font-weight: 600;
+		color: #fff;
+		margin-bottom: 0.25rem;
+	}
+
+	.appointment-doctor {
+		color: #9ca3af;
+		font-size: 0.875rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.appointment-time {
+		color: #6b7280;
+		font-size: 0.75rem;
+	}
+
+	.status-badge {
+		padding: 0.25rem 0.75rem;
+		border-radius: 12px;
+		font-size: 0.75rem;
+		font-weight: 600;
+		text-transform: capitalize;
+	}
+
+	.status-pending {
+		background: rgba(255, 184, 108, 0.2);
+		color: #ffb86c;
+	}
+
+	.status-confirmed {
+		background: rgba(80, 250, 123, 0.2);
+		color: #50fa7b;
+	}
+
+	.status-completed {
+		background: rgba(139, 233, 253, 0.2);
+		color: #8be9fd;
+	}
+
+	/* Progress Ring */
+	.progress-container {
+		display: flex;
+		align-items: center;
+		gap: 2rem;
+	}
+
+	.progress-ring-container {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.progress-ring {
+		transform: rotate(-90deg);
+	}
+
+	.progress-ring-fill {
+		stroke-dasharray: 326.73;
+		stroke-dashoffset: 326.73;
+		transition: stroke-dashoffset 1s ease-in-out;
+	}
+
+	.progress-percentage {
+		position: absolute;
+		font-size: 1.5rem;
+		font-weight: 900;
+		color: #8be9fd;
+	}
+
+	.progress-details {
+		flex: 1;
+	}
+
+	.progress-item {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.progress-dot {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+	}
+
+	.progress-label {
+		flex: 1;
+		color: #e5e7eb;
+		font-weight: 500;
+	}
+
+	.progress-value {
+		color: #9ca3af;
+		font-weight: 600;
+	}
+
+	/* Quick Actions */
+	.quick-actions-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 1rem;
+	}
+
+	.quick-action-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 1.5rem 1rem;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		border-radius: 16px;
+		text-decoration: none;
+		color: #e5e7eb;
+		transition: all 0.2s;
+		text-align: center;
+	}
+
+	.quick-action-item:hover {
+		background: rgba(255, 255, 255, 0.06);
+		border-color: rgba(189, 147, 249, 0.3);
+		transform: translateY(-2px);
+	}
+
+	.action-icon {
+		width: 48px;
+		height: 48px;
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1.5rem;
+		color: white;
+	}
+
+	.action-label {
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: #e5e7eb;
+	}
+
+	/* Resources Grid */
+	.resources-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 1rem;
+	}
+
+	.resource-item {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		border-radius: 12px;
+		transition: all 0.2s;
+	}
+
+	.resource-item:hover {
+		background: rgba(255, 255, 255, 0.06);
+		border-color: rgba(189, 147, 249, 0.2);
+	}
+
+	.resource-icon {
+		font-size: 1.5rem;
+		opacity: 0.8;
+	}
+
+	.resource-content h4 {
+		color: #fff;
+		font-size: 0.875rem;
+		font-weight: 600;
+		margin: 0 0 0.25rem 0;
+	}
+
+	.resource-content p {
+		color: #9ca3af;
+		font-size: 0.75rem;
+		margin: 0;
+		line-height: 1.4;
+	}
+
+	/* Premium Features Styles */
+	.premium-features-card {
+		border: 2px solid transparent;
+		background: linear-gradient(var(--drac-card), var(--drac-card)) padding-box,
+					linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3)) border-box;
+	}
+
+	.premium-features-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: 1rem;
+		margin-top: 1rem;
+	}
+
+	.premium-feature-item {
+		display: flex;
+		align-items: flex-start;
+		gap: 1rem;
+		padding: 1.25rem;
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		border-radius: 12px;
+		transition: all 0.3s ease;
+	}
+
+	.premium-feature-item:hover {
+		background: rgba(255, 255, 255, 0.05);
+		border-color: rgba(139, 92, 246, 0.3);
+		transform: translateY(-2px);
+	}
+
+	.feature-icon {
+		width: 40px;
+		height: 40px;
+		border-radius: 8px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1.25rem;
+		flex-shrink: 0;
+	}
+
+	.feature-content h4 {
+		color: #fff;
+		font-size: 0.875rem;
+		font-weight: 600;
+		margin: 0 0 0.5rem 0;
+	}
+
+	.feature-content p {
+		color: #9ca3af;
+		font-size: 0.75rem;
+		margin: 0;
+		line-height: 1.4;
+	}
+
+	.premium-title-premium {
+		background: linear-gradient(45deg, #ff6b35, #ff8e53);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+
+	.premium-title-pro {
+		background: linear-gradient(45deg, #8b5cf6, #a78bfa);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+
+	.upgrade-prompt-card {
+		border: 2px dashed rgba(139, 92, 246, 0.3);
+		text-align: center;
+	}
+
+	.upgrade-content {
+		padding: 1rem;
+	}
+
+	.upgrade-btn:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+	}
+
+	/* Empty States */
+	.empty-state {
+		text-align: center;
+		padding: 2rem;
+		color: #6b7280;
+	}
+
+	.empty-icon {
+		font-size: 3rem;
+		margin-bottom: 1rem;
+		opacity: 0.5;
+	}
+
+	.empty-text {
+		font-size: 1rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.book-appointment-btn {
+		display: inline-block;
+		padding: 0.75rem 1.5rem;
+		background: linear-gradient(135deg, #bd93f9, #9b59b6);
+		color: white;
+		text-decoration: none;
+		border-radius: 12px;
+		font-weight: 600;
+		transition: all 0.2s;
+	}
+
+	.book-appointment-btn:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(189, 147, 249, 0.4);
+	}
+
+	.loading-state {
+		text-align: center;
+		padding: 2rem;
+		color: #6b7280;
+		font-style: italic;
+	}
+
+	/* Responsive Design */
+	@media (max-width: 1200px) {
+		.dashboard-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.quick-actions-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	@media (max-width: 768px) {
+		.modern-dashboard {
+			padding: 1rem;
+		}
+
+		.welcome-header {
+			flex-direction: column;
+			text-align: center;
+			gap: 1rem;
+		}
+
+		.welcome-title {
+			font-size: 2rem;
+		}
+
+		.snapshot-metrics {
+			grid-template-columns: repeat(2, 1fr);
+		}
+
+		.quick-actions-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.resources-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.progress-container {
+			flex-direction: column;
+			text-align: center;
+		}
+
+		.message-indicators {
+			flex-direction: column;
+			gap: 0.5rem;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.calendar-grid {
+			gap: 10px;
+		}
+
+		.calendar-day {
+			min-height: 60px;
+			min-width: 60px;
+			font-size: 0.875rem;
+		}
+
+		.stat-number {
+			font-size: 2rem;
+		}
+
+		.snapshot-metrics {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>
+{% endblock %}

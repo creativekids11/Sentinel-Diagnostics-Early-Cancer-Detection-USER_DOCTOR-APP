@@ -1,0 +1,363 @@
+{% extends "layouts/base.html" %}
+{% block title %}Complete Firebase Signup{% endblock %}
+
+{% block head %}
+<style>
+    .signup-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 40px;
+        background: var(--drac-card);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    
+    .signup-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .signup-header h1 {
+        color: var(--drac-purple);
+        margin-bottom: 10px;
+        font-size: 2rem;
+    }
+    
+    .firebase-info {
+        background: var(--drac-bg-alt);
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        border-left: 4px solid var(--drac-green);
+    }
+    
+    .firebase-info h3 {
+        color: var(--drac-green);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 2px solid var(--drac-purple);
+    }
+    
+    .user-details p {
+        margin: 0;
+        color: var(--drac-foreground);
+    }
+    
+    .user-details .email {
+        color: var(--drac-cyan);
+        font-weight: 500;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--drac-foreground);
+        font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid var(--drac-selection);
+        border-radius: 6px;
+        background: var(--drac-card-alt);
+        color: var(--drac-foreground);
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: var(--drac-purple);
+    }
+    
+    .role-selection {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .role-option {
+        padding: 15px;
+        border: 2px solid var(--drac-selection);
+        border-radius: 8px;
+        background: var(--drac-card-alt);
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        transform: scale(1);
+    }
+    
+    .role-option::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        opacity: 0;
+        transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        border-radius: 6px;
+        z-index: -1;
+    }
+    
+    .role-option:hover {
+        border-color: var(--drac-purple);
+        background: var(--drac-bg-alt);
+        transform: translateY(-2px) scale(1.02);
+    }
+    
+    .role-option.selected {
+        border-color: var(--drac-purple);
+        background: var(--drac-purple);
+        color: var(--drac-bg);
+        transform: scale(1.02) rotate(1deg);
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+        box-shadow: 0 0 20px rgba(189, 147, 249, 0.4);
+    }
+    
+    .role-option.selected::before {
+        opacity: 1;
+    }
+    
+    .role-option input[type="radio"] {
+        display: none;
+    }
+    
+    .btn {
+        width: 100%;
+        padding: 15px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: var(--drac-purple);
+        color: var(--drac-bg);
+    }
+    
+    .btn:hover {
+        background: var(--drac-pink);
+        transform: translateY(-2px);
+    }
+    
+    .file-input {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        width: 100%;
+    }
+    
+    .file-input input[type=file] {
+        position: absolute;
+        left: -9999px;
+    }
+    
+    .file-input-label {
+        display: block;
+        padding: 12px;
+        background: var(--drac-card-alt);
+        border: 2px dashed var(--drac-selection);
+        border-radius: 6px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .file-input-label:hover {
+        border-color: var(--drac-purple);
+        background: var(--drac-bg-alt);
+    }
+    
+    .qualifications-group {
+        display: none;
+    }
+    
+    .qualifications-group.show {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="signup-container">
+    <div class="signup-header">
+        <h1>🔥 Complete Your Signup</h1>
+        <p>Your email is verified with Firebase. Complete your profile below.</p>
+    </div>
+    
+    <div class="firebase-info">
+        <h3>✅ Firebase Authentication Successful</h3>
+        <div class="user-info">
+            {% if firebase_user.picture %}
+            <img src="{{ firebase_user.picture }}" alt="Profile" class="user-avatar">
+            {% else %}
+            <div class="user-avatar" style="background: var(--drac-purple); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                {{ firebase_user.name[:1] if firebase_user.name else firebase_user.email[:1] }}
+            </div>
+            {% endif %}
+            <div class="user-details">
+                <p><strong>{{ firebase_user.name or 'Firebase User' }}</strong></p>
+                <p class="email">{{ firebase_user.email }}</p>
+                <p style="color: var(--drac-green); font-size: 0.9rem;">✓ Email Verified</p>
+            </div>
+        </div>
+    </div>
+    
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="fullname">Full Name</label>
+            <input 
+                type="text" 
+                id="fullname" 
+                name="fullname" 
+                value="{{ firebase_user.name or '' }}"
+                required
+            >
+        </div>
+        
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input 
+                type="text" 
+                id="username" 
+                name="username" 
+                placeholder="Choose a unique username"
+                required
+            >
+        </div>
+        
+        <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input 
+                type="tel" 
+                id="phone" 
+                name="phone" 
+                placeholder="+1 (555) 123-4567"
+                required
+            >
+        </div>
+        
+        <div class="form-group">
+            <label>Choose Your Role</label>
+            <div class="role-selection">
+                <label class="role-option" for="patient">
+                    <input type="radio" id="patient" name="role" value="patient" required>
+                    <div>👥 Patient</div>
+                    <small>Access diagnostics and health monitoring</small>
+                </label>
+                <label class="role-option" for="doctor">
+                    <input type="radio" id="doctor" name="role" value="doctor" required>
+                    <div>👨‍⚕️ Doctor</div>
+                    <small>Provide medical consultations and reviews</small>
+                </label>
+            </div>
+        </div>
+        
+        <div class="form-group qualifications-group" id="qualificationsGroup">
+            <label for="qualifications">Medical Qualifications</label>
+            <input 
+                type="text" 
+                id="qualifications" 
+                name="qualifications" 
+                placeholder="e.g., MD, Oncologist, Board Certified"
+            >
+        </div>
+        
+        <div class="form-group">
+            <label>Profile Photo (Optional)</label>
+            <div class="file-input">
+                <input type="file" id="photo" name="photo" accept="image/*">
+                <label for="photo" class="file-input-label">
+                    📷 Choose Profile Photo
+                </label>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn">
+            🚀 Complete Signup
+        </button>
+    </form>
+    
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="{{ url_for('signup_page') }}" style="color: var(--drac-comment); text-decoration: none;">
+            ← Back to Signup Options
+        </a>
+    </div>
+</div>
+
+<script>
+// Handle role selection
+document.querySelectorAll('input[name="role"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        // Update visual selection
+        document.querySelectorAll('.role-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        this.closest('.role-option').classList.add('selected');
+        
+        // Show/hide qualifications field
+        const qualificationsGroup = document.getElementById('qualificationsGroup');
+        const qualificationsInput = document.getElementById('qualifications');
+        
+        if (this.value === 'doctor') {
+            qualificationsGroup.classList.add('show');
+            qualificationsInput.required = true;
+        } else {
+            qualificationsGroup.classList.remove('show');
+            qualificationsInput.required = false;
+        }
+    });
+});
+
+// Handle file input
+document.getElementById('photo').addEventListener('change', function(e) {
+    const label = this.nextElementSibling;
+    if (this.files.length > 0) {
+        label.textContent = `📷 ${this.files[0].name}`;
+        label.style.borderColor = 'var(--drac-green)';
+        label.style.color = 'var(--drac-green)';
+    } else {
+        label.textContent = '📷 Choose Profile Photo';
+        label.style.borderColor = 'var(--drac-selection)';
+        label.style.color = 'var(--drac-foreground)';
+    }
+});
+
+// Auto-generate username from email
+document.getElementById('fullname').addEventListener('input', function() {
+    if (!document.getElementById('username').value) {
+        const username = this.value.toLowerCase()
+            .replace(/[^a-z0-9]/g, '')
+            .substring(0, 15);
+        document.getElementById('username').value = username;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends "layouts/patient.html" %}
+{% block title %}My Cases{% endblock %}
+{% block content %}
+
+<style>
+    .case-card {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 4px solid var(--drac-purple);
+        transition: all 0.3s ease;
+    }
+    
+    .case-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .case-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 15px;
+    }
+    
+    .case-title {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: var(--drac-cyan);
+        margin: 0;
+    }
+    
+    .severity-badge {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    .severity-severe { background: var(--drac-red); color: white; }
+    .severity-moderate { background: var(--drac-orange); color: white; }
+    .severity-minor { background: var(--drac-yellow); color: var(--drac-bg); }
+    .severity-normal { background: var(--drac-green); color: white; }
+    .severity-pending { background: var(--drac-comment); color: white; }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-left: 10px;
+    }
+    
+    .status-open { background: rgba(139, 233, 253, 0.2); color: var(--drac-cyan); }
+    .status-in_progress { background: rgba(241, 250, 140, 0.2); color: var(--drac-yellow); }
+    .status-closed { background: rgba(98, 114, 164, 0.2); color: var(--drac-comment); }
+    
+    .case-meta {
+        display: flex;
+        gap: 20px;
+        font-size: 0.9rem;
+        color: var(--drac-comment);
+        margin-bottom: 10px;
+    }
+    
+    .case-description {
+        color: var(--drac-fg);
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+    
+    .case-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 15px;
+        border-top: 1px solid var(--drac-card-alt);
+    }
+    
+    .btn-view-case {
+        background: linear-gradient(135deg, var(--drac-purple) 0%, #9580ff 100%);
+        color: white;
+        padding: 10px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-view-case:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(189, 147, 249, 0.4);
+    }
+    
+    .btn-new-case {
+        background: linear-gradient(135deg, var(--drac-green) 0%, #5af78e 100%);
+        color: var(--drac-bg);
+        padding: 14px 32px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 1.1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        margin-bottom: 30px;
+    }
+    
+    .btn-new-case:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(80, 250, 123, 0.4);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--drac-comment);
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="data-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h2 style="margin: 0;">📋 My Medical Cases</h2>
+        <a href="{{ url_for('new_patient_case') }}" class="btn-new-case">
+            <span>➕</span> Submit New Case
+        </a>
+    </div>
+    
+    {% if cases %}
+        {% for case in cases %}
+        <div class="case-card">
+            <div class="case-header">
+                <div>
+                    <h3 class="case-title">{{ case.title or 'Untitled Case' }}</h3>
+                    <div class="case-meta">
+                        <span>📅 {{ case.created_at[:10] }}</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <span class="severity-badge severity-{{ case.severity }}">
+                        {{ case.severity }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="case-description">
+                {{ case.description[:200] }}{% if case.description|length > 200 %}...{% endif %}
+            </div>
+            
+            <div class="case-footer">
+                <div style="color: var(--drac-comment); font-size: 0.85rem;">
+                    {% if case.severity != 'pending' %}
+                    ✓ Reviewed
+                    {% else %}
+                    ⏳ Awaiting review
+                    {% endif %}
+                </div>
+                <a href="{{ url_for('view_patient_case', case_id=case.id) }}" class="btn-view-case">
+                    View Details →
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">🏥</div>
+            <h3>No Cases Submitted Yet</h3>
+            <p>Submit your first medical case for doctor review and consultation.</p>
+            <a href="{{ url_for('new_patient_case') }}" class="btn-new-case" style="margin-top: 20px;">
+                <span>➕</span> Submit Your First Case
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

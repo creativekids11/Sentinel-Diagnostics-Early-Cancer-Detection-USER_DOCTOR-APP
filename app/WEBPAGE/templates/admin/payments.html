@@ -1,0 +1,756 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<div class="admin-payments-container">
+    <div class="payments-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fas fa-money-check-alt"></i>
+            </div>
+            <div class="header-text">
+                <h1>Payment Verifications</h1>
+                <p>Review and approve pending UPI payment confirmations</p>
+            </div>
+        </div>
+        <div class="header-stats">
+            <div class="stat-card">
+                <div class="stat-value">{{ pending_payments|length }}</div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ recent_payments|length }}</div>
+                <div class="stat-label">Recent</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Payments Section -->
+    <div class="payments-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-hourglass-half"></i>
+                Pending Payment Verifications
+            </h2>
+            {% if pending_payments|length == 0 %}
+            <span class="badge success">All Caught Up!</span>
+            {% endif %}
+        </div>
+
+        {% if pending_payments|length == 0 %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3>No Pending Payments</h3>
+            <p>All payment verifications have been processed. Great work!</p>
+        </div>
+        {% else %}
+        <div class="payments-grid">
+            {% for payment in pending_payments %}
+            <div class="payment-card pending" id="payment-{{ payment.id }}">
+                <div class="payment-header">
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            {{ payment.fullname[0].upper() }}
+                        </div>
+                        <div class="user-details">
+                            <h4>{{ payment.fullname }}</h4>
+                            <p>{{ payment.email }}</p>
+                            <span class="username">@{{ payment.username }}</span>
+                        </div>
+                    </div>
+                    <div class="payment-amount">
+                        <span class="amount">₹{{ payment.amount }}</span>
+                        <span class="plan-type {{ payment.plan_type }}">{{ payment.plan_type.title() }}</span>
+                    </div>
+                </div>
+
+                <div class="payment-details">
+                    <div class="detail-row">
+                        <span class="label">Payment Method:</span>
+                        <span class="value">{{ payment.payment_method }}</span>
+                    </div>
+                    {% if payment.upi_transaction_id %}
+                    <div class="detail-row">
+                        <span class="label">Transaction ID:</span>
+                        <span class="value transaction-id">{{ payment.upi_transaction_id }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="detail-row">
+                        <span class="label">Submitted:</span>
+                        <span class="value">{{ payment.created_at[:19].replace('T', ' ') }}</span>
+                    </div>
+                    {% if payment.user_message %}
+                    <div class="detail-row">
+                        <span class="label">User Message:</span>
+                        <span class="value user-message">{{ payment.user_message }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="detail-row">
+                        <span class="label">Email Receipt:</span>
+                        <span class="value">
+                            {% if payment.email_receipt %}
+                                <span class="email-receipt-yes">
+                                    <i class="fas fa-envelope"></i> Requested
+                                </span>
+                            {% else %}
+                                <span class="email-receipt-no">
+                                    <i class="fas fa-envelope-slash"></i> Not requested
+                                </span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="payment-actions">
+                    <form method="POST" action="{{ url_for('admin_approve_payment', payment_id=payment.id) }}" class="approve-form">
+                        <div class="admin-notes">
+                            <textarea name="admin_notes" placeholder="Add admin notes (optional)..." rows="2"></textarea>
+                        </div>
+                        <div class="action-buttons">
+                            <button type="submit" class="btn approve-btn">
+                                <i class="fas fa-check"></i>
+                                Approve Payment
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <form method="POST" action="{{ url_for('admin_reject_payment', payment_id=payment.id) }}" class="reject-form">
+                        <div class="admin-notes">
+                            <textarea name="admin_notes" placeholder="Reason for rejection (required)..." rows="2" required></textarea>
+                        </div>
+                        <div class="action-buttons">
+                            <button type="submit" class="btn reject-btn">
+                                <i class="fas fa-times"></i>
+                                Reject Payment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Payments Section -->
+    {% if recent_payments|length > 0 %}
+    <div class="payments-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-history"></i>
+                Recent Activity (Last 30 days)
+            </h2>
+        </div>
+
+        <div class="recent-payments-table">
+            <table class="payments-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Plan</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Processed By</th>
+                        <th>Date</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in recent_payments %}
+                    <tr class="payment-row {{ payment.status }}">
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar small">{{ payment.fullname[0].upper() }}</div>
+                                <div class="user-info">
+                                    <div class="user-name">{{ payment.fullname }}</div>
+                                    <div class="user-email">{{ payment.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="plan-badge {{ payment.plan_type }}">{{ payment.plan_type.title() }}</span>
+                        </td>
+                        <td class="amount-cell">₹{{ payment.amount }}</td>
+                        <td>
+                            <span class="status-badge {{ payment.status }}">
+                                {% if payment.status == 'approved' %}
+                                    <i class="fas fa-check"></i> Approved
+                                {% else %}
+                                    <i class="fas fa-times"></i> Rejected
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>{{ payment.admin_name or 'Unknown' }}</td>
+                        <td>{{ payment.updated_at[:19].replace('T', ' ') if payment.updated_at else 'N/A' }}</td>
+                        <td>
+                            {% if payment.admin_notes %}
+                                <span class="notes-preview" title="{{ payment.admin_notes }}">
+                                    {{ payment.admin_notes[:50] }}{% if payment.admin_notes|length > 50 %}...{% endif %}
+                                </span>
+                            {% else %}
+                                <span class="no-notes">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+/* Admin Payments Styles */
+.admin-payments-container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    background: var(--drac-bg);
+    min-height: 100vh;
+}
+
+/* Header Styles */
+.payments-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    background: var(--drac-card);
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #bd93f9, #8be9fd);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.header-text h1 {
+    color: var(--drac-foreground);
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.header-text p {
+    color: var(--drac-comment);
+    margin: 0.25rem 0 0 0;
+}
+
+.header-stats {
+    display: flex;
+    gap: 1rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--drac-purple);
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: var(--drac-comment);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Section Styles */
+.payments-section {
+    margin-bottom: 3rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+    color: var(--drac-foreground);
+    font-size: 1.3rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+}
+
+.section-header h2 i {
+    color: var(--drac-purple);
+}
+
+.badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge.success {
+    background: rgba(80, 250, 123, 0.2);
+    color: var(--drac-green);
+    border: 1px solid rgba(80, 250, 123, 0.3);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--drac-card);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    color: var(--drac-green);
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: var(--drac-foreground);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+}
+
+.empty-state p {
+    color: var(--drac-comment);
+    margin: 0;
+}
+
+/* Payment Cards */
+.payments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 1.5rem;
+}
+
+.payment-card {
+    background: var(--drac-card);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+}
+
+.payment-card:hover {
+    border-color: rgba(189, 147, 249, 0.3);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.payment-card.pending {
+    border-left: 4px solid var(--drac-orange);
+}
+
+.payment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #bd93f9, #8be9fd);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.user-avatar.small {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+}
+
+.user-details h4 {
+    color: var(--drac-foreground);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.user-details p {
+    color: var(--drac-comment);
+    font-size: 0.85rem;
+    margin: 0.25rem 0;
+}
+
+.username {
+    color: var(--drac-cyan);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.payment-amount {
+    text-align: right;
+}
+
+.amount {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--drac-foreground);
+    margin-bottom: 0.25rem;
+}
+
+.plan-type, .plan-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.plan-type.pro, .plan-badge.pro {
+    background: rgba(255, 184, 108, 0.2);
+    color: var(--drac-orange);
+    border: 1px solid rgba(255, 184, 108, 0.3);
+}
+
+.plan-type.premium, .plan-badge.premium {
+    background: rgba(189, 147, 249, 0.2);
+    color: var(--drac-purple);
+    border: 1px solid rgba(189, 147, 249, 0.3);
+}
+
+.plan-type.balance, .plan-badge.balance {
+    background: rgba(80, 250, 123, 0.2);
+    color: var(--drac-green);
+    border: 1px solid rgba(80, 250, 123, 0.3);
+}
+
+/* Payment Details */
+.payment-details {
+    margin-bottom: 1.5rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-row .label {
+    color: var(--drac-comment);
+    font-size: 0.85rem;
+    font-weight: 500;
+    flex-shrink: 0;
+    width: 120px;
+}
+
+.detail-row .value {
+    color: var(--drac-foreground);
+    font-size: 0.85rem;
+    text-align: right;
+    word-break: break-all;
+}
+
+.transaction-id {
+    font-family: monospace;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.user-message {
+    font-style: italic;
+    background: rgba(139, 233, 253, 0.1);
+    padding: 0.5rem;
+    border-radius: 6px;
+    border-left: 3px solid var(--drac-cyan);
+    margin-top: 0.25rem;
+}
+
+.email-receipt-yes {
+    color: var(--drac-green);
+    font-weight: 500;
+}
+
+.email-receipt-no {
+    color: var(--drac-comment);
+    font-weight: 500;
+}
+
+/* Payment Actions */
+.payment-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.admin-notes textarea {
+    width: 100%;
+    background: var(--drac-current-line);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 0.75rem;
+    color: var(--drac-foreground);
+    font-size: 0.85rem;
+    resize: vertical;
+    margin-bottom: 0.75rem;
+}
+
+.admin-notes textarea:focus {
+    outline: none;
+    border-color: var(--drac-purple);
+}
+
+.btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+}
+
+.approve-btn {
+    background: linear-gradient(135deg, #50fa7b, #2ecc71);
+    color: #1a1a1a;
+}
+
+.approve-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(80, 250, 123, 0.3);
+}
+
+.reject-btn {
+    background: linear-gradient(135deg, #ff6b6b, #ff4757);
+    color: white;
+}
+
+.reject-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+/* Recent Payments Table */
+.recent-payments-table {
+    background: var(--drac-card);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.payments-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.payments-table thead {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.payments-table th {
+    padding: 1rem;
+    text-align: left;
+    color: var(--drac-comment);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.payments-table td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--drac-foreground);
+    font-size: 0.85rem;
+}
+
+.payment-row:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.user-cell .user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--drac-foreground);
+}
+
+.user-email {
+    color: var(--drac-comment);
+    font-size: 0.8rem;
+}
+
+.amount-cell {
+    font-weight: 600;
+    color: var(--drac-foreground);
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.status-badge.approved {
+    background: rgba(80, 250, 123, 0.2);
+    color: var(--drac-green);
+    border: 1px solid rgba(80, 250, 123, 0.3);
+}
+
+.status-badge.rejected {
+    background: rgba(255, 107, 107, 0.2);
+    color: var(--drac-red);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.notes-preview {
+    color: var(--drac-comment);
+    font-style: italic;
+    cursor: help;
+}
+
+.no-notes {
+    color: var(--drac-comment);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .payments-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .payments-header {
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-payments-container {
+        padding: 1rem;
+    }
+    
+    .payment-actions {
+        grid-template-columns: 1fr;
+    }
+    
+    .payments-table {
+        font-size: 0.8rem;
+    }
+    
+    .payments-table th,
+    .payments-table td {
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .recent-payments-table {
+        overflow-x: auto;
+    }
+    
+    .payments-table {
+        min-width: 600px;
+    }
+}
+</style>
+
+<script>
+// Auto-refresh page every 30 seconds to check for new payments
+setTimeout(() => {
+    window.location.reload();
+}, 30000);
+
+// Confirmation for payment actions
+document.querySelectorAll('.approve-form').forEach(form => {
+    form.addEventListener('submit', (e) => {
+        if (!confirm('Are you sure you want to approve this payment? This will activate the user\'s subscription.')) {
+            e.preventDefault();
+        }
+    });
+});
+
+document.querySelectorAll('.reject-form').forEach(form => {
+    form.addEventListener('submit', (e) => {
+        const textarea = form.querySelector('textarea[name="admin_notes"]');
+        if (!textarea.value.trim()) {
+            alert('Please provide a reason for rejection.');
+            e.preventDefault();
+            textarea.focus();
+            return;
+        }
+        
+        if (!confirm('Are you sure you want to reject this payment? The user will be notified.')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

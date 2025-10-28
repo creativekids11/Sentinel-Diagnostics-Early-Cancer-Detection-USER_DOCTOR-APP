@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Patient Report</title>
+    <link rel="stylesheet" href="report_style.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #282a36;
+            color: #f8f8f2;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            background: #44475a;
+            margin: 40px auto;
+            padding: 32px;
+            border-radius: 12px;
+            max-width: 800px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        .logo {
+            height: 60px;
+        }
+        .title {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #bd93f9;
+        }
+        .section {
+            margin-bottom: 24px;
+        }
+        .section-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #50fa7b;
+            margin-bottom: 8px;
+        }
+        .field {
+            margin-bottom: 8px;
+        }
+        .label {
+            font-weight: bold;
+            color: #ffb86c;
+        }
+        .value {
+            margin-left: 8px;
+            color: #f8f8f2;
+        }
+        .signature {
+            margin-top: 40px;
+            text-align: right;
+        }
+        .signature-label {
+            color: #ff79c6;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{ logo_path }}" alt="Logo" class="logo">
+            <div class="title">Patient Report</div>
+        </div>
+        <div class="section">
+            <div class="field"><span class="label">Generated on:</span> <span class="value">{{ generated_on }}</span></div>
+            <div class="field"><span class="label">Case ID:</span> <span class="value">{{ case_id }}</span></div>
+            <div class="field"><span class="label">Patient Name:</span> <span class="value">{{ patient_name }}</span></div>
+        </div>
+        <div class="section">
+            <div class="section-title">Patient Description</div>
+            <div class="value">{{ patient_description }}</div>
+        </div>
+        <div class="section">
+            <div class="section-title">Symptoms & Findings</div>
+            <div class="value">{{ symptoms_findings }}</div>
+        </div>
+        <div class="section">
+            <div class="section-title">Suggested Solution & Treatment Plan</div>
+            <div class="value">{{ treatment_plan }}</div>
+        </div>
+        <div class="section">
+            <div class="section-title">Additional Notes</div>
+            <div class="value">{{ additional_notes }}</div>
+        </div>
+        <div class="signature">
+            <span class="signature-label">Doctor's Signature:</span>
+            <span class="value">{{ doctor_signature }}</span>
+        </div>
+    </div>
+</body>
+</html>

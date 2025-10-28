@@ -1,0 +1,239 @@
+{% extends "layouts/base.html" %}
+{% block title %}Complete Doctor Verification{% endblock %}
+{% block head %}
+<style>
+    body {
+        justify-content: center;
+        align-items: center;
+        padding: 40px 20px;
+    }
+    .container {
+        width: 100%;
+        max-width: 600px;
+        background-color: #1e1e2f;
+        border-radius: 20px;
+        padding: 60px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
+    }
+    .header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .header h1 {
+        color: #dcdcdc;
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+    .header p {
+        color: #aaa;
+        font-size: 16px;
+    }
+    .user-info {
+        background: #2a2b3d;
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    .user-info img {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 15px;
+    }
+    .user-info h3 {
+        color: #dcdcdc;
+        margin-bottom: 5px;
+    }
+    .user-info p {
+        color: #aaa;
+        font-size: 14px;
+    }
+    .input-group {
+        display: flex;
+        background: #3a3b50;
+        border-radius: 25px;
+        padding: 14px 20px;
+        color: #ccc;
+        margin-bottom: 20px;
+    }
+    .input-group input,
+    .input-group textarea {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: white;
+        font-size: 14px;
+        width: 100%;
+        resize: none;
+    }
+    .file-upload {
+        border: 2px dashed #444;
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+        margin-bottom: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .file-upload:hover {
+        border-color: #9b42f4;
+        background: rgba(155, 66, 244, 0.1);
+    }
+    .file-upload.has-file {
+        border-color: #2ed573;
+        background: rgba(46, 213, 115, 0.1);
+    }
+    .file-upload input {
+        display: none;
+    }
+    .file-upload-icon {
+        font-size: 48px;
+        color: #444;
+        margin-bottom: 10px;
+    }
+    .file-upload.has-file .file-upload-icon {
+        color: #2ed573;
+    }
+    .btn {
+        background: linear-gradient(to right, #ff416c, #9b42f4);
+        color: white;
+        border: none;
+        padding: 16px 40px;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 15px;
+        cursor: pointer;
+        transition: opacity 0.3s;
+        width: 100%;
+        margin-top: 20px;
+    }
+    .btn:hover {
+        opacity: 0.9;
+    }
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .note {
+        background: rgba(155, 66, 244, 0.1);
+        border: 1px solid rgba(155, 66, 244, 0.3);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        color: #dcdcdc;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="header">
+        <img src="{{ url_for('static', filename='assets/logo.png') }}" alt="Logo" style="height: 60px; width: auto; margin-bottom: 20px;">
+        <h1>Complete Your Verification</h1>
+        <p>Please provide additional information to verify your doctor account</p>
+    </div>
+
+    <div class="user-info">
+        {% if user.photo_filename %}
+        <img src="{{ url_for('static', filename='uploads/photos/' + user.photo_filename) }}" alt="Profile Photo">
+        {% else %}
+        <div style="width: 80px; height: 80px; border-radius: 50%; background: #444; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-size: 24px; color: #aaa;">👤</div>
+        {% endif %}
+        <h3>{{ user.fullname }}</h3>
+        <p>{{ user.email }}</p>
+    </div>
+
+    <div class="note">
+        <strong>📋 Required Information:</strong><br>
+        As a doctor, you need to provide your qualifications and upload required documents for account verification. Your account will be reviewed by our admin team before approval.
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <ul class="flash-messages">
+            {% for category, msg in messages %}
+            <li class="flash-{{category}}">{{ msg }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" enctype="multipart/form-data">
+        <div class="input-group">
+            <input type="text" name="qualifications" placeholder="Medical Qualifications (e.g., MD, MBBS, Oncologist)" required>
+        </div>
+
+        <div class="input-group">
+            <input type="tel" name="phone" placeholder="Phone Number" required>
+        </div>
+
+        <label for="qualification_pdf" class="file-upload" id="qualificationUpload">
+            <input type="file" id="qualification_pdf" name="qualification_pdf" accept=".pdf" required>
+            <div class="file-upload-icon">📄</div>
+            <div class="file-upload-text">
+                <strong>Upload Qualification Certificate (PDF)</strong><br>
+                <span style="color: #aaa; font-size: 12px;">Required - Click to select file</span>
+            </div>
+        </label>
+
+        <label for="pancard_file" class="file-upload" id="pancardUpload">
+            <input type="file" id="pancard_file" name="pancard_file" accept=".pdf,.jpg,.jpeg,.png">
+            <div class="file-upload-icon">🆔</div>
+            <div class="file-upload-text">
+                <strong>Upload PAN Card (Optional)</strong><br>
+                <span style="color: #aaa; font-size: 12px;">PDF or Image format</span>
+            </div>
+        </label>
+
+        <button type="submit" class="btn">Submit for Verification</button>
+    </form>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{{ url_for('login_page') }}" style="color: #9b42f4; text-decoration: none;">← Back to Login</a>
+    </div>
+</div>
+
+<script>
+    // File upload handlers
+    document.getElementById('qualification_pdf').addEventListener('change', function(e) {
+        const upload = document.getElementById('qualificationUpload');
+        const file = e.target.files[0];
+        
+        if (file) {
+            upload.classList.add('has-file');
+            upload.querySelector('.file-upload-text').innerHTML = `
+                <strong>${file.name}</strong><br>
+                <span style="color: #2ed573; font-size: 12px;">✓ File selected</span>
+            `;
+        } else {
+            upload.classList.remove('has-file');
+            upload.querySelector('.file-upload-text').innerHTML = `
+                <strong>Upload Qualification Certificate (PDF)</strong><br>
+                <span style="color: #aaa; font-size: 12px;">Required - Click to select file</span>
+            `;
+        }
+    });
+
+    document.getElementById('pancard_file').addEventListener('change', function(e) {
+        const upload = document.getElementById('pancardUpload');
+        const file = e.target.files[0];
+        
+        if (file) {
+            upload.classList.add('has-file');
+            upload.querySelector('.file-upload-text').innerHTML = `
+                <strong>${file.name}</strong><br>
+                <span style="color: #2ed573; font-size: 12px;">✓ File selected</span>
+            `;
+        } else {
+            upload.classList.remove('has-file');
+            upload.querySelector('.file-upload-text').innerHTML = `
+                <strong>Upload PAN Card (Optional)</strong><br>
+                <span style="color: #aaa; font-size: 12px;">PDF or Image format</span>
+            `;
+        }
+    });
+</script>
+{% endblock %}

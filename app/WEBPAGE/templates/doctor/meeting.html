@@ -1,0 +1,53 @@
+{% extends "layouts/doctor.html" %}
+{% block title %}Meeting - {{ appointment.patient_name }}{% endblock %}
+{% block content %}
+<div class="data-card">
+    <h2>Meeting with {{ appointment.patient_name }}</h2>
+    <p style="color: var(--drac-comment); margin-top: -15px; margin-bottom: 20px;">
+        Scheduled: {{ appointment.scheduled_at }} | Reason: {{ appointment.reason or 'General consultation' }}
+    </p>
+
+    <div style="text-align: center; margin: 40px 0;">
+        <div style="background: var(--drac-card-alt); padding: 30px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="color: var(--drac-green); margin-bottom: 15px;">Meeting Active</h3>
+            <p style="color: var(--drac-comment); margin-bottom: 20px;">
+                Your meeting link has been generated and shared with the patient.
+            </p>
+
+            <div style="background: var(--drac-bg-darker); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <strong style="color: var(--drac-cyan);">Meeting URL:</strong><br>
+                <a href="{{ meeting_url }}" target="_blank" style="color: var(--drac-pink); word-break: break-all;">
+                    {{ meeting_url }}
+                </a>
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <a href="{{ meeting_url }}" target="_blank" class="action-btn" style="background: linear-gradient(135deg, var(--drac-pink), var(--drac-purple));">
+                    Open Meeting
+                </a>
+                <a href="{{ url_for('doctor_appointments') }}" class="action-btn" style="background-color: var(--drac-comment);">
+                    Back to Appointments
+                </a>
+            </div>
+        </div>
+
+        <div style="background: var(--drac-card-alt); padding: 20px; border-radius: 12px;">
+            <h4 style="color: var(--drac-orange); margin-bottom: 10px;">Instructions</h4>
+            <ul style="text-align: left; color: var(--drac-comment); line-height: 1.6;">
+                <li>Click "Open Meeting" to join the video call</li>
+                <li>The patient has been notified and can join using the same link</li>
+                <li>Make sure your microphone and camera are working</li>
+                <li>You can share your screen if needed for presentations</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh to check meeting status
+setInterval(function() {
+    // Could add logic to check if meeting is still active
+    // For now, just keep the page updated
+}, 30000); // Check every 30 seconds
+</script>
+{% endblock %}

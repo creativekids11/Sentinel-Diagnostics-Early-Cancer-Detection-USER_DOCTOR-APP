@@ -1,0 +1,371 @@
+{% extends "layouts/doctor.html" %}
+{% block title %}Manage Cases{% endblock %}
+{% block content %}
+
+<style>
+    .case-card {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 4px solid var(--drac-purple);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        overflow: hidden;
+    }
+    
+    .case-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .case-details {
+        max-height: 0;
+        overflow: hidden;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid var(--drac-card-alt);
+        transition: max-height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), padding-top 0.4s ease, margin-top 0.4s ease;
+    }
+    
+    .case-card.expanded .case-details {
+        max-height: 500px;
+        padding-top: 15px;
+        margin-top: 15px;
+    }
+    
+    .case-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 15px;
+    }
+    
+    .case-title {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: var(--drac-cyan);
+        margin: 0;
+    }
+    
+    .severity-badge {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    .severity-high { background: var(--drac-red); color: white; }
+    .severity-medium { background: var(--drac-orange); color: white; }
+    .severity-low { background: var(--drac-yellow); color: var(--drac-bg); }
+    .severity-pending { background: var(--drac-comment); color: white; }
+    .severity-resolved { background: var(--drac-green); color: white; }
+    .severity-surgery { background: var(--drac-pink); color: white; }
+    
+    .case-meta {
+        display: flex;
+        gap: 20px;
+        font-size: 0.9rem;
+        color: var(--drac-comment);
+        margin-bottom: 10px;
+    }
+    
+    .case-description {
+        color: var(--drac-fg);
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+    
+    .case-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 15px;
+        border-top: 1px solid var(--drac-card-alt);
+    }
+    
+    .btn-update-case {
+        background: linear-gradient(135deg, var(--drac-purple) 0%, #9580ff 100%);
+        color: white;
+        padding: 10px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+    }
+    
+    .btn-resolve-case {
+        background: linear-gradient(135deg, var(--drac-red) 0%, #ff6b6b 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        font-size: 0.9rem;
+    }
+    
+    .btn-resolve-case:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+    }
+    
+    .btn-generate-report {
+        background: linear-gradient(135deg, var(--drac-cyan) 0%, #8be9fd 100%);
+        color: var(--drac-bg);
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        font-size: 0.9rem;
+    }
+    
+    .btn-generate-report:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(139, 233, 253, 0.4);
+    }
+    
+    .btn-approve-case {
+        background: linear-gradient(135deg, var(--drac-green) 0%, #2ecc71 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        font-size: 0.9rem;
+    }
+    
+    .btn-approve-case:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(80, 250, 123, 0.4);
+    }
+    
+    .btn-message-patient {
+        background: linear-gradient(135deg, var(--drac-purple) 0%, #9580ff 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        font-size: 0.9rem;
+        display: inline-block;
+    }
+    
+    .btn-message-patient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(189, 147, 249, 0.4);
+    }
+    
+    .update-form {
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .update-form select, .update-form input {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid var(--drac-card-alt);
+        background: var(--drac-bg-header);
+        color: var(--drac-fg);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--drac-comment);
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="data-card">
+    <h2 style="margin-bottom: 30px;">📋 Manage Patient Cases</h2>
+    
+    {% if cases %}
+        {% for case in cases %}
+        <div class="case-card" onclick="toggleCaseDetails(this)">
+            <div class="case-header">
+                <div>
+                    <h3 class="case-title">{{ case.title or 'Untitled Case' }}</h3>
+                    <div class="case-meta">
+                        <span>👤 {{ case.patient_name }}</span>
+                        <span>📅 {{ case.created_at[:10] }}</span>
+                        <span>📧 {{ case.patient_email }}</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="severity-badge severity-{{ case.severity }}">
+                        {{ case.severity }}
+                    </span>
+                    <span class="severity-badge severity-{{ case.status }}">
+                        {{ case.status }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="case-description">
+                {{ case.description[:300] }}{% if case.description|length > 300 %}...{% endif %}
+            </div>
+            
+            <div class="case-details">
+                <div style="margin-bottom: 15px;">
+                    <strong>Full Description:</strong><br>
+                    {{ case.description }}
+                </div>
+                {% if case.case_type %}
+                <div style="margin-bottom: 10px;">
+                    <strong>Case Type:</strong> {{ case.case_type }}
+                </div>
+                {% endif %}
+                {% if case.symptoms %}
+                <div style="margin-bottom: 10px;">
+                    <strong>Symptoms:</strong> {{ case.symptoms }}
+                </div>
+                {% endif %}
+                {% if case.duration %}
+                <div style="margin-bottom: 10px;">
+                    <strong>Duration:</strong> {{ case.duration }}
+                </div>
+                {% endif %}
+                {% if case.notes %}
+                <div style="margin-bottom: 10px;">
+                    <strong>Notes:</strong> {{ case.notes }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="case-footer">
+                <div style="color: var(--drac-comment); font-size: 0.85rem;">
+                    Last updated: {{ case.updated_at[:16] if case.updated_at else case.created_at[:16] }}
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    {# Show Approve button first when case is not approved. #}
+                    {% if case.status != 'approved' %}
+                        <button class="btn-approve-case" data-case-id="{{ case.id }}" onclick="approveCase(this.getAttribute('data-case-id'), event)">
+                            ✓ Approve Case
+                        </button>
+                    {% else %}
+                        {# After approval, show full set of actions. stopPropagation prevents card toggle. #}
+                        <a href="{{ url_for('doctor_messages') }}?other_id={{ case.user_id }}" class="btn-message-patient" onclick="event.stopPropagation();">
+                            💬 Message Patient
+                        </a>
+                        <a href="{{ url_for('doctor_reports') }}?case_id={{ case.id }}" class="btn-generate-report" onclick="event.stopPropagation();">Generate Report</a>
+                        <form class="update-form" method="POST" action="{{ url_for('update_case', case_id=case.id) }}" onclick="event.stopPropagation()">
+                            <select name="severity" required>
+                                <option value="pending" {% if case.severity == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="low" {% if case.severity == 'low' %}selected{% endif %}>Low</option>
+                                <option value="medium" {% if case.severity == 'medium' %}selected{% endif %}>Medium</option>
+                                <option value="high" {% if case.severity == 'high' %}selected{% endif %}>High</option>
+                            </select>
+                            <select name="status" required>
+                                <option value="pending" {% if case.status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="approved" {% if case.status == 'approved' %}selected{% endif %}>Approved</option>
+                                <option value="in-progress" {% if case.status == 'in-progress' %}selected{% endif %}>In Progress</option>
+                                <option value="resolved" {% if case.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                                <option value="surgery" {% if case.status == 'surgery' %}selected{% endif %}>Surgery</option>
+                            </select>
+                            <input type="hidden" name="surgery_meter" value="0">
+                            <button type="submit" class="btn-update-case">Update</button>
+                        </form>
+                        <button class="btn-resolve-case" data-case-id="{{ case.id }}" onclick="resolveCase(this.getAttribute('data-case-id'), event)">Resolve</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <h3>No Cases to Review</h3>
+            <p>All patient cases have been reviewed.</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleCaseDetails(card) {
+    card.classList.toggle('expanded');
+    
+    // Force reflow to ensure smooth animation
+    card.offsetHeight;
+}
+
+async function approveCase(caseId, event) {
+    event.stopPropagation(); // Prevent card expansion
+    
+    if (!confirm('Approve this case? You can set severity and status after approval.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/cases/${caseId}/approve`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                severity: 'medium',
+                status: 'approved',
+                doctor_notes: 'Case approved for treatment'
+            })
+        });
+        
+        if (response.ok) {
+            // Case approved successfully
+            location.reload(); // Refresh the page to show updated cases
+        } else {
+            alert('Failed to approve case');
+        }
+    } catch (error) {
+        console.error('Error approving case:', error);
+        alert('Error approving case');
+    }
+}
+
+async function resolveCase(caseId, event) {
+    event.stopPropagation(); // Prevent card expansion
+    
+    if (!confirm('Are you sure you want to resolve this case? This will permanently remove it from the system.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/doctor/cases/${caseId}/resolve`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        });
+        
+        if (response.ok) {
+            // Case resolved successfully
+            location.reload(); // Refresh the page to show updated cases
+        } else {
+            alert('Failed to resolve case');
+        }
+    } catch (error) {
+        console.error('Error resolving case:', error);
+        alert('Error resolving case');
+    }
+}
+</script>
+
+{% endblock %}

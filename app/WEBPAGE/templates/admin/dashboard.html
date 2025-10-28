@@ -1,0 +1,372 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<div class="dashboard-container">
+    <!-- Welcome Section -->
+    <div class="admin-card">
+        <h2>Dashboard Overview</h2>
+        <p>Welcome to the admin portal. Monitor system statistics and manage doctor verifications.</p>
+    </div>
+
+    <!-- Metrics Row -->
+    <div class="metrics-row">
+        <div class="metric-card metric-gradient-1">
+            <div class="metric-icon">👥</div>
+            <div class="metric-content">
+                <div class="metric-label">Total Users</div>
+                <div class="metric-value">{{ total_users }}</div>
+            </div>
+        </div>
+        <div class="metric-card metric-gradient-2">
+            <div class="metric-icon">👨‍⚕️</div>
+            <div class="metric-content">
+                <div class="metric-label">Total Doctors</div>
+                <div class="metric-value">{{ total_doctors }}</div>
+            </div>
+        </div>
+        <div class="metric-card metric-gradient-3">
+            <div class="metric-icon">⏳</div>
+            <div class="metric-content">
+                <div class="metric-label">Pending Doctors</div>
+                <div class="metric-value">{{ pending_doctors }}</div>
+            </div>
+        </div>
+        <div class="metric-card metric-gradient-4">
+            <div class="metric-icon">🏥</div>
+            <div class="metric-content">
+                <div class="metric-label">Total Patients</div>
+                <div class="metric-value">{{ total_patients }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Widget -->
+    <div class="admin-card">
+        <h3>Quick Actions</h3>
+        <div class="quick-actions-grid">
+            <!-- Doctor Management -->
+            <a href="{{ url_for('admin_doctors') }}" class="quick-action-item">
+                <div class="action-icon">👨‍⚕️</div>
+                <div class="action-content">
+                    <div class="action-title">Doctor Verifications</div>
+                    <div class="action-description">Review and approve doctor applications</div>
+                </div>
+                <div class="action-btn-primary">Review</div>
+            </a>
+
+            <a href="{{ url_for('admin_users') }}" class="quick-action-item">
+                <div class="action-icon">👥</div>
+                <div class="action-content">
+                    <div class="action-title">All Users</div>
+                    <div class="action-description">View and manage all system users</div>
+                </div>
+                <div class="action-btn-primary">Manage</div>
+            </a>
+
+            <!-- Data Management -->
+            <div onclick="showExportModal()" class="quick-action-item">
+                <div class="action-icon">💾</div>
+                <div class="action-content">
+                    <div class="action-title">Data Export</div>
+                    <div class="action-description">Export user data and system reports</div>
+                </div>
+                <div class="action-btn-primary">Export</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Placeholder -->
+    <div class="admin-card">
+        <h3>Recent Activity</h3>
+        <p style="color: #9ca3af; margin: 0;">Activity monitoring and system logs will be displayed here.</p>
+    </div>
+</div>
+
+<style>
+    /* Counter animation utility */
+    .metric-value {
+        animation: countUp 2s ease-out;
+    }
+
+    @keyframes countUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Stagger animations */
+    .metric-card:nth-child(1) .metric-value { animation-delay: 0.1s; }
+    .metric-card:nth-child(2) .metric-value { animation-delay: 0.2s; }
+    .metric-card:nth-child(3) .metric-value { animation-delay: 0.3s; }
+    .metric-card:nth-child(4) .metric-value { animation-delay: 0.4s; }
+
+    /* Quick Actions Widget */
+    .quick-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+    }
+
+    .quick-action-item {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        transition: all 0.3s ease;
+        position: relative;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .quick-action-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        border-color: rgba(102, 126, 234, 0.3);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.05) 100%);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .action-icon {
+        font-size: 2.5rem;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border-radius: 12px;
+        flex-shrink: 0;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .action-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .action-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--drac-foreground);
+        margin-bottom: 4px;
+    }
+
+    .action-description {
+        font-size: 0.85rem;
+        color: var(--drac-comment);
+        line-height: 1.4;
+        margin: 0;
+    }
+
+    .action-btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: var(--drac-foreground);
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 80px;
+    }
+
+    .action-btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+
+    /* Responsive adjustments for quick actions */
+    @media (max-width: 768px) {
+        .quick-actions-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .quick-action-item {
+            padding: 16px;
+        }
+
+        .action-icon {
+            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+        }
+
+        .action-title {
+            font-size: 1rem;
+        }
+
+        .action-description {
+            font-size: 0.8rem;
+        }
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .modal-content {
+        background: linear-gradient(135deg, #2a2c3a 0%, #1f2029 100%);
+        border-radius: 16px;
+        padding: 0;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+        padding: 24px 24px 16px 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--drac-foreground);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .modal-body {
+        padding: 20px 24px;
+    }
+
+    .modal-body p {
+        margin: 0 0 8px 0;
+        color: var(--drac-comment);
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    .modal-note {
+        color: var(--drac-comment) !important;
+        font-size: 0.9rem !important;
+        font-style: italic;
+    }
+
+    .modal-footer {
+        padding: 16px 24px 24px 24px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    .btn-modal-cancel {
+        background: linear-gradient(135deg, var(--metric-gradient-2) 0%, var(--metric-gradient-3) 100%);
+        color: var(--drac-foreground);
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+    }
+
+    .btn-modal-cancel:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.5);
+    }
+
+    .btn-modal-confirm {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: var(--drac-foreground);
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        display: inline-block;
+        text-align: center;
+    }
+
+    .btn-modal-confirm:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        text-decoration: none;
+        color: #ffffff;
+    }
+</style>
+
+<!-- Export Confirmation Modal -->
+<div id="exportModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Confirm Data Export</h3>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to download this table file?</p>
+            <p class="modal-note">This will export all user data as a CSV file.</p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="hideExportModal()" class="btn-modal-cancel">No</button>
+            <a href="{{ url_for('export_users_csv') }}" onclick="hideExportModal()" class="btn-modal-confirm">Yes</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function showExportModal() {
+    document.getElementById('exportModal').style.display = 'flex';
+}
+
+function hideExportModal() {
+    document.getElementById('exportModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('exportModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                hideExportModal();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

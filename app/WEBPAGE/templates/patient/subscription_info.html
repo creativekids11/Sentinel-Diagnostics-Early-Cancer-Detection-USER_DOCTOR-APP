@@ -1,0 +1,492 @@
+{% extends "layouts/patient.html" %}
+
+{% block content %}
+<div class="subscription-info-container">
+    <div class="subscription-header">
+        <div class="header-content">
+            <div class="plan-badge-large {{ subscription.current_plan }}">
+                <i class="fas fa-crown"></i>
+                {{ subscription.current_plan.title() }} Plan
+            </div>
+            <div class="plan-details">
+                <h2>Your Subscription Details</h2>
+                <p>Current status: <span class="status-{{ subscription.status }}">{{ subscription.status.title() }}</span></p>
+                {% if subscription.expires_at %}
+                    <p>Valid until: {{ subscription.expires_at[:10] }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="features-grid">
+        <!-- Case Creation Limits -->
+        <div class="feature-card">
+            <div class="feature-header">
+                <i class="fas fa-file-medical"></i>
+                <h3>Case Creation</h3>
+            </div>
+            <div class="feature-content">
+                {% if subscription.case_limit %}
+                    <div class="usage-bar">
+                        <div class="usage-progress" style="width: {{ (subscription.cases_used / subscription.case_limit) * 100 }}%"></div>
+                    </div>
+                    <p class="usage-text">{{ subscription.cases_used }} / {{ subscription.case_limit }} cases used today</p>
+                    {% if not subscription.can_create_case %}
+                        <p class="limit-reached">Daily limit reached!</p>
+                    {% endif %}
+                {% else %}
+                    <p class="unlimited">✨ Unlimited cases per day</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Report Delivery -->
+        <div class="feature-card">
+            <div class="feature-header">
+                <i class="fas fa-file-alt"></i>
+                <h3>Report Delivery</h3>
+            </div>
+            <div class="feature-content">
+                {% if subscription.report_delay_minutes == 0 %}
+                    <p class="instant">⚡ Instant delivery</p>
+                {% else %}
+                    <p class="delay">⏱️ {{ subscription.report_delay_minutes }} minute delay</p>
+                {% endif %}
+                {% if subscription.pending_reports > 0 %}
+                    <p class="pending">{{ subscription.pending_reports }} reports pending delivery</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Nutrition Planner -->
+        <div class="feature-card">
+            <div class="feature-header">
+                <i class="fas fa-apple-alt"></i>
+                <h3>Nutrition Planner</h3>
+            </div>
+            <div class="feature-content">
+                {% if subscription.nutrition_access %}
+                    <p class="available">✅ Full access</p>
+                    <a href="{{ url_for('healing_nutrition') }}" class="feature-link">Open Nutrition Planner</a>
+                {% else %}
+                    <p class="restricted">❌ Requires Pro or Premium</p>
+                    <a href="{{ url_for('manage_plans') }}" class="upgrade-link">Upgrade Now</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Private Meetings -->
+        <div class="feature-card">
+            <div class="feature-header">
+                <i class="fas fa-video"></i>
+                <h3>Private Meetings</h3>
+            </div>
+            <div class="feature-content">
+                {% if subscription.meeting_access %}
+                    <p class="available">✅ Full access</p>
+                {% else %}
+                    <p class="restricted">❌ Requires Premium</p>
+                    <a href="{{ url_for('manage_plans') }}" class="upgrade-link">Upgrade to Premium</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Plan Comparison -->
+    <div class="plan-comparison">
+        <h3>Plan Comparison</h3>
+        <div class="comparison-table">
+            <div class="comparison-header">
+                <div class="feature-name">Feature</div>
+                <div class="plan-column free">Free</div>
+                <div class="plan-column pro">Pro</div>
+                <div class="plan-column premium">Premium</div>
+            </div>
+            
+            <div class="comparison-row">
+                <div class="feature-name">Daily Cases</div>
+                <div class="plan-column free">3</div>
+                <div class="plan-column pro">10</div>
+                <div class="plan-column premium">Unlimited</div>
+            </div>
+            
+            <div class="comparison-row">
+                <div class="feature-name">Report Delivery</div>
+                <div class="plan-column free">30 minutes</div>
+                <div class="plan-column pro">10 minutes</div>
+                <div class="plan-column premium">Instant</div>
+            </div>
+            
+            <div class="comparison-row">
+                <div class="feature-name">Nutrition Planner</div>
+                <div class="plan-column free">❌</div>
+                <div class="plan-column pro">✅</div>
+                <div class="plan-column premium">✅</div>
+            </div>
+            
+            <div class="comparison-row">
+                <div class="feature-name">Private Meetings</div>
+                <div class="plan-column free">❌</div>
+                <div class="plan-column pro">❌</div>
+                <div class="plan-column premium">✅</div>
+            </div>
+        </div>
+    </div>
+
+    {% if subscription.current_plan == 'free' %}
+    <div class="upgrade-section">
+        <h3>Upgrade Your Plan</h3>
+        <p>Get more features and faster service with Pro or Premium plans.</p>
+        <div class="upgrade-buttons">
+            <a href="{{ url_for('manage_plans') }}" class="btn btn-pro">Upgrade to Pro</a>
+            <a href="{{ url_for('manage_plans') }}" class="btn btn-premium">Upgrade to Premium</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.subscription-info-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    background: var(--drac-bg);
+    min-height: 100vh;
+}
+
+.subscription-header {
+    background: var(--drac-card);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.plan-badge-large {
+    padding: 1.5rem 2rem;
+    border-radius: 16px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-align: center;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.plan-badge-large.free {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+}
+
+.plan-badge-large.pro {
+    background: linear-gradient(135deg, #ff9500, #ff7b00);
+    color: white;
+}
+
+.plan-badge-large.premium {
+    background: linear-gradient(135deg, #bd93f9, #8be9fd);
+    color: white;
+}
+
+.plan-details h2 {
+    color: var(--drac-foreground);
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+}
+
+.plan-details p {
+    color: var(--drac-comment);
+    margin: 0.25rem 0;
+}
+
+.status-active {
+    color: var(--drac-green);
+    font-weight: 600;
+}
+
+.status-expired {
+    color: var(--drac-red);
+    font-weight: 600;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.feature-card {
+    background: var(--drac-card);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+.feature-card:hover {
+    border-color: rgba(189, 147, 249, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.feature-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.feature-header i {
+    color: var(--drac-purple);
+    font-size: 1.25rem;
+}
+
+.feature-header h3 {
+    color: var(--drac-foreground);
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.usage-bar {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    height: 8px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+}
+
+.usage-progress {
+    background: linear-gradient(90deg, var(--drac-green), var(--drac-orange));
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.3s ease;
+}
+
+.usage-text {
+    color: var(--drac-foreground);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.unlimited {
+    color: var(--drac-purple);
+    font-weight: 600;
+    margin: 0;
+}
+
+.instant {
+    color: var(--drac-green);
+    font-weight: 600;
+    margin: 0;
+}
+
+.delay {
+    color: var(--drac-orange);
+    font-weight: 600;
+    margin: 0;
+}
+
+.pending {
+    color: var(--drac-comment);
+    font-size: 0.85rem;
+    margin: 0.5rem 0 0 0;
+}
+
+.available {
+    color: var(--drac-green);
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+}
+
+.restricted {
+    color: var(--drac-red);
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+}
+
+.limit-reached {
+    color: var(--drac-red);
+    font-weight: 600;
+    margin: 0.5rem 0 0 0;
+    font-size: 0.9rem;
+}
+
+.feature-link, .upgrade-link {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: var(--drac-purple);
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.feature-link:hover, .upgrade-link:hover {
+    background: var(--drac-cyan);
+    transform: translateY(-1px);
+    color: white;
+    text-decoration: none;
+}
+
+.plan-comparison {
+    background: var(--drac-card);
+    border-radius: 12px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 2rem;
+}
+
+.plan-comparison h3 {
+    color: var(--drac-foreground);
+    margin: 0 0 1.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.comparison-table {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.comparison-header {
+    display: contents;
+}
+
+.comparison-header > div {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.comparison-row {
+    display: contents;
+}
+
+.comparison-row > div {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+}
+
+.feature-name {
+    text-align: left !important;
+    font-weight: 500;
+    color: var(--drac-foreground);
+}
+
+.plan-column {
+    color: var(--drac-comment);
+}
+
+.plan-column.free {
+    color: #6c757d;
+}
+
+.plan-column.pro {
+    color: #ff9500;
+}
+
+.plan-column.premium {
+    color: var(--drac-purple);
+}
+
+.upgrade-section {
+    background: linear-gradient(135deg, rgba(189, 147, 249, 0.1), rgba(139, 233, 253, 0.1));
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid rgba(189, 147, 249, 0.2);
+}
+
+.upgrade-section h3 {
+    color: var(--drac-foreground);
+    margin: 0 0 1rem 0;
+    font-size: 1.25rem;
+}
+
+.upgrade-section p {
+    color: var(--drac-comment);
+    margin: 0 0 1.5rem 0;
+}
+
+.upgrade-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn {
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-pro {
+    background: linear-gradient(135deg, #ff9500, #ff7b00);
+    color: white;
+}
+
+.btn-premium {
+    background: linear-gradient(135deg, #bd93f9, #8be9fd);
+    color: white;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    text-decoration: none;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .subscription-info-container {
+        padding: 1rem;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .comparison-table {
+        grid-template-columns: 1fr;
+        gap: 1px;
+    }
+    
+    .comparison-header,
+    .comparison-row {
+        display: block;
+    }
+    
+    .comparison-header > div,
+    .comparison-row > div {
+        display: flex;
+        justify-content: space-between;
+        text-align: left !important;
+    }
+    
+    .upgrade-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+</style>
+{% endblock %}

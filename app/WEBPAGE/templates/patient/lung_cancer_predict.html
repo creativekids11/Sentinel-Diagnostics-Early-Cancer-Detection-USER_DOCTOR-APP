@@ -1,0 +1,91 @@
+{% extends "layouts/patient.html" %} {% block title %}Lung Cancer Prediction{%
+endblock %} {% block content %}
+<h1>Lung Cancer Risk Assessment</h1>
+<p>Fill in the details below to get a prediction using our AI model.</p>
+<form method="POST">
+	{% for feat in features %} {% set meta = feature_meta[feat] %} {% if feat !=
+	"ANXYELFIN" %}
+	<div class="form-group" style="margin-bottom: 18px">
+		<label>{{ feat }}</label>
+		{% if feat == "GENDER" %}
+		<select name="{{ feat }}" class="form-select">
+			<option value="1">Male (1)</option>
+			<option value="0">Female (0)</option>
+		</select>
+		<div class="form-text">Male = 1, Female = 0</div>
+		{% elif meta.binary %}
+		<div class="btn-group toggle-yesno">
+			<input
+				type="hidden"
+				name="{{ feat }}"
+				value="{{ meta.median|round(0) }}" />
+			<button type="button" class="btn btn-no btn-no-default">No</button>
+			<button type="button" class="btn btn-yes btn-yes-default">Yes</button>
+		</div>
+		<div class="form-text">Toggle No / Yes</div>
+		{% else %}
+		<input
+			type="range"
+			class="form-range"
+			name="{{ feat }}"
+			min="{{ meta.min }}"
+			max="{{ meta.max }}"
+			step="{{ meta.step }}"
+			value="{{ meta.median }}" />
+		<div class="val-badge">{{ meta.median|round(3) }}</div>
+		{% endif %}
+	</div>
+	{% endif %} {% endfor %}
+	<button type="submit" class="btn-primary">Predict</button>
+</form>
+
+{% if result %}
+<div class="result-card" style="margin-top: 30px">
+	<h3>Prediction Result</h3>
+	<p><strong>Prediction:</strong> {{ result.pred }}</p>
+	<p>
+		<strong>Probability (Lung Cancer):</strong> {{ result.proba_1 | round(4) }}
+	</p>
+	{% if result.pred == 1 %}
+	<div class="status-high">High risk of lung cancer detected.</div>
+	{% else %}
+	<div class="status-low">Low risk of lung cancer detected.</div>
+	{% endif %}
+</div>
+{% endif %}
+
+<script>
+	// Add interactive elements for sliders and toggles
+	document.querySelectorAll('input[type="range"]').forEach((s, i) => {
+		const badge = s.nextElementSibling;
+		if (badge) {
+			s.addEventListener("input", () => {
+				badge.textContent = parseFloat(s.value).toFixed(3);
+			});
+		}
+	});
+
+	document.querySelectorAll(".toggle-yesno").forEach((el) => {
+		const input = el.querySelector("input");
+		const btnNo = el.querySelector(".btn-no");
+		const btnYes = el.querySelector(".btn-yes");
+
+		function setState(val) {
+			input.value = val;
+			if (val === "1") {
+				btnYes.classList.add("btn-yes-active");
+				btnNo.classList.remove("btn-no-active");
+			} else {
+				btnNo.classList.add("btn-no-active");
+				btnYes.classList.remove("btn-yes-active");
+			}
+		}
+
+		btnNo.addEventListener("click", () => setState("0"));
+		btnYes.addEventListener("click", () => setState("1"));
+
+		// Initialize state
+		setState(input.value);
+	});
+</script>
+{% endblock %}

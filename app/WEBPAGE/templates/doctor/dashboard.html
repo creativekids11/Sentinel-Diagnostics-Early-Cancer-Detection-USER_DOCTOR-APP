@@ -1,0 +1,1228 @@
+{% extends "layouts/doctor.html" %} {% block title %}Doctor Dashboard{% endblock
+%} {% block content %}
+
+<div class="dashboard-container">
+	<!-- Status Bar -->
+	<div class="status-bar">
+		<div class="status-indicator">
+			<span class="status-label">Current Status:</span>
+			<span id="currentStatus" class="status-text">Available</span>
+		</div>
+		<div class="status-buttons">
+			<form method="POST" action="/doctor/status" style="display: inline;">
+				<input type="hidden" name="status" value="busy">
+				<button type="submit" class="status-btn status-busy">Busy (1 hour)</button>
+			</form>
+			<form method="POST" action="/doctor/status" style="display: inline;">
+				<input type="hidden" name="status" value="emergency">
+				<button type="submit" class="status-btn status-emergency">Emergency (3 hours)</button>
+			</form>
+			<form method="POST" action="/doctor/status" style="display: inline;">
+				<input type="hidden" name="status" value="available">
+				<button type="submit" class="status-btn status-available">Available</button>
+			</form>
+		</div>
+	</div>
+
+	<!-- Top Metrics Row -->
+	<div class="metrics-row">
+		<div class="metric-card metric-gradient-1">
+			<div class="metric-icon">👥</div>
+			<div class="metric-content">
+				<div class="metric-label">Total Patients</div>
+				<div id="totalPatients" class="metric-value">...</div>
+			</div>
+		</div>
+		<div class="metric-card metric-gradient-2">
+			<div class="metric-icon">📅</div>
+			<div class="metric-content">
+				<div class="metric-label">Today's Appointments</div>
+				<div id="todaysAppointments" class="metric-value">...</div>
+			</div>
+		</div>
+		<div class="metric-card metric-gradient-3">
+			<div class="metric-icon">📋</div>
+			<div class="metric-content">
+				<div class="metric-label">Total Cases</div>
+				<div id="totalCases" class="metric-value">...</div>
+			</div>
+		</div>
+		<div class="metric-card metric-gradient-4">
+			<div class="metric-icon">⏳</div>
+			<div class="metric-content">
+				<div class="metric-label">Pending Cases</div>
+				<div id="pendingCases" class="metric-value">...</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Main Content Grid -->
+	<div class="main-grid">
+		<!-- Left Column -->
+		<div class="left-column">
+			<!-- Upcoming Appointments Card -->
+			<div class="dashboard-card appointments-card">
+				<div class="card-header">
+					<h2 class="card-title">Upcoming Appointments</h2>
+					<button class="card-menu-btn">⋯</button>
+				</div>
+				<div class="card-content">
+					<canvas id="upcomingAppointmentsChart" height="95"></canvas>
+					<br>
+					<h2 class="card-title">Point Messages</h2>
+					<div id="upcomingAppointmentsList" class="appointments-list"></div>
+				</div>
+			</div>
+
+			<!-- Recent Cases Card -->
+		</div>
+		
+		<!-- Right Column -->
+		<div class="right-column">
+			<!-- AI Analysis Card -->
+			<div class="dashboard-card ai-card">
+				<div class="card-header">
+					<h3 class="card-title-small">Pending Analysis</h3>
+					<button class="card-menu-btn">⋯</button>
+				</div>
+				<div class="ai-stats">
+					<div class="ai-number">20.k</div>
+					<div class="ai-percentage">45%</div>
+				</div>
+				<div class="ai-chart-wrapper">
+					<canvas id="appointmentChart" width="200" height="200"></canvas>
+					<div class="chart-center-icon">🔬</div>
+				</div>
+				<div class="ai-legend">
+					<div class="legend-row">
+						<span class="legend-dot breast-dot"></span>
+						<span class="legend-text">Breast</span>
+						<span class="legend-percent">50%</span>
+					</div>
+					<div class="legend-row">
+						<span class="legend-dot molo-dot"></span>
+						<span class="legend-text">Molo</span>
+						<span class="legend-percent">20%</span>
+					</div>
+				</div>
+				<div class="ai-actions">
+					<button class="ai-btn-primary">Upload Analysis ▼</button>
+					<button class="ai-btn-secondary">Configure</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<br>
+<div class="dashboard-card cases-card">
+	<div class="card-header">
+		<h2 class="card-title">Recent Patient Activity</h2>
+		<button class="card-menu-btn">⋯</button>
+	</div>
+	<div class="card-content">
+		<div id="recentCasesContainer" class="cases-container"></div>
+	</div>
+</div>
+
+<style>
+	/* Dashboard Container */
+	.dashboard-container {
+		padding: 0;
+		max-width: 100%;
+	}
+
+	/* Metrics Row */
+	.metrics-row {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 16px;
+		margin-bottom: 24px;
+	}
+
+	.metric-card {
+		background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+		border-radius: 16px;
+		padding: 20px;
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		transition: all 0.3s ease;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.metric-card::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+		opacity: 0;
+		transition: opacity 0.3s ease;
+	}
+
+	.metric-card:hover::before {
+		opacity: 1;
+	}
+
+	.metric-card:hover {
+		transform: translateY(-4px);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+	}
+
+	.metric-gradient-1 {
+		border-left: 3px solid #8be9fd;
+	}
+
+	.metric-gradient-2 {
+		border-left: 3px solid #50fa7b;
+	}
+
+	.metric-gradient-3 {
+		border-left: 3px solid #bd93f9;
+	}
+
+	.metric-gradient-4 {
+		border-left: 3px solid #ffb86c;
+	}
+
+	.metric-icon {
+		font-size: 2.5rem;
+		width: 60px;
+		height: 60px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(255, 255, 255, 0.05);
+		border-radius: 12px;
+		flex-shrink: 0;
+	}
+
+	.metric-content {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.metric-label {
+		font-size: 0.85rem;
+		color: var(--drac-foreground);
+		font-weight: 500;
+		margin-bottom: 8px;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
+
+	.metric-value {
+		font-size: 2rem;
+		font-weight: 700;
+		color: var(--drac-foreground);
+		line-height: 1;
+	}
+
+	/* Main Grid Layout */
+	.main-grid {
+		display: grid;
+		grid-template-columns: 2fr 1fr;
+		gap: 20px;
+	}
+
+	.left-column {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+
+	.right-column {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+
+	/* Dashboard Cards */
+	.dashboard-card {
+		background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+		border-radius: 20px;
+		padding: 24px;
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+	}
+
+	.card-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 20px;
+	}
+
+	.card-title {
+		font-size: 1.1rem;
+		font-weight: 600;
+		color: var(--drac-foreground);
+		margin: 0;
+	}
+
+	.card-title-small {
+		font-size: 0.95rem;
+		font-weight: 500;
+		color: var(--drac-foreground);
+		margin: 0;
+	}
+
+	.card-menu-btn {
+		background: transparent;
+		border: none;
+		color: var(--drac-comment);
+		font-size: 1.5rem;
+		cursor: pointer;
+		padding: 4px;
+		line-height: 1;
+		transition: color 0.2s;
+	}
+
+	.card-menu-btn:hover {
+		color: var(--drac-comment);
+	}
+
+	/* Appointments Card */
+	.appointments-card {
+		min-height: 395px;
+	}
+
+	.appointments-list {
+		margin-top: 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.appointment-item {
+		background: rgba(255, 255, 255, 0.03);
+		padding: 12px 16px;
+		border-radius: 10px;
+		border-left: 3px solid #bd93f9;
+		font-size: 0.9rem;
+		color: var(--drac-comment);
+		transition: all 0.2s;
+	}
+
+	.appointment-item:hover {
+		background: rgba(255, 255, 255, 0.05);
+		transform: translateX(4px);
+	}
+
+	/* Cases Card */
+	.cases-card {
+		flex: 1;
+	}
+
+	.cases-container {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.case-card {
+		background: rgba(255, 255, 255, 0.1);
+		padding: 16px;
+		border-radius: 12px;
+		border-left: 3px solid #6b7280;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.case-card:hover {
+		background: rgba(255, 255, 255, 0.05);
+		transform: translateX(4px);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	}
+
+	.case-card.expanded {
+		background: rgba(255, 255, 255, 0.06);
+	}
+
+	.case-info {
+		flex: 1;
+	}
+
+	.case-patient {
+		font-weight: 600;
+		color: var(--drac-foreground);
+		font-size: 1rem;
+		margin-bottom: 6px;
+	}
+
+	.case-description {
+		color: #9ca3af;
+		font-size: 0.85rem;
+		line-height: 1.5;
+		margin-bottom: 8px;
+	}
+
+	.case-severity,
+	.case-status {
+		display: inline-block;
+		padding: 4px 10px;
+		border-radius: 12px;
+		font-size: 0.75rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		margin-right: 8px;
+	}
+
+	.status-low {
+		background: rgba(80, 250, 123, 0.15);
+		color: #50fa7b;
+		border: 1px solid rgba(80, 250, 123, 0.3);
+	}
+
+	.status-medium {
+		background: rgba(255, 184, 108, 0.15);
+		color: #ffb86c;
+		border: 1px solid rgba(255, 184, 108, 0.3);
+	}
+
+	.status-high {
+		background: rgba(255, 85, 85, 0.15);
+		color: #ff5555;
+		border: 1px solid rgba(255, 85, 85, 0.3);
+	}
+
+	.status-pending {
+		background: rgba(98, 114, 164, 0.15);
+		color: #6272a4;
+		border: 1px solid rgba(98, 114, 164, 0.3);
+	}
+
+	.status-resolved {
+		background: rgba(80, 250, 123, 0.15);
+		color: #50fa7b;
+		border: 1px solid rgba(80, 250, 123, 0.3);
+	}
+
+	.status-surgery {
+		background: rgba(255, 121, 198, 0.15);
+		color: #ff79c6;
+		border: 1px solid rgba(255, 121, 198, 0.3);
+	}
+
+	.case-actions {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+		padding-top: 8px;
+		border-top: 1px solid rgba(255, 255, 255, 0.05);
+	}
+
+	.status-select {
+		background: rgba(255, 255, 255, 0.05);
+		color: var(--drac-foreground);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 8px;
+		padding: 6px 12px;
+		font-size: 0.85rem;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.status-select:focus {
+		outline: none;
+		border-color: #bd93f9;
+		background: rgba(255, 255, 255, 0.08);
+	}
+
+	.resolve-btn {
+		background: linear-gradient(135deg, #ff5555 0%, #ff6b6b 100%);
+		color: #ffffff;
+		border: none;
+		border-radius: 8px;
+		padding: 6px 16px;
+		font-size: 0.85rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.resolve-btn:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(255, 85, 85, 0.4);
+	}
+
+	.case-details {
+		max-height: 0;
+		overflow: hidden;
+		padding-top: 0;
+		margin-top: 0;
+		border-top: none;
+		color: #d1d5db;
+		font-size: 0.9rem;
+		line-height: 1.6;
+		transition: all 0.4s ease-in-out;
+		opacity: 0;
+	}
+
+	.case-card.expanded .case-details {
+		max-height: 500px;
+		padding-top: 12px;
+		margin-top: 12px;
+		border-top: 1px solid rgba(255, 255, 255, 0.08);
+		opacity: 1;
+	}
+
+	/* AI Analysis Card */
+	.ai-card {
+		background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--drac-bg-darker) 100%);
+		position: relative;
+		overflow: hidden;
+		max-height: 395px;
+	}
+
+	.ai-stats {
+		margin-bottom: 20px;
+	}
+
+	.ai-number {
+		font-size: 2.8rem;
+		font-weight: 700;
+		color: var(--drac-foreground);
+		margin-bottom: 4px;
+		line-height: 1;
+	}
+
+	.ai-percentage {
+		font-size: 0.9rem;
+		color: #9ca3af;
+	}
+
+	.ai-chart-wrapper {
+		position: relative;
+		width: 200px;
+		height: 200px;
+		margin: 0 auto 24px;
+	}
+
+	.chart-center-icon {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		font-size: 2.5rem;
+		pointer-events: none;
+		filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+	}
+
+	.ai-legend {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		margin-bottom: 20px;
+	}
+
+	.legend-row {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		font-size: 0.9rem;
+	}
+
+	.legend-dot {
+		width: 14px;
+		height: 14px;
+		border-radius: 50%;
+		flex-shrink: 0;
+	}
+
+	.breast-dot {
+		background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+		box-shadow: 0 2px 8px rgba(255, 107, 157, 0.4);
+	}
+
+	.molo-dot {
+		background: linear-gradient(135deg, #5f27cd 0%, #341f97 100%);
+		box-shadow: 0 2px 8px rgba(95, 39, 205, 0.4);
+	}
+
+	.legend-text {
+		color: #d1d5db;
+		flex: 1;
+	}
+
+	.legend-percent {
+		color: #9ca3af;
+		font-weight: 600;
+	}
+
+	.ai-actions {
+		display: flex;
+		gap: 10px;
+	}
+
+	.ai-btn-primary,
+	.ai-btn-secondary {
+		flex: 1;
+		padding: 12px 16px;
+		border-radius: 10px;
+		border: none;
+		font-size: 0.9rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.3s ease;
+	}
+
+	.ai-btn-primary {
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		color: #ffffff;
+		box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+	}
+
+	.ai-btn-primary:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+	}
+
+	.ai-btn-secondary {
+		background: rgba(255, 255, 255, 0.05);
+		color: #d1d5db;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.ai-btn-secondary:hover {
+		background: rgba(255, 255, 255, 0.08);
+	}
+
+	/* Responsive Design */
+	@media (max-width: 1200px) {
+		.main-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.metrics-row {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	@media (max-width: 768px) {
+		.metrics-row {
+			grid-template-columns: 1fr;
+		}
+
+		.metric-card {
+			padding: 16px;
+		}
+
+		.metric-icon {
+			font-size: 2rem;
+			width: 50px;
+			height: 50px;
+		}
+
+		.metric-value {
+			font-size: 1.5rem;
+		}
+	}
+
+	/* Profile Avatar Override */
+	.profile-avatar {
+		width: 42px;
+		height: 42px;
+		min-width: 42px;
+		min-height: 42px;
+		max-width: 42px;
+		max-height: 42px;
+		border-radius: 50%;
+		overflow: hidden;
+	}
+
+	/* Status Bar */
+	.status-bar {
+		background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--drac-bg-darker) 100%);
+		border-radius: 16px;
+		padding: 20px;
+		margin-bottom: 24px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+		border: 1px solid rgba(255, 255, 255, 0.05);
+	}
+
+	.status-indicator {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.status-label {
+		color: #9ca3af;
+		font-size: 0.9rem;
+		font-weight: 500;
+	}
+
+	.status-text {
+		color: #50fa7b;
+		font-size: 1.1rem;
+		font-weight: 600;
+		padding: 6px 12px;
+		border-radius: 8px;
+		background: rgba(80, 250, 123, 0.1);
+		border: 1px solid rgba(80, 250, 123, 0.3);
+	}
+
+	.status-text.status-busy {
+		color: #ffb86c;
+		background: rgba(255, 184, 108, 0.1);
+		border-color: rgba(255, 184, 108, 0.3);
+	}
+
+	.status-text.status-emergency {
+		color: #ff5555;
+		background: rgba(255, 85, 85, 0.1);
+		border-color: rgba(255, 85, 85, 0.3);
+	}
+
+	.status-buttons {
+		display: flex;
+		gap: 12px;
+	}
+
+	.status-btn {
+		padding: 10px 16px;
+		border: none;
+		border-radius: 8px;
+		font-size: 0.9rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
+
+	.status-available {
+		background: linear-gradient(135deg, #50fa7b 0%, #4ade80 100%);
+		color: #ffffff;
+		box-shadow: 0 4px 12px rgba(80, 250, 123, 0.3);
+	}
+
+	.status-available:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 6px 20px rgba(80, 250, 123, 0.5);
+	}
+
+	.status-busy {
+		background: linear-gradient(135deg, #ffb86c 0%, #ff9f43 100%);
+		color: #ffffff;
+		box-shadow: 0 4px 12px rgba(255, 184, 108, 0.3);
+	}
+
+	.status-busy:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 6px 20px rgba(255, 184, 108, 0.5);
+	}
+
+	.status-emergency {
+		background: linear-gradient(135deg, #ff5555 0%, #ff6b6b 100%);
+		color: #ffffff;
+		box-shadow: 0 4px 12px rgba(255, 85, 85, 0.3);
+	}
+
+	.status-emergency:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 6px 20px rgba(255, 85, 85, 0.5);
+	}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+<script>
+let appointmentChart = null;
+let upcomingAppointmentsChart = null;
+
+// Counter animation utility function
+function animateCounter(element, targetValue, duration = 1000) {
+    if (!element) return;
+    
+    const startValue = parseInt(element.textContent) || 0;
+    const difference = targetValue - startValue;
+    const startTime = performance.now();
+    
+    function updateCounter(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function for smooth animation
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+        const currentValue = Math.round(startValue + (difference * easeOutQuart));
+        
+        element.textContent = currentValue;
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateCounter);
+        } else {
+            element.textContent = targetValue;
+        }
+    }
+    
+    requestAnimationFrame(updateCounter);
+}
+
+function renderUpcomingAppointments(list) {
+	const container = document.getElementById('upcomingAppointmentsList');
+	if (!container) return;
+	container.innerHTML = (list || []).map(appt => `
+		<div class="appointment-item">
+			<span style="color: #bd93f9; font-weight: 600;">${appt.doctor_name}</span> 
+			<span style="color: #6b7280;">•</span> 
+			<span style="color: #9ca3af;">${appt.time}</span>
+			<br>
+			<span style="color: #d1d5db; font-size: 0.85rem;">${appt.patient_name} - ${appt.reason}</span>
+		</div>
+	`).join('');
+}
+
+function renderRecentCases(cases) {
+	const container = document.getElementById('recentCasesContainer');
+	if (!container) return;
+	container.innerHTML = cases.map(c => `
+		<div class="case-card" onclick="toggleCaseDetails(this)">
+			<div style="display: flex; justify-content: space-between; align-items: start; width: 100%;">
+				<div class="case-info">
+					<div class="case-patient">${c.patient_name}</div>
+					<div class="case-description">${c.description.length > 100 ? c.description.substring(0, 100) + '...' : c.description}</div>
+					<div style="margin-top: 8px;">
+						<span class="case-severity status-${c.severity}">${c.severity}</span>
+						<span class="case-status status-${c.status}">${c.status}</span>
+					</div>
+				</div>
+			</div>
+			<div class="case-actions">
+				<select class="status-select" onchange="updateCaseStatus(${c.id}, this.value)" onclick="event.stopPropagation()">
+					<option value="pending" ${c.status === 'pending' ? 'selected' : ''}>Pending</option>
+					<option value="resolved" ${c.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+					<option value="surgery" ${c.status === 'surgery' ? 'selected' : ''}>Surgery</option>
+				</select>
+				<button class="resolve-btn" onclick="resolveCase(${c.id}, event)">Resolve</button>
+			</div>
+			<div class="case-details">
+				<strong style="color: var(--drac-foreground);">Full Description:</strong><br>
+				<span style="color: var(--drac-comment); line-height: 1.6;">${c.description}</span>
+				<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); color: #6b7280; font-size: 0.8rem;">
+					Click to collapse
+				</div>
+			</div>
+		</div>
+	`).join('');
+}
+
+function toggleCaseDetails(card) {
+    card.classList.toggle('expanded');
+}
+
+async function updateCaseStatus(caseId, newStatus) {
+    try {
+        const response = await fetch(`/doctor/cases/${caseId}/update`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                'severity': 'medium', // Default severity
+                'status': newStatus,
+                'surgery_meter': 0 // Not used anymore
+            })
+        });
+        
+        if (response.ok) {
+            // Status updated successfully - immediate UI feedback
+            showNotification(`Case status updated to ${newStatus}`, 'success');
+            smartUpdateDashboard(); // Use smart update instead of direct call
+        } else {
+            showNotification('Failed to update case status', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating case status:', error);
+        showNotification('Error updating case status', 'error');
+    }
+}
+
+async function resolveCase(caseId, event) {
+    event.stopPropagation(); // Prevent card expansion
+    
+    if (!confirm('Are you sure you want to resolve this case? This will remove it from the system.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/doctor/cases/${caseId}/resolve`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        });
+        
+        if (response.ok) {
+            // Case resolved successfully - immediate UI feedback
+            showNotification('Case resolved successfully', 'success');
+            smartUpdateDashboard(); // Use smart update instead of direct call
+        } else {
+            showNotification('Failed to resolve case', 'error');
+        }
+    } catch (error) {
+        console.error('Error resolving case:', error);
+        showNotification('Error resolving case', 'error');
+    }
+}
+
+// Simple notification system
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 24px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        max-width: 300px;
+        word-wrap: break-word;
+    `;
+    
+    // Set color based on type
+    switch(type) {
+        case 'success':
+            notification.style.backgroundColor = '#50fa7b';
+            notification.style.color = '#000';
+            break;
+        case 'error':
+            notification.style.backgroundColor = '#ff5555';
+            break;
+        case 'warning':
+            notification.style.backgroundColor = '#ffb86c';
+            notification.style.color = '#000';
+            break;
+        default:
+            notification.style.backgroundColor = '#6272a4';
+    }
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+async function updateDoctorDashboard() {
+    try {
+        const res = await fetch("/api/doctor_dashboard_data");
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        const data = await res.json();
+
+        // Animate counters with fallback values
+        animateCounter(document.getElementById("totalPatients"), data.total_patients || 0);
+        animateCounter(document.getElementById("todaysAppointments"), data.todays_appointments || 0);
+        animateCounter(document.getElementById("totalCases"), data.total_cases || 0);
+        animateCounter(document.getElementById("pendingCases"), data.pending_cases || 0);
+
+	// Monthly Patient Consultations Chart (Doughnut) - Styled like the image
+	const apptCtx = document.getElementById("appointmentChart").getContext("2d");
+	if (appointmentChart) appointmentChart.destroy();
+	appointmentChart = new Chart(apptCtx, {
+		type: "doughnut",
+		data: {
+			labels: ["Breast", "Molo", "Other"],
+			datasets: [{
+				data: [50, 20, 30],
+				backgroundColor: [
+					"#ff6b9d", // Pink/Rose gradient start
+					"#5f27cd", // Purple gradient start
+					"#4ade80"  // Green
+				],
+				borderWidth: 0,
+				cutout: "75%",
+				borderRadius: 0,
+			}]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: true,
+			plugins: {
+				legend: { 
+					display: false // Hide default legend, we have custom one
+				},
+				tooltip: {
+					enabled: true,
+					backgroundColor: "rgba(0, 0, 0, 0.8)",
+					titleColor: "#fff",
+					bodyColor: "#fff",
+					padding: 12,
+					cornerRadius: 8
+				}
+			}
+		}
+	});
+
+    // Upcoming Appointments Live Line Graph
+    const chartElem = document.getElementById('upcomingAppointmentsChart');
+    if (chartElem) {
+        const chartData = data.charts?.upcoming_appointments_line || {
+            labels: (data.upcoming_appointments || []).map(a => a.time),
+            datasets: [
+                {
+                    label: 'Upcoming Appointments',
+                    data: (data.upcoming_appointments || []).map(a => a.count || 1),
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    fill: true,
+                    tension: 0.4,
+                },
+            ],
+        };
+
+        // Only destroy and recreate if chart structure has significantly changed
+        const shouldRecreateChart = !upcomingAppointmentsChart || 
+            (upcomingAppointmentsChart.data.labels.length !== chartData.labels.length);
+
+        if (shouldRecreateChart) {
+            if (upcomingAppointmentsChart) upcomingAppointmentsChart.destroy();
+            upcomingAppointmentsChart = new Chart(chartElem.getContext('2d'), {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    animation: {
+                        duration: 750,
+                        easing: 'easeInOutQuart'
+                    },
+                    plugins: {
+                        legend: { 
+                            position: 'top',
+                            labels: { color: 'var(--drac-foreground)' }
+                        },
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false },
+                    },
+                },
+            });
+        } else {
+            // Update existing chart data for smoother updates
+            upcomingAppointmentsChart.data = chartData;
+            upcomingAppointmentsChart.update('active');
+        }
+    }
+
+        // Render lists
+        renderUpcomingAppointments(data.upcoming_appointments || []);
+        renderRecentCases(data.recent_cases || []);
+    } catch (error) {
+        console.error('Error updating doctor dashboard:', error);
+        // Show fallback data or error message
+        const errorElements = ['totalPatients', 'todaysAppointments', 'totalCases', 'pendingCases'];
+        errorElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element && element.textContent === '...') {
+                element.textContent = 'Error';
+                element.style.color = '#ff5555';
+            }
+        });
+    }
+}
+
+// Initialize dashboard
+updateDoctorDashboard();
+
+// Periodic updates - less frequent since we have real-time updates
+let dashboardUpdateInterval = setInterval(updateDoctorDashboard, 30000); // Every 30 seconds
+
+// Smart update function that avoids unnecessary refreshes
+let lastUpdateTime = 0;
+const minUpdateInterval = 1000; // Minimum 1 second between updates
+
+function smartUpdateDashboard() {
+    const now = Date.now();
+    if (now - lastUpdateTime >= minUpdateInterval) {
+        lastUpdateTime = now;
+        updateDoctorDashboard();
+    }
+}
+
+// Handle page visibility changes to optimize updates
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        // Page is hidden, reduce update frequency
+        if (dashboardUpdateInterval) {
+            clearInterval(dashboardUpdateInterval);
+        }
+    } else {
+        // Page is visible, resume normal updates and refresh immediately
+        updateDoctorDashboard();
+        dashboardUpdateInterval = setInterval(updateDoctorDashboard, 30000);
+    }
+});
+
+// Update status display
+async function updateStatusDisplay() {
+    try {
+        const res = await fetch("/api/doctor/status");
+        const statusData = await res.json();
+        
+        const statusElement = document.getElementById("currentStatus");
+        if (statusElement) {
+            const status = statusData.status || "available";
+            statusElement.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            statusElement.className = `status-text status-${status}`;
+        }
+        
+        // Emit status update event for header dropdown
+        if (window.parent && window.parent.postMessage) {
+            window.parent.postMessage({
+                type: 'doctor_status_update',
+                status: statusData.status || "available",
+                set_at: statusData.set_at,
+                expires_at: statusData.expires_at
+            }, '*');
+        }
+    } catch (error) {
+        console.error('Error updating status display:', error);
+    }
+}
+
+// Update status every 30 seconds
+setInterval(updateStatusDisplay, 30000);
+
+// Initialize status display
+updateStatusDisplay();
+
+// Real-time updates via Socket.IO
+try {
+    const socket = io();
+    socket.on('connect', () => {
+        console.log('Socket connected for real-time updates.');
+        {% if session.user_id %}
+        // Join user-specific room for targeted events
+        socket.emit('join', {
+            username: '{{ session.user_fullname or "Doctor" }}',
+            room: 'user_{{ session.user_id }}'
+        });
+        {% endif %}
+    });
+
+    // Handle all real-time events that should trigger dashboard updates
+    const handleRealtimeUpdate = (eventName, data) => {
+        console.log(`${eventName} event received`, data);
+        
+        // Show notification for relevant events
+        let message = '';
+        let type = 'info';
+        
+        switch(eventName) {
+            case 'case_created':
+                message = 'New case submitted by patient';
+                type = 'info';
+                break;
+            case 'case_updated':
+                message = 'Case status updated';
+                type = 'success';
+                break;
+            case 'case_resolved':
+                message = 'Case resolved';
+                type = 'success';
+                break;
+            case 'appointment_created':
+                message = 'New appointment requested';
+                type = 'info';
+                break;
+            case 'appointment_confirmed':
+                message = 'Appointment confirmed';
+                type = 'success';
+                break;
+            case 'appointment_rejected':
+                message = 'Appointment rejected';
+                type = 'info';
+                break;
+            case 'appointment_cancelled':
+                message = 'Appointment cancelled';
+                type = 'warning';
+                break;
+            case 'patient_registered':
+                message = 'New patient registered';
+                type = 'info';
+                break;
+        }
+        
+        if (message) {
+            showNotification(message, type);
+        }
+        
+        smartUpdateDashboard(); // Use smart update to prevent rapid successive calls
+        
+        // Force chart update to prevent reset issues
+        setTimeout(() => {
+            if (upcomingAppointmentsChart) {
+                upcomingAppointmentsChart.update('none'); // Update without animation to prevent flicker
+            }
+        }, 100);
+    };
+
+    // Appointment related events
+    socket.on('appointment_accepted', (data) => handleRealtimeUpdate('appointment_accepted', data));
+    socket.on('appointment_created', (data) => handleRealtimeUpdate('appointment_created', data));
+    socket.on('appointment_confirmed', (data) => handleRealtimeUpdate('appointment_confirmed', data));
+    socket.on('appointment_rejected', (data) => handleRealtimeUpdate('appointment_rejected', data));
+    socket.on('appointment_cancelled', (data) => handleRealtimeUpdate('appointment_cancelled', data));
+    socket.on('appointment_deleted', (data) => handleRealtimeUpdate('appointment_deleted', data));
+    socket.on('appointments_updated', (data) => handleRealtimeUpdate('appointments_updated', data));
+
+    // Case related events
+    socket.on('case_updated', (data) => handleRealtimeUpdate('case_updated', data));
+    socket.on('case_created', (data) => handleRealtimeUpdate('case_created', data));
+    socket.on('case_resolved', (data) => handleRealtimeUpdate('case_resolved', data));
+
+    // Patient related events
+    socket.on('patient_registered', (data) => handleRealtimeUpdate('patient_registered', data));
+
+    // Handle connection issues
+    socket.on('disconnect', () => {
+        console.log('Socket disconnected');
+    });
+
+    socket.on('reconnect', () => {
+        console.log('Socket reconnected');
+        updateDoctorDashboard(); // Refresh data after reconnection
+    });
+
+} catch (e) {
+    console.warn('Socket.IO not available', e);
+}
+</script>
+{% endblock %}

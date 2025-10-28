@@ -1,0 +1,483 @@
+{% extends "layouts/patient.html" %}
+{% block title %}Outstanding Balances{% endblock %}
+{% block content %}
+
+<style>
+    .balance-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .balance-header {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(139, 233, 253, 0.2);
+    }
+
+    .balance-title {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 10px;
+    }
+
+    .balance-title h1 {
+        color: var(--drac-cyan);
+        font-size: 2rem;
+        margin: 0;
+        font-weight: 700;
+    }
+
+    .balance-subtitle {
+        color: var(--drac-comment);
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    .balance-summary {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(139, 233, 253, 0.1);
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .summary-row:last-child {
+        margin-bottom: 0;
+        padding-top: 15px;
+        border-top: 1px solid rgba(139, 233, 253, 0.3);
+    }
+
+    .summary-label {
+        color: var(--drac-cyan);
+        font-size: 1.1rem;
+    }
+
+    .summary-value {
+        color: var(--drac-orange);
+        font-size: 1.3rem;
+        font-weight: bold;
+    }
+
+    .balance-items {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(139, 233, 253, 0.1);
+    }
+
+    .balance-item {
+        background: rgba(139, 233, 253, 0.1);
+        border: 1px solid rgba(139, 233, 253, 0.3);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+
+    .balance-item:hover {
+        background: rgba(139, 233, 253, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .balance-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .item-details {
+        flex: 1;
+    }
+
+    .item-title {
+        color: var(--drac-cyan);
+        font-weight: bold;
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+    }
+
+    .item-date {
+        color: var(--drac-comment);
+        font-size: 0.9rem;
+    }
+
+    .item-type {
+        color: var(--drac-purple);
+        font-size: 0.9rem;
+        background: rgba(189, 147, 249, 0.2);
+        padding: 2px 8px;
+        border-radius: 8px;
+        margin-top: 5px;
+        display: inline-block;
+    }
+
+    .item-amount {
+        color: var(--drac-orange);
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+
+    .pay-button {
+        background: linear-gradient(135deg, var(--drac-green) 0%, #45b7d1 100%);
+        border: none;
+        border-radius: 15px;
+        padding: 15px 30px;
+        color: white;
+        font-weight: bold;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .pay-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(80, 250, 123, 0.4);
+    }
+
+    .pay-button:disabled {
+        background: var(--drac-comment);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .no-balance {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--drac-green);
+    }
+
+    .no-balance-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        display: block;
+    }
+
+    .no-balance-text {
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .no-balance-subtitle {
+        color: var(--drac-comment);
+        font-size: 1rem;
+    }
+
+    /* Payment Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border: 1px solid rgba(139, 233, 253, 0.3);
+        margin: 5% auto;
+        padding: 0;
+        width: 90%;
+        max-width: 500px;
+        border-radius: 20px;
+        animation: modalFadeIn 0.3s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+        from { opacity: 0; transform: translateY(-50px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-header {
+        padding: 25px 30px;
+        border-bottom: 1px solid rgba(139, 233, 253, 0.3);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h3 {
+        color: var(--drac-cyan);
+        margin: 0;
+        font-size: 1.3rem;
+    }
+
+    .modal-close {
+        color: var(--drac-red);
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+        background: none;
+    }
+
+    .modal-close:hover {
+        color: var(--drac-orange);
+    }
+
+    .modal-body {
+        padding: 25px 30px;
+    }
+
+    .modal-footer {
+        padding: 20px 30px;
+        border-top: 1px solid rgba(139, 233, 253, 0.3);
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+    }
+
+    .btn-cancel, .btn-confirm {
+        padding: 12px 25px;
+        border: none;
+        border-radius: 10px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-cancel {
+        background: var(--drac-comment);
+        color: white;
+    }
+
+    .btn-cancel:hover {
+        background: var(--drac-red);
+    }
+
+    .btn-confirm {
+        background: linear-gradient(135deg, var(--drac-green) 0%, #45b7d1 100%);
+        color: white;
+    }
+
+    .btn-confirm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(80, 250, 123, 0.4);
+    }
+
+    .payment-method-select {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid var(--drac-purple);
+        background: var(--drac-bg);
+        color: var(--drac-fg);
+        font-size: 1rem;
+    }
+
+    .payment-items {
+        background: rgba(255, 193, 7, 0.1);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .payment-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255, 193, 7, 0.2);
+    }
+
+    .payment-item:last-child {
+        border-bottom: none;
+    }
+
+    .payment-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 193, 7, 0.3);
+        margin-top: 15px;
+    }
+</style>
+
+<div class="balance-container">
+    <!-- Header Section -->
+    <div class="balance-header">
+        <div class="balance-title">
+            <div>
+                <h1>💳 Outstanding Balances</h1>
+                <p class="balance-subtitle">Manage your AI scanner usage payments</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Balance Summary -->
+    <div class="balance-summary">
+        <div class="summary-row">
+            <span class="summary-label">Total Outstanding Items:</span>
+            <span class="summary-value">{{ balances|length }}</span>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">Total Amount Due:</span>
+            <span class="summary-value">₹{{ total_outstanding }}</span>
+        </div>
+    </div>
+
+    <!-- Balance Items or No Balance Message -->
+    {% if balances %}
+    <div class="balance-items">
+        <h2 style="color: var(--drac-cyan); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            📋 Outstanding Items
+        </h2>
+        
+        {% for balance in balances %}
+        <div class="balance-item">
+            <div class="item-details">
+                <div class="item-title">{{ balance.description }}</div>
+                <div class="item-date">{{ balance.created_at[:10] }}</div>
+                {% if balance.scan_type %}
+                <div class="item-type">{{ balance.scan_type.title() }} Scan</div>
+                {% endif %}
+            </div>
+            <div class="item-amount">₹{{ balance.amount }}</div>
+        </div>
+        {% endfor %}
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="pay-button" onclick="openPaymentModal()">
+                💳 Pay All Outstanding (₹{{ total_outstanding }})
+            </button>
+        </div>
+    </div>
+    {% else %}
+    <div class="balance-items">
+        <div class="no-balance">
+            <span class="no-balance-icon">🎉</span>
+            <div class="no-balance-text">No Outstanding Balance!</div>
+            <div class="no-balance-subtitle">You're all caught up with your payments.</div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Payment Modal -->
+<div id="paymentModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>💳 Process Payment</h3>
+            <span class="modal-close" onclick="closePaymentModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="payment-items">
+                <h4 style="color: var(--drac-orange); margin: 0 0 15px 0;">Items to Pay:</h4>
+                <div id="payment-item-list">
+                    {% for balance in balances %}
+                    <div class="payment-item">
+                        <span style="color: var(--drac-cyan);">{{ balance.description }}</span>
+                        <span style="color: var(--drac-orange);">₹{{ balance.amount }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="payment-total">
+                    <strong style="color: var(--drac-cyan);">Total Amount:</strong>
+                    <strong style="color: var(--drac-orange); font-size: 1.2rem;">₹{{ total_outstanding }}</strong>
+                </div>
+            </div>
+            
+            <div>
+                <label style="color: var(--drac-cyan); display: block; margin-bottom: 10px;">Payment Method:</label>
+                <select id="payment-method" class="payment-method-select">
+                    <option value="UPI">UPI Payment</option>
+                    <option value="Card">Credit/Debit Card</option>
+                    <option value="Net Banking">Net Banking</option>
+                    <option value="Wallet">Digital Wallet</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closePaymentModal()">Cancel</button>
+            <button class="btn-confirm" onclick="processPayment()" id="payBtn">Process Payment</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openPaymentModal() {
+        document.getElementById('paymentModal').style.display = 'block';
+    }
+
+    function closePaymentModal() {
+        document.getElementById('paymentModal').style.display = 'none';
+    }
+
+    function processPayment() {
+        const paymentMethod = document.getElementById('payment-method').value;
+        const payBtn = document.getElementById('payBtn');
+        
+        payBtn.textContent = 'Processing...';
+        payBtn.disabled = true;
+
+        // Get all balance IDs from the current page
+        const balanceIds = [];
+        {% for balance in balances %}
+        balanceIds.push({{ balance.id }});
+        {% endfor %}
+
+        fetch('/patient/pay-outstanding-balance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                balance_ids: balanceIds,
+                payment_method: paymentMethod
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Payment successful! Amount paid: ₹${data.amount_paid}`);
+                location.reload(); // Refresh the page to show updated balances
+            } else {
+                alert(`Payment failed: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error processing payment:', error);
+            alert('Payment processing failed. Please try again.');
+        })
+        .finally(() => {
+            payBtn.textContent = 'Process Payment';
+            payBtn.disabled = false;
+            closePaymentModal();
+        });
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('paymentModal');
+        if (event.target == modal) {
+            closePaymentModal();
+        }
+    }
+</script>
+
+{% endblock %}

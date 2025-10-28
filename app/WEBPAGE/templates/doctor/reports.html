@@ -1,0 +1,1104 @@
+{% extends "layouts/doctor.html" %}
+{% block title %}Patient Reports{% endblock %}
+{% block content %}
+{# Removed auto-refreshing reports_sync.js script #}
+
+{% if request.args.get('case_id') %}
+<div class="report-form-container">
+    <div class="form-header">
+        <h2>Generate Medical Report</h2>
+        <p class="form-subtitle">Create a comprehensive medical report for the selected case</p>
+    </div>
+
+    <form id="manual-report-form" class="report-form">
+        <!-- Basic Information Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h3> Report Information</h3>
+                <div class="section-divider"></div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="report-title" class="form-label">
+                        <span class="label-icon"></span>
+                        Report Title <span class="required">*</span>
+                    </label>
+                    <input type="text" id="report-title" class="form-input" placeholder="e.g., Comprehensive Lung Cancer Assessment Report" required>
+                    <div class="form-help">Provide a clear, descriptive title for this medical report</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient Information Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h3>Patient Information</h3>
+                <div class="section-divider"></div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="patient-description" class="form-label">
+                        <span class="label-icon"></span>
+                        Patient Demographics & History <span class="required">*</span>
+                    </label>
+                    <textarea id="patient-description" class="form-textarea" rows="4" placeholder="Age, gender, medical history, allergies, previous conditions, etc." required></textarea>
+                    <div class="form-help">Include relevant patient background information</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clinical Assessment Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h3>Clinical Assessment</h3>
+                <div class="section-divider"></div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="symptoms" class="form-label">
+                        <span class="label-icon"></span>
+                        Symptoms & Clinical Findings <span class="required">*</span>
+                    </label>
+                    <textarea id="symptoms" class="form-textarea" rows="4" placeholder="Detailed symptoms, test results, physical examination findings, vital signs, etc." required></textarea>
+                    <div class="form-help">Document all clinical observations and test results</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="diagnosis" class="form-label">
+                        <span class="label-icon"></span>
+                        Diagnosis <span class="required">*</span>
+                    </label>
+                    <input type="text" id="diagnosis" class="form-input" placeholder="e.g., Stage II Non-Small Cell Lung Cancer" required>
+                    <div class="form-help">Provide the primary diagnosis with staging/classification if applicable</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Treatment Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h3>Treatment & Management</h3>
+                <div class="section-divider"></div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="procedures" class="form-label">
+                        <span class="label-icon"></span>
+                        Procedures Performed
+                    </label>
+                    <textarea id="procedures" class="form-textarea" rows="3" placeholder="CT Scan, Biopsy, Blood Tests, X-Ray, etc."></textarea>
+                    <div class="form-help">List all diagnostic and therapeutic procedures</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="medications" class="form-label">
+                        <span class="label-icon"></span>
+                        Medications Prescribed
+                    </label>
+                    <textarea id="medications" class="form-textarea" rows="3" placeholder="Drug name - dosage - frequency (e.g., Paracetamol 500mg - 2x daily)"></textarea>
+                    <div class="form-help">Include dosage, frequency, and duration</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="suggested-solution" class="form-label">
+                        <span class="label-icon"></span>
+                        Treatment Plan & Recommendations <span class="required">*</span>
+                    </label>
+                    <textarea id="suggested-solution" class="form-textarea" rows="4" placeholder="Recommended treatment plan, follow-up schedule, lifestyle modifications, monitoring requirements, etc." required></textarea>
+                    <div class="form-help">Provide comprehensive treatment recommendations and follow-up care</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Information Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h3>Additional Information</h3>
+                <div class="section-divider"></div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="additional-notes" class="form-label">
+                        <span class="label-icon"></span>
+                        Additional Notes & Observations
+                    </label>
+                    <textarea id="additional-notes" class="form-textarea" rows="3" placeholder="Any additional observations, contraindications, patient preferences, or special considerations"></textarea>
+                    <div class="form-help">Optional additional information for comprehensive documentation</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Doctor Information Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h3>Doctor Information</h3>
+                <div class="section-divider"></div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="doctor-signature" class="form-label">
+                        <span class="label-icon"></span>
+                        Doctor Signature <span class="required">*</span>
+                    </label>
+                    <input type="text" id="doctor-signature" class="form-input" placeholder="Dr. [Your Full Name]" required>
+                    <div class="form-help">Your professional signature</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="doctor-phone" class="form-label">
+                        <span class="label-icon"></span>
+                        Contact Number <span class="required">*</span>
+                    </label>
+                    <input type="tel" id="doctor-phone" class="form-input" placeholder="9876543210" required>
+                    <div class="form-help">10-digit mobile number starting with 6, 7, 8, or 9</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Scanner Section -->
+        <div class="form-section ai-scanner-section">
+            <div class="section-header">
+                <h3>AI-Powered Analysis</h3>
+                <div class="section-divider"></div>
+            </div>
+
+            <div class="ai-scanner-toggle">
+                <label class="toggle-label">
+                    <input type="checkbox" id="include-ai-scanner" class="toggle-checkbox">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">Include AI Scanner Analysis</span>
+                </label>
+                <div class="ai-info">
+                    <span class="ai-badge">Optional</span>
+                    <span class="ai-description">Enhance your report with AI-powered medical image analysis</span>
+                </div>
+            </div>
+
+            <div id="ai-scanner-options" class="ai-scanner-options" style="display: none;">
+                <div class="ai-scanner-content">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="scan-type" class="form-label">
+                                <span class="label-icon"></span>
+                                Scan Type
+                            </label>
+                            <select id="scan-type" class="form-select">
+                                <option value="breast">Breast Cancer Segmentation</option>
+                                <option value="brain">Brain Tumor Segmentation</option>
+                                <option value="lung">Lung Cancer Segmentation</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="scan-image" class="form-label">
+                                <span class="label-icon"></span>
+                                Medical Scan Image
+                            </label>
+                            <div class="file-upload-area">
+                                <input type="file" id="scan-image" accept="image/*" class="file-input">
+                                <div class="file-upload-content">
+                                    <div class="upload-icon">📤</div>
+                                    <div class="upload-text">Click to upload or drag and drop</div>
+                                    <div class="upload-subtext">PNG, JPG, JPEG up to 10MB</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="scan-preview" class="scan-preview" style="display: none;">
+                        <h4 class="preview-title">Scan Analysis Preview</h4>
+                        <div class="preview-grid">
+                            <div class="preview-item">
+                                <h5>Original Scan</h5>
+                                <div class="image-container">
+                                    <img id="original-scan" alt="Original scan" class="preview-image">
+                                </div>
+                            </div>
+                            <div class="preview-item">
+                                <h5>AI Segmented Regions</h5>
+                                <div class="image-container">
+                                    <img id="segmented-scan" alt="AI segmented scan" class="preview-image">
+                                </div>
+                            </div>
+                        </div>
+                        <div id="ai-analysis-result" class="analysis-result">
+                            <div class="analysis-loading">
+                                <div class="loading-spinner"></div>
+                                <span>Running AI analysis...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <div class="action-buttons">
+                <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+                    <span class="btn-icon"></span>
+                    Cancel
+                </button>
+                <button type="button" id="save-report-btn" class="btn btn-primary">
+                    <span class="btn-icon"></span>
+                    Generate Report
+                </button>
+            </div>
+            <div class="form-status">
+                <span id="form-status" class="status-text"></span>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+.report-form-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.form-header h2 {
+    color: var(--drac-purple);
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.form-subtitle {
+    color: var(--drac-comment);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.report-form {
+    background: var(--drac-bg);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.form-section {
+    padding: 30px;
+    border-bottom: 1px solid var(--drac-comment);
+}
+
+.form-section:last-child {
+    border-bottom: none;
+}
+
+.section-header {
+    margin-bottom: 25px;
+}
+
+.section-header h3 {
+    color: var(--drac-cyan);
+    font-size: 1.4rem;
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-divider {
+    height: 3px;
+    background: linear-gradient(90deg, var(--drac-cyan), var(--drac-purple));
+    border-radius: 2px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-row:last-child {
+    margin-bottom: 0;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--drac-foreground);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95rem;
+}
+
+.label-icon {
+    font-size: 1rem;
+}
+
+.required {
+    color: var(--drac-red);
+    font-weight: 700;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    padding: 12px 16px;
+    border: 2px solid var(--drac-comment);
+    border-radius: 8px;
+    background-color: var(--drac-bg);
+    color: var(--drac-foreground);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    outline: none;
+    border-color: var(--drac-cyan);
+    box-shadow: 0 0 0 3px rgba(139, 233, 253, 0.1);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.5;
+}
+
+.form-help {
+    font-size: 0.85rem;
+    color: var(--drac-comment);
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* AI Scanner Section */
+.ai-scanner-section {
+    background: linear-gradient(135deg, rgba(139, 233, 253, 0.05), rgba(80, 250, 123, 0.05));
+    border: 1px solid rgba(139, 233, 253, 0.2);
+}
+
+.ai-scanner-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    background: rgba(139, 233, 253, 0.05);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(139, 233, 253, 0.2);
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--drac-cyan);
+}
+
+.toggle-checkbox {
+    display: none;
+}
+
+.toggle-slider {
+    position: relative;
+    width: 50px;
+    height: 26px;
+    background: var(--drac-comment);
+    border-radius: 13px;
+    transition: background 0.3s ease;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-checkbox:checked + .toggle-slider {
+    background: var(--drac-cyan);
+}
+
+.toggle-checkbox:checked + .toggle-slider::before {
+    transform: translateX(24px);
+}
+
+.toggle-text {
+    font-size: 1.1rem;
+}
+
+.ai-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ai-badge {
+    background: var(--drac-cyan);
+    color: var(--drac-bg);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.ai-description {
+    color: var(--drac-comment);
+    font-size: 0.9rem;
+}
+
+.ai-scanner-options {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ai-scanner-content {
+    background: var(--drac-bg);
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid var(--drac-comment);
+}
+
+.file-upload-area {
+    position: relative;
+    border: 2px dashed var(--drac-comment);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: rgba(139, 233, 253, 0.02);
+}
+
+.file-upload-area:hover {
+    border-color: var(--drac-cyan);
+    background: rgba(139, 233, 253, 0.05);
+}
+
+.file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.upload-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+.upload-text {
+    font-weight: 600;
+    color: var(--drac-foreground);
+    margin-bottom: 4px;
+}
+
+.upload-subtext {
+    font-size: 0.85rem;
+    color: var(--drac-comment);
+}
+
+.scan-preview {
+    margin-top: 20px;
+    padding: 20px;
+    background: var(--drac-comment);
+    border-radius: 8px;
+}
+
+.preview-title {
+    color: var(--drac-cyan);
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.preview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.preview-item h5 {
+    color: var(--drac-foreground);
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.image-container {
+    background: var(--drac-bg);
+    border-radius: 6px;
+    padding: 10px;
+    border: 1px solid var(--drac-comment);
+}
+
+.preview-image {
+    width: 100%;
+    height: 200px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.analysis-result {
+    padding: 15px;
+    background: var(--drac-bg);
+    border-radius: 6px;
+    border: 1px solid var(--drac-comment);
+}
+
+.analysis-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--drac-cyan);
+}
+
+.loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--drac-comment);
+    border-top: 2px solid var(--drac-cyan);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Form Actions */
+.form-actions {
+    padding: 30px;
+    background: var(--drac-card);
+    border-top: 1px solid var(--drac-comment);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: var(--drac-comment);
+    color: var(--drac-foreground);
+    border: 2px solid var(--drac-comment);
+}
+
+.btn-secondary:hover {
+    background: var(--drac-comment);
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: var(--drac-purple);
+    color: var(--drac-foreground);
+}
+
+.btn-primary:hover {
+    background: var(--drac-purple);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(189, 147, 249, 0.3);
+}
+
+.btn-icon {
+    font-size: 1rem;
+}
+
+.form-status {
+    flex: 1;
+    text-align: right;
+}
+
+.status-text {
+    font-size: 0.9rem;
+    color: var(--drac-comment);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .report-form-container {
+        padding: 10px;
+    }
+
+    .form-section {
+        padding: 20px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .ai-scanner-toggle {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .preview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .action-buttons {
+        justify-content: center;
+    }
+}
+</style>
+{% endif %}
+
+<div class="data-card">
+    <h2>📊 Patient Reports Archive</h2>
+    {% include 'shared/reports_table.html' %}
+</div>
+
+<script>
+{% if request.args.get('case_id') %}
+// JavaScript for manual report generation mode
+document.getElementById('save-report-btn').addEventListener('click', saveReport);
+
+// Fetch case details and pre-fill form fields
+async function loadCaseDetails() {
+    const caseId = "{{ request.args.get('case_id') }}";
+    try {
+        const response = await fetch(`/api/case/${caseId}`);
+        const caseData = await response.json();
+        
+        if (response.ok) {
+            // Only pre-fill if fields are empty to avoid overwriting user input
+            const patientDescField = document.getElementById('patient-description');
+            if (!patientDescField.value) {
+                patientDescField.value = caseData.description || '';
+            }
+            
+            const symptomsField = document.getElementById('symptoms');
+            if (!symptomsField.value) {
+                symptomsField.value = caseData.symptoms || '';
+            }
+            
+            const titleField = document.getElementById('report-title');
+            if (!titleField.value) {
+                titleField.value = `${caseData.title} - Report`;
+            }
+        } else {
+            console.error('Failed to load case details:', caseData.error);
+        }
+    } catch (error) {
+        console.error('Error loading case details:', error);
+    }
+}
+
+// Load case details only once when page initially loads
+let caseDetailsLoaded = false;
+document.addEventListener('DOMContentLoaded', function() {
+    if (!caseDetailsLoaded) {
+        loadCaseDetails();
+        caseDetailsLoaded = true;
+    }
+    
+    // Autofill doctor's name
+    const doctorSignatureField = document.getElementById('doctor-signature');
+    if (doctorSignatureField && !doctorSignatureField.value) {
+        doctorSignatureField.value = "{{ current_user.fullname if current_user else '' }}";
+    }
+});
+
+// AI Scanner functionality
+document.getElementById('include-ai-scanner').addEventListener('change', function() {
+    const options = document.getElementById('ai-scanner-options');
+    if (this.checked) {
+        options.style.display = 'block';
+        options.style.animation = 'slideDown 0.3s ease-out';
+    } else {
+        options.style.display = 'none';
+        // Clear any uploaded files when unchecked
+        document.getElementById('scan-image').value = '';
+        document.getElementById('scan-preview').style.display = 'none';
+    }
+});
+
+document.getElementById('scan-image').addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+        // Validate file size (10MB max)
+        if (file.size > 10 * 1024 * 1024) {
+            showStatus('File size must be less than 10MB', 'error');
+            this.value = '';
+            return;
+        }
+
+        // Validate file type
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+        if (!allowedTypes.includes(file.type)) {
+            showStatus('Please select a valid image file (PNG, JPG, JPEG)', 'error');
+            this.value = '';
+            return;
+        }
+
+        // Preview the image
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('original-scan').src = e.target.result;
+            document.getElementById('scan-preview').style.display = 'block';
+
+            // Run AI analysis
+            runAIScanner(file);
+        };
+        reader.readAsDataURL(file);
+    } else {
+        document.getElementById('scan-preview').style.display = 'none';
+    }
+});
+
+async function runAIScanner(file) {
+    const resultDiv = document.getElementById('ai-analysis-result');
+    resultDiv.innerHTML = `
+        <div class="analysis-loading">
+            <div class="loading-spinner"></div>
+            <span>Running AI analysis...</span>
+        </div>
+    `;
+
+    try {
+        const formData = new FormData();
+        formData.append('scan', file);
+        formData.append('scan_type', document.getElementById('scan-type').value);
+
+        const response = await fetch('/doctor/ai-scanner/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            // Extract the images from the response
+            const origImg = doc.querySelector('img[alt*="original"]') || doc.querySelector('img[src*="orig"]');
+            const overlayImg = doc.querySelector('img[alt*="segmented"]') || doc.querySelector('img[src*="overlay"]');
+
+            if (origImg && overlayImg) {
+                // Update the preview images
+                document.getElementById('original-scan').src = origImg.src;
+                document.getElementById('segmented-scan').src = overlayImg.src;
+
+                resultDiv.innerHTML = `
+                    <div class="analysis-success">
+                        <span class="success-icon"></span>
+                        <span>AI analysis completed successfully! Segmented regions highlighted in green.</span>
+                    </div>
+                `;
+            } else {
+                throw new Error('Could not extract analysis results');
+            }
+        } else {
+            const errorText = await response.text();
+            throw new Error(`Analysis failed: ${response.status}`);
+        }
+    } catch (error) {
+        console.error('AI Scanner error:', error);
+        resultDiv.innerHTML = `
+            <div class="analysis-error">
+                <span class="error-icon"></span>
+                <span>AI analysis failed: ${error.message}. You can still save the report without AI analysis.</span>
+            </div>
+        `;
+    }
+}
+
+function saveReport() {
+    // Clear any previous status
+    showStatus('', '');
+
+    // Get form data
+    const caseId = "{{ request.args.get('case_id') }}";
+    const title = document.getElementById('report-title').value.trim();
+    const patientDescription = document.getElementById('patient-description').value.trim();
+    const diagnosis = document.getElementById('diagnosis').value.trim();
+    const symptoms = document.getElementById('symptoms').value.trim();
+    const procedures = document.getElementById('procedures').value.trim();
+    const medications = document.getElementById('medications').value.trim();
+    const suggestedSolution = document.getElementById('suggested-solution').value.trim();
+    const additionalNotes = document.getElementById('additional-notes').value.trim();
+    const doctorSignature = document.getElementById('doctor-signature').value.trim();
+    const doctorPhone = document.getElementById('doctor-phone').value.trim();
+
+    // Validate required fields
+    const requiredFields = [
+        { field: title, name: 'Report Title' },
+        { field: patientDescription, name: 'Patient Description' },
+        { field: diagnosis, name: 'Diagnosis' },
+        { field: symptoms, name: 'Symptoms & Findings' },
+        { field: suggestedSolution, name: 'Treatment Plan & Recommendations' },
+        { field: doctorSignature, name: 'Doctor Signature' },
+        { field: doctorPhone, name: 'Doctor Phone Number' }
+    ];
+
+    const missingFields = requiredFields.filter(item => !item.field);
+
+    if (missingFields.length > 0) {
+        const fieldNames = missingFields.map(item => item.name).join(', ');
+        showStatus(`Please fill in all required fields: ${fieldNames}`, 'error');
+        // Highlight missing fields
+        missingFields.forEach(item => {
+            const fieldName = Object.keys(requiredFields.find(rf => rf.name === item.name) || {})[0] || '';
+            if (fieldName) {
+                const element = document.getElementById(fieldName.toLowerCase().replace(/\s+/g, '-').replace('&', ''));
+                if (element) {
+                    element.style.borderColor = 'var(--drac-red)';
+                    setTimeout(() => element.style.borderColor = '', 3000);
+                }
+            }
+        });
+        return;
+    }
+
+    // Validate phone number format (10 digits, starting with 6, 7, 8, or 9)
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(doctorPhone.replace(/[\s\-\(\)]/g, ''))) {
+        showStatus('Please enter a valid 10-digit phone number starting with 6, 7, 8, or 9', 'error');
+        document.getElementById('doctor-phone').focus();
+        return;
+    }
+
+    // Show loading state
+    const saveBtn = document.getElementById('save-report-btn');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<span class="btn-icon"></span> Generating Report...';
+    saveBtn.disabled = true;
+
+    // Get AI scanner data if enabled
+    let aiScannerData = null;
+    const includeAIScanner = document.getElementById('include-ai-scanner').checked;
+    if (includeAIScanner) {
+        const scanImage = document.getElementById('scan-image').files[0];
+        if (!scanImage) {
+            showStatus('Please select a scan image for AI analysis.', 'error');
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+            return;
+        }
+
+        // Convert images to base64 for storage
+        const originalImg = document.getElementById('original-scan');
+        const segmentedImg = document.getElementById('segmented-scan');
+
+        aiScannerData = {
+            scan_type: document.getElementById('scan-type').value,
+            original_image: originalImg.src,
+            segmented_image: segmentedImg.src,
+            analysis_completed: document.getElementById('ai-analysis-result').innerHTML.includes('completed successfully')
+        };
+    }
+
+    // Prepare data for API
+    const reportData = {
+        case_id: caseId,
+        title: title,
+        patient_description: patientDescription,
+        diagnosis: diagnosis,
+        symptoms: symptoms,
+        procedures: procedures,
+        medications: medications,
+        suggested_solution: suggestedSolution,
+        additional_notes: additionalNotes,
+        doctor_signature: doctorSignature,
+        doctor_phone: doctorPhone,
+        ai_scanner_data: aiScannerData
+    };
+
+    // Send to backend
+    fetch('/api/save_report', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reportData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showStatus('Report generated successfully! Redirecting...', 'success');
+            // Redirect to reports page with success parameter to show notification
+            setTimeout(() => {
+                window.location.href = '/doctor/reports?success=report_saved';
+            }, 1500);
+        } else {
+            showStatus('Error saving report: ' + (data.error || 'Unknown error'), 'error');
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showStatus('Error saving report. Please try again.', 'error');
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    });
+}
+
+function showStatus(message, type) {
+    const statusElement = document.getElementById('form-status');
+    statusElement.textContent = message;
+    statusElement.className = 'status-text';
+
+    if (type) {
+        statusElement.classList.add(`status-${type}`);
+    }
+
+    // Auto-clear success messages after 3 seconds
+    if (type === 'success') {
+        setTimeout(() => {
+            statusElement.textContent = '';
+            statusElement.className = 'status-text';
+        }, 3000);
+    }
+}
+{% else %}
+// Load reports when not in manual report generation mode
+document.addEventListener('DOMContentLoaded', loadReports);
+
+function loadReports() {
+    fetch('/api/reports')
+    .then(response => response.json())
+    .then(reports => {
+        const tbody = document.getElementById('reports-table-body');
+        tbody.innerHTML = '';
+        
+        if (reports.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No reports found. Create your first manual report from a case.</td></tr>';
+            return;
+        }
+        
+        reports.forEach(report => {
+            const row = document.createElement('tr');
+            
+            // Format date
+            const date = new Date(report.created_at);
+            const formattedDate = date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+            
+            row.innerHTML = `
+                <td>R-${String(report.id).padStart(10, '0')}</td>
+                <td>${report.patient_name}</td>
+                <td>${report.report_title || 'Medical Report'}</td>
+                <td>${report.diagnosis || 'N/A'}</td>
+                <td>${formattedDate}</td>
+                <td>
+                    <button class="action-btn" onclick="viewPDF(${report.id})">View PDF</button>
+                    <button class="action-btn" onclick="downloadPDF(${report.id})">Download PDF</button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+    })
+    .catch(error => {
+        console.error('Error loading reports:', error);
+        document.getElementById('reports-table-body').innerHTML = 
+            '<tr><td colspan="6" style="text-align: center;">Error loading reports</td></tr>';
+    });
+}
+
+function viewPDF(reportId) {
+    // Open PDF in a new window/tab for viewing
+    window.open(`/api/reports/${reportId}/pdf?view=true`, '_blank');
+}
+
+function downloadPDF(reportId) {
+    // Fetch report data to get the title for filename
+    fetch(`/api/reports/${reportId}`)
+    .then(response => response.json())
+    .then(report => {
+        if (!report) {
+            alert('Report not found');
+            return;
+        }
+
+        // Create a temporary link to download the PDF with custom filename
+        const link = document.createElement('a');
+        link.href = `/api/reports/${reportId}/pdf`;
+        link.download = `${report.report_title || 'Medical_Report'}.pdf`.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    })
+    .catch(error => {
+        console.error('Error fetching report:', error);
+        alert('Error loading report data');
+    });
+}
+{% endif %}
+</script>
+{% endblock %}

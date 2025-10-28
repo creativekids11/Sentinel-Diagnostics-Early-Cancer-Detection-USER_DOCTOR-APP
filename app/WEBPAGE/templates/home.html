@@ -1,0 +1,1814 @@
+{% extends "layouts/base.html" %}
+{% block title %}Welcome to Sentinel Diagnostics{% endblock %}
+
+{% block head %}
+<style>
+    body { display: block; }
+
+    /* Background similar to login page */
+    .hero-features-bg {
+        position: relative;
+        padding-top: 40px;
+        padding-bottom: 40px;
+        background: url("{{ url_for('static', filename='assets/home_page_background.jpg') }}") center/cover no-repeat fixed;
+    }
+
+    .landing-hero {
+        min-height: calc(100vh - 80px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        background: transparent; /* inherit from wrapper */
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Liquid / frosted glass card */
+    .glass-card {
+        width: 100%;
+        max-width: 1100px;
+        border-radius: 18px;
+        padding: 40px;
+        display: flex;
+        gap: 36px;
+        backdrop-filter: blur(10px) saturate(120%);
+        -webkit-backdrop-filter: blur(10px) saturate(120%);
+        background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+        box-shadow: 0 10px 40px rgba(2,6,23,0.7);
+        border: 1px solid rgba(255,255,255,0.04);
+        overflow: hidden;
+    }
+
+    .glass-left, .glass-right { flex: 1 1 50%; min-width: 300px; }
+
+    .glass-left {
+        color: #e6eef0;
+        background: linear-gradient(180deg, rgba(9,12,16,0.08), rgba(9,12,16,0.02));
+        padding: 24px 28px;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+    }
+
+    .glass-left h1 { font-size: 36px; margin: 0 0 12px 0; line-height:1.05; }
+    .glass-left p { color: #cbd6da; margin-bottom: 12px; }
+
+    .glass-right {
+        padding: 24px 28px;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+    }
+
+    .cta-buttons { 
+        display: flex; 
+        gap: 0px; 
+        margin-top: 24px; 
+        position: relative;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 25px;
+        padding: 4px;
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        width: fit-content;
+    }
+    
+    /* Slider background indicator */
+    .slider-indicator {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        height: calc(100% - 8px);
+        width: calc(50% - 2px);
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 
+            0 4px 20px rgba(255, 255, 255, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        z-index: 1;
+        cursor: grab;
+        user-select: none;
+    }
+    
+    .slider-indicator:active {
+        cursor: grabbing;
+    }
+    
+    .slider-indicator.dragging {
+        cursor: grabbing;
+        transition: none;
+        box-shadow: 
+            0 8px 30px rgba(255, 255, 255, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        transform: scale(1.02);
+    }
+    
+    .slider-indicator.slide-right {
+        left: calc(50% + 2px);
+    }
+    
+    /* Apple-inspired liquid glass buttons */
+    .liquid-btn {
+        position: relative;
+        padding: 14px 28px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 15px;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.85);
+        overflow: hidden;
+        transform-style: preserve-3d;
+        will-change: transform, color;
+        flex: 1;
+        text-align: center;
+        z-index: 2;
+        min-width: 120px;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.12),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Subtle morphing effect on the main container */
+    .liquid-btn:not(.active) {
+        animation: subtleMorph 6s ease-in-out infinite;
+    }
+    
+    .liquid-btn.active {
+        color: rgba(255, 255, 255, 0.95);
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(25px) saturate(200%);
+        -webkit-backdrop-filter: blur(25px) saturate(200%);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 
+            0 12px 40px rgba(0, 0, 0, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.15),
+            0 0 20px rgba(255, 255, 255, 0.08);
+    }
+    
+    .liquid-btn.active::before {
+        animation: fluidFlow 4s ease-in-out infinite;
+    }
+    
+    .liquid-btn.active::after {
+        opacity: 0.3;
+        animation: shimmerPulse 2s ease-in-out infinite;
+    }
+    
+    .liquid-btn:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(35px) saturate(240%);
+        -webkit-backdrop-filter: blur(35px) saturate(240%);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.15),
+            0 0 40px rgba(255, 255, 255, 0.15);
+    }
+    
+    .liquid-btn:focus::before {
+        animation: fluidFlow 2.5s ease-in-out infinite;
+    }
+    
+    .liquid-btn:focus::after {
+        opacity: 0.6;
+        animation: focusShimmer 1.5s ease-in-out infinite;
+    }
+    
+    /* Subtle noise texture for enhanced glass effect */
+    .liquid-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(255,255,255,0.12) 0%, transparent 30%),
+            radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 40%),
+            radial-gradient(circle at 40% 40%, rgba(255,255,255,0.1) 0%, transparent 35%),
+            radial-gradient(circle at 60% 10%, rgba(255,255,255,0.06) 0%, transparent 25%),
+            radial-gradient(circle at 10% 60%, rgba(255,255,255,0.09) 0%, transparent 45%);
+        border-radius: inherit;
+        pointer-events: none;
+        z-index: -1;
+        animation: floatingParticles 8s ease-in-out infinite;
+    }
+    
+    /* Fluid glass shimmer effect */
+    .liquid-btn::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            45deg,
+            transparent 20%,
+            rgba(255, 255, 255, 0.15) 40%,
+            rgba(255, 255, 255, 0.25) 50%,
+            rgba(255, 255, 255, 0.15) 60%,
+            transparent 80%
+        );
+        transform: translateX(-100%) skewX(-20deg);
+        transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+        border-radius: inherit;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0;
+    }
+    
+    .liquid-btn:hover {
+        color: rgba(255, 255, 255, 0.9);
+        transform: translateY(-2px) scale(1.02);
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(30px) saturate(220%);
+        -webkit-backdrop-filter: blur(30px) saturate(220%);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 
+            0 16px 48px rgba(0, 0, 0, 0.18),
+            inset 0 1px 0 rgba(255, 255, 255, 0.12),
+            0 0 30px rgba(255, 255, 255, 0.12);
+    }
+    
+    .liquid-btn:hover::after {
+        opacity: 1;
+        transform: translateX(100%) skewX(-20deg);
+    }
+    
+    .liquid-btn:hover::before {
+        animation: fluidFlow 3s ease-in-out infinite;
+    }
+    
+    .liquid-btn:active {
+        transform: scale(0.98);
+    }
+    
+    /* Ripple effect */
+    .liquid-btn .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.4);
+        transform: scale(0);
+        animation: ripple-animation 0.6s linear;
+        pointer-events: none;
+        z-index: 1;
+    }
+    
+    @keyframes ripple-animation {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+    
+    /* Fluid glass animations */
+    @keyframes floatingParticles {
+        0%, 100% {
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255,255,255,0.12) 0%, transparent 30%),
+                radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 40%),
+                radial-gradient(circle at 40% 40%, rgba(255,255,255,0.1) 0%, transparent 35%),
+                radial-gradient(circle at 60% 10%, rgba(255,255,255,0.06) 0%, transparent 25%),
+                radial-gradient(circle at 10% 60%, rgba(255,255,255,0.09) 0%, transparent 45%);
+        }
+        25% {
+            background: 
+                radial-gradient(circle at 30% 70%, rgba(255,255,255,0.15) 0%, transparent 35%),
+                radial-gradient(circle at 70% 30%, rgba(255,255,255,0.1) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.12) 0%, transparent 40%),
+                radial-gradient(circle at 70% 20%, rgba(255,255,255,0.08) 0%, transparent 30%),
+                radial-gradient(circle at 20% 70%, rgba(255,255,255,0.11) 0%, transparent 50%);
+        }
+        50% {
+            background: 
+                radial-gradient(circle at 40% 60%, rgba(255,255,255,0.1) 0%, transparent 40%),
+                radial-gradient(circle at 60% 40%, rgba(255,255,255,0.12) 0%, transparent 35%),
+                radial-gradient(circle at 60% 60%, rgba(255,255,255,0.08) 0%, transparent 45%),
+                radial-gradient(circle at 80% 30%, rgba(255,255,255,0.09) 0%, transparent 25%),
+                radial-gradient(circle at 30% 80%, rgba(255,255,255,0.07) 0%, transparent 40%);
+        }
+        75% {
+            background: 
+                radial-gradient(circle at 50% 90%, rgba(255,255,255,0.08) 0%, transparent 30%),
+                radial-gradient(circle at 90% 10%, rgba(255,255,255,0.11) 0%, transparent 40%),
+                radial-gradient(circle at 30% 30%, rgba(255,255,255,0.09) 0%, transparent 35%),
+                radial-gradient(circle at 50% 20%, rgba(255,255,255,0.12) 0%, transparent 45%),
+                radial-gradient(circle at 10% 50%, rgba(255,255,255,0.06) 0%, transparent 25%);
+        }
+    }
+    
+    @keyframes fluidFlow {
+        0%, 100% {
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255,255,255,0.18) 0%, transparent 30%),
+                radial-gradient(circle at 80% 20%, rgba(255,255,255,0.14) 0%, transparent 40%),
+                radial-gradient(circle at 40% 40%, rgba(255,255,255,0.16) 0%, transparent 35%),
+                radial-gradient(circle at 60% 10%, rgba(255,255,255,0.12) 0%, transparent 25%),
+                radial-gradient(circle at 10% 60%, rgba(255,255,255,0.15) 0%, transparent 45%);
+            transform: scale(1) rotate(0deg);
+        }
+        33% {
+            background: 
+                radial-gradient(circle at 70% 30%, rgba(255,255,255,0.2) 0%, transparent 35%),
+                radial-gradient(circle at 30% 70%, rgba(255,255,255,0.16) 0%, transparent 45%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.18) 0%, transparent 40%),
+                radial-gradient(circle at 20% 20%, rgba(255,255,255,0.14) 0%, transparent 30%),
+                radial-gradient(circle at 50% 90%, rgba(255,255,255,0.17) 0%, transparent 50%);
+            transform: scale(1.05) rotate(1deg);
+        }
+        66% {
+            background: 
+                radial-gradient(circle at 90% 80%, rgba(255,255,255,0.15) 0%, transparent 40%),
+                radial-gradient(circle at 10% 20%, rgba(255,255,255,0.19) 0%, transparent 35%),
+                radial-gradient(circle at 50% 10%, rgba(255,255,255,0.13) 0%, transparent 45%),
+                radial-gradient(circle at 90% 50%, rgba(255,255,255,0.16) 0%, transparent 25%),
+                radial-gradient(circle at 20% 90%, rgba(255,255,255,0.11) 0%, transparent 40%);
+            transform: scale(1.02) rotate(-0.5deg);
+        }
+    }
+    
+    @keyframes shimmerPulse {
+        0%, 100% {
+            opacity: 0.3;
+            transform: translateX(-20%) skewX(-20deg);
+        }
+        50% {
+            opacity: 0.5;
+            transform: translateX(20%) skewX(-20deg);
+        }
+    }
+    
+    @keyframes focusShimmer {
+        0% {
+            opacity: 0.6;
+            transform: translateX(-100%) skewX(-15deg) scale(0.8);
+        }
+        50% {
+            opacity: 0.8;
+            transform: translateX(0%) skewX(-15deg) scale(1);
+        }
+        100% {
+            opacity: 0.6;
+            transform: translateX(100%) skewX(-15deg) scale(0.8);
+        }
+    }
+    
+    @keyframes subtleMorph {
+        0%, 100% {
+            border-radius: 20px;
+            transform: scale(1);
+        }
+        25% {
+            border-radius: 22px 18px 20px 22px;
+            transform: scale(1.005);
+        }
+        50% {
+            border-radius: 18px 22px 22px 18px;
+            transform: scale(0.998);
+        }
+        75% {
+            border-radius: 21px 19px 23px 17px;
+            transform: scale(1.002);
+        }
+    }
+    
+    /* Slider animations */
+    @keyframes slide-bounce {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .slider-indicator.bouncing {
+        animation: slide-bounce 0.3s ease-out;
+    }
+
+    @media (max-width: 900px) {
+        .glass-card { flex-direction: column; padding: 28px; }
+    }
+
+    /* Keep original header/hero styles for fallback - adjusted for reduced height */
+    .page-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 6%; background-color: #0d0e15; overflow: hidden; }
+    /* Hide top-right nav links as requested */
+    .page-header nav { display: none; }
+    .page-header nav a { margin: 0 16px; text-decoration: none; color: #ccc; font-weight: 500; }
+    /* Ensure logo keeps its size and doesn't overflow */
+    .logo { flex: 0 0 auto; display: flex; height: 40px; align-items: center; }
+        .logo img { height: 180px; width: 500px; margin-top: 15px; }
+
+    .quick-nav {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .nav-btn {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 8px 16px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .nav-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 1);
+        transform: translateY(-2px);
+    }
+
+    .nav-btn:active {
+        transform: translateY(0);
+    }
+
+    @media (max-width: 600px) {
+        .page-header { padding: 8px 4%; }
+        .logo img { height: 72px; margin-top: 12px; }
+    }
+    .btn-signup { background: linear-gradient(to right, var(--drac-pink), var(--drac-purple)); padding: 10px 20px; border-radius: 25px; color: white; text-decoration: none; font-weight: 600; cursor: pointer; transition: opacity 0.3s ease; }
+    .btn-signup:hover { opacity: 0.9; }
+
+    /* New sections inspired by the design */
+    
+    /* Features Section */
+    .features-section {
+        padding: 80px 20px;
+        background: transparent; /* show wrapper background */
+    }
+    
+    .features-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .features-title {
+        text-align: center;
+        color: #e6eef0;
+        font-size: 32px;
+        font-weight: 600;
+        margin-bottom: 50px;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 30px;
+        margin-bottom: 60px;
+    }
+    
+    .feature-card {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border-radius: 20px;
+        padding: 40px 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: conic-gradient(transparent, rgba(255,255,255,0.03), transparent);
+        animation: rotate 20s linear infinite;
+        z-index: -1;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-8px);
+        background: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 20px 60px rgba(255, 255, 255, 0.08);
+    }
+    
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        margin-bottom: 20px;
+    }
+    
+    .feature-icon.ai { background: linear-gradient(135deg, #00d4ff, #0095cc); }
+    .feature-icon.consultation { background: linear-gradient(135deg, #ff6b9d, #c44569); }
+    .feature-icon.healing { background: linear-gradient(135deg, #ff9500, #ff6b35); }
+    
+    .feature-title {
+        color: #e6eef0;
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+    
+    .feature-description {
+        color: #cbd6da;
+        line-height: 1.6;
+        font-size: 15px;
+    }
+    
+    /* How It Works Section */
+    /* How It Works - timeline design */
+    .howworks-footer-bg {
+        background: url("{{ url_for('static', filename='icons/How_it_works.png') }}") center/cover no-repeat;
+        position: relative;
+        background-size: cover;
+        background-position: center;
+        padding-top: 40px;
+        padding-bottom: 40px;
+    }
+
+    .how-it-works {
+        padding: 120px 20px;
+        background: radial-gradient(ellipse at center, rgba(6,8,12,0.85) 0%, rgba(6,8,12,0.95) 60%);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .how-it-works-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        text-align: center;
+        position: relative;
+        z-index: 2;
+    }
+
+    .how-it-works-title {
+        color: #ffffff;
+        font-size: 34px;
+        font-weight: 700;
+        margin-bottom: 48px;
+        letter-spacing: 0.4px;
+    }
+
+    /* Central horizontal timeline */
+    .timeline-wrapper { position: relative; padding: 60px 0 40px; }
+
+    .steps-timeline {
+        display: flex;
+        gap: 0px;
+        justify-content: center;
+        align-items: flex-start;
+        position: relative;
+        z-index: 3;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .timeline-step {
+        flex: 1;
+        text-align: center;
+        background: transparent;
+        padding: 0;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .timeline-badge {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 0 20px 0;
+        color: #fff;
+        font-weight: 800;
+        font-size: 28px;
+        position: relative;
+        z-index: 4;
+        box-shadow: 
+            0 20px 50px rgba(0,0,0,0.5), 
+            inset 0 2px 0 rgba(255,255,255,0.15);
+    }
+
+    /* Outer circle ring with spacing */
+    .timeline-badge::before {
+        content: '';
+        position: absolute;
+        top: -20px;
+        left: -20px;
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        border: 3px solid;
+        z-index: -1;
+        opacity: 0.6;
+    }
+
+    .timeline-badge.number-1 { 
+        background: linear-gradient(135deg, #49d06a, #0c8b45);
+    }
+    .timeline-badge.number-1::before { 
+        border-color: #49d06a;
+    }
+    .timeline-badge.number-2 { 
+        background: linear-gradient(135deg, #2fb8ff, #1a8ed6);
+    }
+    .timeline-badge.number-2::before { 
+        border-color: #2fb8ff;
+    }
+    .timeline-badge.number-3 { 
+        background: linear-gradient(135deg, #a56bff, #a355d1);
+    }
+    .timeline-badge.number-3::before { 
+        border-color: #a56bff;
+    }
+    .timeline-badge.number-4 { 
+        background: linear-gradient(135deg, #ff758c, #ff5a8a);
+    }
+    .timeline-badge.number-4::before { 
+        border-color: #ff758c;
+    }
+
+    /* Dotted connecting lines between badges - centered through badges */
+    .timeline-step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 60px; /* Center with badge (accounting for outer ring) */
+        left: calc(50% + 80px); /* Start from center + outer ring radius */
+        width: calc(100% - 160px); /* Full width minus outer ring diameters */
+        height: 3px;
+        background: transparent;
+        z-index: 2;
+        background-image: 
+            radial-gradient(circle, rgba(255,255,255,0.7) 3px, transparent 3px);
+        background-size: 16px 3px;
+        background-repeat: repeat-x;
+        animation: flow-dots 4s linear infinite;
+    }
+
+    /* Different colored dots for each connection */
+    .timeline-step:nth-child(1)::after {
+        background-image: 
+            radial-gradient(circle, rgba(73,208,106,0.8) 3px, transparent 3px);
+    }
+    
+    .timeline-step:nth-child(2)::after {
+        background-image: 
+            radial-gradient(circle, rgba(47,184,255,0.8) 3px, transparent 3px);
+    }
+    
+    .timeline-step:nth-child(3)::after {
+        background-image: 
+            radial-gradient(circle, rgba(165,107,255,0.8) 3px, transparent 3px);
+    }
+
+    /* Flowing animation for dots */
+    @keyframes flow-dots {
+        0% { background-position: 0 0; }
+        100% { background-position: 32px 0; }
+    }
+
+    .timeline-title { 
+        color: #ffffff; 
+        font-size: 20px; 
+        font-weight: 700; 
+        margin-bottom: 12px;
+        text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        text-align: center;
+    }
+    
+    .timeline-desc { 
+        color: #cbd6da; 
+        font-size: 14px; 
+        line-height: 1.6; 
+        max-width: 220px; 
+        margin: 0;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        text-align: center;
+    }
+
+    /* responsive adjustments */
+    @media (max-width: 900px) {
+        .how-it-works { padding: 80px 16px; }
+        .steps-timeline { 
+            flex-wrap: wrap; 
+            gap: 50px; 
+            max-width: 700px;
+            justify-content: center;
+        }
+        .timeline-step { 
+            flex: 0 0 45%; 
+            min-width: 250px;
+        }
+        .timeline-step:not(:last-child)::after {
+            display: none; /* Hide connecting lines on mobile */
+        }
+        .timeline-badge { 
+            width: 100px; 
+            height: 100px; 
+            font-size: 24px; 
+        }
+        .timeline-badge::before {
+            top: -15px;
+            left: -15px;
+            width: 130px;
+            height: 130px;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .timeline-badge { 
+            width: 90px; 
+            height: 90px; 
+            font-size: 22px;
+        }
+        .timeline-badge::before {
+            top: -12px;
+            left: -12px;
+            width: 114px;
+            height: 114px;
+            border: 2px solid;
+        }
+        .timeline-desc { 
+            font-size: 13px; 
+            max-width: 200px;
+        }
+        .timeline-step { 
+            flex: 0 0 100%; 
+            min-width: unset;
+            max-width: 280px;
+        }
+        .steps-timeline {
+            gap: 40px;
+        }
+    }
+    
+    /* Contact & Footer Section */
+    .contact-footer {
+        padding: 60px 20px 40px;
+        /* overlay only - background image comes from the wrapper */
+        background: radial-gradient(ellipse at center, rgba(6,8,12,0.88) 0%, rgba(6,8,12,0.97) 70%);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .contact-footer-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 40px;
+    }
+    
+    .contact-card, .doctors-needed-card {
+        /* 90% transparent (very subtle card) */
+        background: rgba(255, 255, 255, 0.10);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 18px;
+        padding: 35px 30px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    
+    .section-title {
+        color: #e6eef0;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+    
+    .contact-info {
+        color: #cbd6da;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    
+    .contact-email {
+        color: #49d06a;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .apply-btn {
+        background: linear-gradient(135deg, #ff6b9d, #c44569);
+        color: white;
+        padding: 12px 28px;
+        border: none;
+        border-radius: 25px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 15px;
+    }
+    
+    .apply-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(255, 107, 157, 0.3);
+    }
+    
+    @keyframes rotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    @media (max-width: 768px) {
+        .features-grid, .steps-grid, .contact-footer-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .features-section, .how-it-works, .contact-footer {
+            padding: 60px 20px 40px;
+        }
+        
+        .features-title, .how-it-works-title {
+            font-size: 28px;
+        }
+    }
+</style>
+
+<style>
+    /* Smoke Simulation Styles */
+    #smoke-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    html, body {
+        font: 16px/1.4 'Lato', sans-serif;
+        color: #fefeff;
+    }
+
+    canvas {
+        width: 100%;
+        height: 100%;
+    }
+
+    h1 {
+        font: 2.75em 'Cinzel', serif;
+        font-weight: 400;
+        letter-spacing: 0.35em;
+    }
+
+    [class^="letter"] {
+        -webkit-transition: opacity 3s ease;
+        -moz-transition: opacity 3s ease;
+        transition: opacity 3s ease;
+    }
+
+    .letter-0 {
+        transition-delay: 0.2s;
+    }
+
+    .letter-1 {
+        transition-delay: 0.4s;
+    }
+
+    .letter-2 {
+        transition-delay: 0.6s;
+    }
+
+    .letter-3 {
+        transition-delay: 0.8s;
+    }
+
+    .letter-4 {
+        transition-delay: 1.0s;
+    }
+
+    .letter-5 {
+        transition-delay: 1.2s;
+    }
+
+    .letter-6 {
+        transition-delay: 1.4s;
+    }
+
+    .letter-7 {
+        transition-delay: 1.6s;
+    }
+
+    .letter-8 {
+        transition-delay: 1.8s;
+    }
+
+    .letter-9 {
+        transition-delay: 2.0s;
+    }
+
+    .letter-10 {
+        transition-delay: 2.2s;
+    }
+
+    .letter-11 {
+        transition-delay: 2.4s;
+    }
+
+    .letter-12 {
+        transition-delay: 2.6s;
+    }
+
+    .letter-13 {
+        transition-delay: 2.8s;
+    }
+
+    .letter-14 {
+        transition-delay: 3.0s;
+    }
+
+    .letter-15 {
+        transition-delay: 3.2s;
+    }
+
+    h1 {
+        visibility: hidden;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        -moz-transform: translate(-50%, -50%);
+        -webkit-transform: translate(-50%, -50%);
+    }
+
+    h1.transition-in {
+        visibility: visible;
+    }
+
+    h1 [class^="letter"] {
+        opacity: 0;
+    }
+
+    h1.transition-in [class^="letter"] {
+        opacity: 1;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const getStartedBtn = document.getElementById('getStartedBtn');
+    const signInBtn = document.getElementById('signInBtn');
+    const sliderIndicator = document.getElementById('sliderIndicator');
+    const ctaButtons = document.getElementById('ctaButtons');
+    
+    let currentSelection = 'getStarted'; // Track current selection
+    let isDragging = false;
+    let dragStartX = 0;
+    let sliderStartX = 0;
+    let containerRect = null;
+    
+    // Create ripple effect
+    function createRipple(event, element) {
+        const ripple = document.createElement('span');
+        const rect = element.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = event.clientX - rect.left - size / 2;
+        const y = event.clientY - rect.top - size / 2;
+        
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        ripple.classList.add('ripple');
+        
+        element.appendChild(ripple);
+        
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    }
+    
+    // Slide to selection
+    function slideToSelection(selection, navigate = false) {
+        if (selection === currentSelection && !navigate) return;
+        
+        currentSelection = selection;
+        
+        // Update slider position
+        if (selection === 'getStarted') {
+            sliderIndicator.classList.remove('slide-right');
+            getStartedBtn.classList.add('active');
+            signInBtn.classList.remove('active');
+        } else {
+            sliderIndicator.classList.add('slide-right');
+            signInBtn.classList.add('active');
+            getStartedBtn.classList.remove('active');
+        }
+        
+        // Add bounce effect
+        sliderIndicator.classList.add('bouncing');
+        setTimeout(() => {
+            sliderIndicator.classList.remove('bouncing');
+        }, 300);
+        
+        // Navigate if requested
+        if (navigate) {
+            const targetBtn = selection === 'getStarted' ? getStartedBtn : signInBtn;
+            targetBtn.classList.add('flowing');
+            
+            setTimeout(() => {
+                window.location.href = targetBtn.dataset.url;
+            }, 400);
+        }
+    }
+    
+    // Drag functionality for slider indicator
+    function startDrag(e) {
+        e.preventDefault();
+        isDragging = true;
+        dragStartX = e.clientX || (e.touches && e.touches[0].clientX);
+        containerRect = ctaButtons.getBoundingClientRect();
+        
+        const indicatorRect = sliderIndicator.getBoundingClientRect();
+        sliderStartX = indicatorRect.left - containerRect.left;
+        
+        sliderIndicator.classList.add('dragging');
+        document.addEventListener('mousemove', handleDrag);
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchmove', handleDrag, { passive: false });
+        document.addEventListener('touchend', endDrag);
+        
+        // Stop auto-slide during drag
+        stopAutoSlide();
+    }
+    
+    function handleDrag(e) {
+        if (!isDragging) return;
+        
+        e.preventDefault();
+        const currentX = e.clientX || (e.touches && e.touches[0].clientX);
+        const deltaX = currentX - dragStartX;
+        const newX = sliderStartX + deltaX;
+        
+        // Calculate boundaries
+        const containerWidth = containerRect.width;
+        const indicatorWidth = sliderIndicator.offsetWidth;
+        const minX = 4; // Padding
+        const maxX = containerWidth - indicatorWidth - 4; // Padding
+        
+        // Constrain within boundaries
+        const constrainedX = Math.max(minX, Math.min(maxX, newX));
+        
+        // Apply position
+        sliderIndicator.style.left = constrainedX + 'px';
+        
+        // Update button states based on position
+        const centerPoint = containerWidth / 2;
+        if (constrainedX + (indicatorWidth / 2) < centerPoint) {
+            if (currentSelection !== 'getStarted') {
+                currentSelection = 'getStarted';
+                getStartedBtn.classList.add('active');
+                signInBtn.classList.remove('active');
+            }
+        } else {
+            if (currentSelection !== 'signIn') {
+                currentSelection = 'signIn';
+                signInBtn.classList.add('active');
+                getStartedBtn.classList.remove('active');
+            }
+        }
+    }
+    
+    function endDrag(e) {
+        if (!isDragging) return;
+        
+        isDragging = false;
+        sliderIndicator.classList.remove('dragging');
+        
+        // Clean up event listeners
+        document.removeEventListener('mousemove', handleDrag);
+        document.removeEventListener('mouseup', endDrag);
+        document.removeEventListener('touchmove', handleDrag);
+        document.removeEventListener('touchend', endDrag);
+        
+        // Reset transition for smooth snap
+        sliderIndicator.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        
+        // Snap to final position and navigate
+        setTimeout(() => {
+            slideToSelection(currentSelection, true); // Navigate to the selected page
+            sliderIndicator.style.left = ''; // Reset inline style
+        }, 50);
+    }
+    
+    // Mouse events for slider indicator
+    sliderIndicator.addEventListener('mousedown', startDrag);
+    
+    // Touch events for slider indicator
+    sliderIndicator.addEventListener('touchstart', startDrag, { passive: false });
+    
+    // Handle button clicks
+    getStartedBtn.addEventListener('click', function(e) {
+        if (isDragging) return; // Don't navigate if dragging
+        e.preventDefault();
+        createRipple(e, this);
+        slideToSelection('getStarted', true);
+    });
+    
+    signInBtn.addEventListener('click', function(e) {
+        if (isDragging) return; // Don't navigate if dragging
+        e.preventDefault();
+        createRipple(e, this);
+        slideToSelection('signIn', true);
+    });
+    
+    // Handle hover effects for better UX (only when not dragging)
+    getStartedBtn.addEventListener('mouseenter', function() {
+        if (!isDragging && currentSelection !== 'getStarted') {
+            slideToSelection('getStarted', false);
+        }
+    });
+    
+    signInBtn.addEventListener('mouseenter', function() {
+        if (!isDragging && currentSelection !== 'signIn') {
+            slideToSelection('signIn', false);
+        }
+    });
+    
+    // Handle keyboard navigation
+    ctaButtons.addEventListener('keydown', function(e) {
+        if (isDragging) return;
+        
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault();
+            const newSelection = currentSelection === 'getStarted' ? 'signIn' : 'getStarted';
+            slideToSelection(newSelection, false);
+        } else if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            slideToSelection(currentSelection, true);
+        }
+    });
+    
+    // Make container focusable for keyboard navigation
+    ctaButtons.setAttribute('tabindex', '0');
+    
+    // Touch/swipe support for mobile (on container, not slider)
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    ctaButtons.addEventListener('touchstart', function(e) {
+        if (e.target === sliderIndicator) return; // Don't interfere with slider dragging
+        touchStartX = e.changedTouches[0].screenX;
+    });
+    
+    ctaButtons.addEventListener('touchend', function(e) {
+        if (e.target === sliderIndicator) return; // Don't interfere with slider dragging
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+    
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const deltaX = touchEndX - touchStartX;
+        
+        if (Math.abs(deltaX) > swipeThreshold) {
+            if (deltaX > 0) {
+                // Swipe right - go to Sign In
+                slideToSelection('signIn', false);
+            } else {
+                // Swipe left - go to Get Started
+                slideToSelection('getStarted', false);
+            }
+        }
+    }
+    
+    // Auto-slide demo (optional - remove if not wanted)
+    let autoSlideTimeout;
+    
+    function startAutoSlide() {
+        autoSlideTimeout = setTimeout(() => {
+            if (!isDragging) {
+                const nextSelection = currentSelection === 'getStarted' ? 'signIn' : 'getStarted';
+                slideToSelection(nextSelection, false);
+                startAutoSlide(); // Continue the cycle
+            }
+        }, 3000); // Change every 3 seconds
+    }
+    
+    function stopAutoSlide() {
+        clearTimeout(autoSlideTimeout);
+    }
+    
+    // Start auto-slide, but stop on user interaction
+    startAutoSlide();
+    
+    [getStartedBtn, signInBtn, sliderIndicator].forEach(element => {
+        element.addEventListener('mouseenter', stopAutoSlide);
+        element.addEventListener('click', stopAutoSlide);
+        element.addEventListener('mousedown', stopAutoSlide);
+    });
+    
+    ctaButtons.addEventListener('touchstart', stopAutoSlide);
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const target = this.getAttribute('data-target');
+            const element = document.getElementById(target);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+});
+</script>
+
+<script>
+    // Smoke Simulation JavaScript
+    'use strict';
+
+    var canvas = document.getElementById('smoke-canvas');
+
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+
+    var config = {
+        TEXTURE_DOWNSAMPLE: 1,
+        DENSITY_DISSIPATION: 0.98,
+        VELOCITY_DISSIPATION: 0.99,
+        PRESSURE_DISSIPATION: 0.8,
+        PRESSURE_ITERATIONS: 25,
+        CURL: 30,
+        SPLAT_RADIUS: 0.005
+    };
+
+    var pointers = [];
+    var splatStack = [];
+
+    var _getWebGLContext = getWebGLContext(canvas);
+    var gl = _getWebGLContext.gl;
+    var ext = _getWebGLContext.ext;
+    var support_linear_float = _getWebGLContext.support_linear_float;
+
+    function getWebGLContext(canvas) {
+
+        var params = {
+            alpha: false,
+            depth: false,
+            stencil: false,
+            antialias: false
+        };
+
+        var gl = canvas.getContext('webgl2', params);
+
+        var isWebGL2 = !!gl;
+
+        if (!isWebGL2) gl = canvas.getContext('webgl', params) || canvas.getContext('experimental-webgl', params);
+
+        var halfFloat = gl.getExtension('OES_texture_half_float');
+        var support_linear_float = gl.getExtension('OES_texture_half_float_linear');
+
+        if (isWebGL2) {
+            gl.getExtension('EXT_color_buffer_float');
+            support_linear_float = gl.getExtension('OES_texture_float_linear');
+        }
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+        var internalFormat = isWebGL2 ? gl.RGBA16F : gl.RGBA;
+        var internalFormatRG = isWebGL2 ? gl.RG16F : gl.RGBA;
+        var formatRG = isWebGL2 ? gl.RG : gl.RGBA;
+        var texType = isWebGL2 ? gl.HALF_FLOAT : halfFloat.HALF_FLOAT_OES;
+
+        return {
+            gl: gl,
+            ext: {
+                internalFormat: internalFormat,
+                internalFormatRG: internalFormatRG,
+                formatRG: formatRG,
+                texType: texType
+            },
+            support_linear_float: support_linear_float
+        };
+    }
+
+    function pointerPrototype() {
+        this.id = -1;
+        this.x = 0;
+        this.y = 0;
+        this.dx = 0;
+        this.dy = 0;
+        this.down = false;
+        this.moved = false;
+        this.color = [30, 0, 300];
+    }
+
+    pointers.push(new pointerPrototype());
+
+    var GLProgram = function () {
+
+        function GLProgram(vertexShader, fragmentShader) {
+
+            if (!(this instanceof GLProgram))
+                throw new TypeError("Cannot call a class as a function");
+
+            this.uniforms = {};
+            this.program = gl.createProgram();
+
+            gl.attachShader(this.program, vertexShader);
+            gl.attachShader(this.program, fragmentShader);
+            gl.linkProgram(this.program);
+
+            if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) throw gl.getProgramInfoLog(this.program);
+
+            var uniformCount = gl.getProgramParameter(this.program, gl.ACTIVE_UNIFORMS);
+
+            for (var i = 0; i < uniformCount; i++) {
+
+                var uniformName = gl.getActiveUniform(this.program, i).name;
+
+                this.uniforms[uniformName] = gl.getUniformLocation(this.program, uniformName);
+
+            }
+        }
+
+        GLProgram.prototype.bind = function bind() {
+            gl.useProgram(this.program);
+        };
+
+        return GLProgram;
+
+    }();
+
+    function compileShader(type, source) {
+
+        var shader = gl.createShader(type);
+
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw gl.getShaderInfoLog(shader);
+
+        return shader;
+
+    }
+
+    var baseVertexShader = compileShader(gl.VERTEX_SHADER, 'precision highp float; precision mediump sampler2D; attribute vec2 aPosition; varying vec2 vUv; varying vec2 vL; varying vec2 vR; varying vec2 vT; varying vec2 vB; uniform vec2 texelSize; void main () {     vUv = aPosition * 0.5 + 0.5;     vL = vUv - vec2(texelSize.x, 0.0);     vR = vUv + vec2(texelSize.x, 0.0);     vT = vUv + vec2(0.0, texelSize.y);     vB = vUv - vec2(0.0, texelSize.y);     gl_Position = vec4(aPosition, 0.0, 1.0); }');
+    var clearShader = compileShader(gl.FRAGMENT_SHADER, 'precision highp float; precision mediump sampler2D; varying vec2 vUv; uniform sampler2D uTexture; uniform float value; void main () {     gl_FragColor = value * texture2D(uTexture, vUv); }');
+    var displayShader = compileShader(gl.FRAGMENT_SHADER, 'precision highp float; precision mediump sampler2D; varying vec2 vUv; uniform sampler2D uTexture; void main () {     gl_FragColor = texture2D(uTexture, vUv); }');
+    var splatShader = compileShader(gl.FRAGMENT_SHADER, 'precision highp float; precision mediump sampler2D; varying vec2 vUv; uniform sampler2D uTarget; uniform float aspectRatio; uniform vec3 color; uniform vec2 point; uniform float radius; void main () {     vec2 p = vUv - point.xy;     p.x *= aspectRatio;     vec3 splat = exp(-dot(p, p) / radius) * color;     vec3 base = texture2D(uTarget, vUv).xyz;     gl_FragColor = vec4(base + splat, 1.0); }');
+    var advectionManualFilteringShader = compileShader(gl.FRAGMENT_SHADER, 'precision highp float; precision mediump sampler2D; varying vec2 vUv; uniform sampler2D uVelocity; uniform sampler2D uSource; uniform vec2 texelSize; uniform float dt; uniform float dissipation; vec4 bilerp (in sampler2D sam, in vec2 p) {     vec4 st;     st.xy = floor(p - 0.5) + 0.5;     st.zw = st.xy + 1.0;     vec4 uv = st * texelSize.xyxy;     vec4 a = texture2D(sam, uv.xy);     vec4 b = texture2D(sam, uv.zy);     vec4 c = texture2D(sam, uv.xw);     vec4 d = texture2D(sam, uv.zw);     vec2 f = p - st.xy;     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y); } void main () {     vec2 coord = gl_FragCoord.xy - dt * texture2D(uVelocity, vUv).xy;     gl_FragColor = dissipation * bilerp(uSource, coord);     gl_FragColor.a = 1.0; }');
+    var advectionShader = compileShader(gl.FRAGMENT_SHADER, 'precision highp float; precision mediump sampler2D; varying vec2 vUv; uniform sampler2D uVelocity; uniform sampler2D uSource; uniform vec2 texelSize; uniform float dt; uniform float dissipation; void main () {     vec2 coord = vUv - dt * texture2D(uVelocity, vUv).xy * texelSize;     gl_FragColor = dissipation * texture2D(uSource, coord); }');
+    var divergenceShader = compileShader(gl.FRAGMENT_SHADER, 'precision highp float; precision mediump sampler2D; varying vec2 vUv; varying vec2 vL; varying vec2 vR; varying vec2 vT; varying vec2 vB; uniform sampler2D uVelocity; vec2 sampleVelocity (in vec2 uv) {     vec2 multiplier = vec2(1.0, 1.0);     if (uv.x < 0.0) { uv.x = 0.0; multiplier.x = -1.0; }     if (uv.x > 1.0) { uv.x = 1.0; multiplier.x = -1.0; }     if (uv.y < 0.0) { uv.y = 0.0; multiplier.y = -1.0; }     if (uv.y > 1.0) { uv.y = 1.0; multiplier.y = -1.0; }     return multiplier * texture2D(uVelocity, uv).xy; } void main () {     float L = sampleVelocity(vL).x;     float R = sampleVelocity(vR).x;     float T = sampleVelocity(vT).y;     float B = sampleVelocity(vB).y;     float div = 0.5 * (R - L + T - B);     gl_FragColor = vec4(div, 0.0, 0.0, 1.0); }');
+    var curlShader = compileShader(gl.FRAGMENT_SHADER, 'precision highp float; precision mediump sampler2D; varying vec2 vUv; varying vec2 vL; varying vec2 vR; varying vec2 vT; varying vec2 vB; uniform sampler2D uVelocity; void main () {     float L = texture2D(uVelocity, vL).y;     float R = texture2D(uVelocity, vR).y;     float T = texture2D(uVelocity, vT).x;     float B = texture2D(uVelocity, vB).x;     float vorticity = R - L - T + B;     gl_FragColor = vec4(vorticity, 0.0, 0.0, 1.0); }');
+    var vorticityShader = compileShader(gl.FRAGMENT_SHADER, 'precision highp float; precision mediump sampler2D; varying vec2 vUv; varying vec2 vL; varying vec2 vR; varying vec2 vT; varying vec2 vB; uniform sampler2D uVelocity; uniform sampler2D uCurl; uniform float curl; uniform float dt; void main () {     float L = texture2D(uCurl, vL).y;     float R = texture2D(uCurl, vR).y;     float T = texture2D(uCurl, vT).x;     float B = texture2D(uCurl, vB).x;     float C = texture2D(uCurl, vUv).x;     vec2 force = vec2(abs(T) - abs(B), abs(R) - abs(L));     force *= 1.0 / length(force + 0.00001) * curl * C;     vec2 vel = texture2D(uVelocity, vUv).xy;     gl_FragColor = vec4(vel + force * dt, 0.0, 1.0); }');
+    var pressureShader = compileShader(gl.FRAGMENT_SHADER, 'precision highp float; precision mediump sampler2D; varying vec2 vUv; varying vec2 vL; varying vec2 vR; varying vec2 vT; varying vec2 vB; uniform sampler2D uPressure; uniform sampler2D uDivergence; vec2 boundary (in vec2 uv) {     uv = min(max(uv, 0.0), 1.0);     return uv; } void main () {     float L = texture2D(uPressure, boundary(vL)).x;     float R = texture2D(uPressure, boundary(vR)).x;     float T = texture2D(uPressure, boundary(vT)).x;     float B = texture2D(uPressure, boundary(vB)).x;     float C = texture2D(uPressure, vUv).x;     float divergence = texture2D(uDivergence, vUv).x;     float pressure = (L + R + B + T - divergence) * 0.25;     gl_FragColor = vec4(pressure, 0.0, 0.0, 1.0); }');
+    var gradientSubtractShader = compileShader(gl.FRAGMENT_SHADER, 'precision highp float; precision mediump sampler2D; varying vec2 vUv; varying vec2 vL; varying vec2 vR; varying vec2 vT; varying vec2 vB; uniform sampler2D uPressure; uniform sampler2D uVelocity; vec2 boundary (in vec2 uv) {     uv = min(max(uv, 0.0), 1.0);     return uv; } void main () {     float L = texture2D(uPressure, boundary(vL)).x;     float R = texture2D(uPressure, boundary(vR)).x;     float T = texture2D(uPressure, boundary(vT)).x;     float B = texture2D(uPressure, boundary(vB)).x;     vec2 velocity = texture2D(uVelocity, vUv).xy;     velocity.xy -= vec2(R - L, T - B);     gl_FragColor = vec4(velocity, 0.0, 1.0); }');
+
+    var textureWidth;
+    var textureHeight;
+    var density;
+    var velocity;
+    var divergence;
+    var curl;
+    var pressure;
+
+    initFramebuffers();
+
+    var clearProgram = new GLProgram(baseVertexShader, clearShader);
+    var displayProgram = new GLProgram(baseVertexShader, displayShader);
+    var splatProgram = new GLProgram(baseVertexShader, splatShader);
+    var advectionProgram = new GLProgram(baseVertexShader, support_linear_float ? advectionShader : advectionManualFilteringShader);
+    var divergenceProgram = new GLProgram(baseVertexShader, divergenceShader);
+    var curlProgram = new GLProgram(baseVertexShader, curlShader);
+    var vorticityProgram = new GLProgram(baseVertexShader, vorticityShader);
+    var pressureProgram = new GLProgram(baseVertexShader, pressureShader);
+    var gradienSubtractProgram = new GLProgram(baseVertexShader, gradientSubtractShader);
+
+    function initFramebuffers() {
+
+        textureWidth = gl.drawingBufferWidth >> config.TEXTURE_DOWNSAMPLE;
+        textureHeight = gl.drawingBufferHeight >> config.TEXTURE_DOWNSAMPLE;
+
+        var iFormat = ext.internalFormat;
+        var iFormatRG = ext.internalFormatRG;
+        var formatRG = ext.formatRG;
+        var texType = ext.texType;
+
+        density = createDoubleFBO(0, textureWidth, textureHeight, iFormat, gl.RGBA, texType, support_linear_float ? gl.LINEAR : gl.NEAREST);
+        velocity = createDoubleFBO(2, textureWidth, textureHeight, iFormatRG, formatRG, texType, support_linear_float ? gl.LINEAR : gl.NEAREST);
+        divergence = createFBO(4, textureWidth, textureHeight, iFormatRG, formatRG, texType, gl.NEAREST);
+        curl = createFBO(5, textureWidth, textureHeight, iFormatRG, formatRG, texType, gl.NEAREST);
+        pressure = createDoubleFBO(6, textureWidth, textureHeight, iFormatRG, formatRG, texType, gl.NEAREST);
+
+    }
+
+    function createFBO(texId, w, h, internalFormat, format, type, param) {
+
+        gl.activeTexture(gl.TEXTURE0 + texId);
+
+        var texture = gl.createTexture();
+
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, param);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, param);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, null);
+
+        var fbo = gl.createFramebuffer();
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+        gl.viewport(0, 0, w, h);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        return [texture, fbo, texId];
+
+    }
+
+    function createDoubleFBO(texId, w, h, internalFormat, format, type, param) {
+
+        var fbo1 = createFBO(texId, w, h, internalFormat, format, type, param);
+        var fbo2 = createFBO(texId + 1, w, h, internalFormat, format, type, param);
+
+        return {
+            get first() {
+                return fbo1;
+            },
+            get second() {
+                return fbo2;
+            },
+            swap: function swap() {
+                var temp = fbo1;
+
+                fbo1 = fbo2;
+                fbo2 = temp;
+            }
+        };
+
+    }
+
+    var blit = function () {
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gl.createBuffer());
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 0, 2, 3]), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(0);
+
+        return function (destination) {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, destination);
+            gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+        };
+
+    }();
+
+    var lastTime = Date.now();
+
+    update();
+
+    function update() {
+
+        resizeCanvas();
+
+        var dt = Math.min((Date.now() - lastTime) / 1000, 0.016);
+        lastTime = Date.now();
+
+        gl.viewport(0, 0, textureWidth, textureHeight);
+
+        if (splatStack.length > 0) {
+            for (var m = 0; m < splatStack.pop(); m++) {
+
+                var color = [Math.random() * 10, Math.random() * 10, Math.random() * 10];
+                var x = canvas.width * Math.random();
+                var y = canvas.height * Math.random();
+                var dx = 1000 * (Math.random() - 0.5);
+                var dy = 1000 * (Math.random() - 0.5);
+
+                splat(x, y, dx, dy, color);
+            }
+        }
+
+        advectionProgram.bind();
+        gl.uniform2f(advectionProgram.uniforms.texelSize, 1.0 / textureWidth, 1.0 / textureHeight);
+        gl.uniform1i(advectionProgram.uniforms.uVelocity, velocity.first[2]);
+        gl.uniform1i(advectionProgram.uniforms.uSource, velocity.first[2]);
+        gl.uniform1f(advectionProgram.uniforms.dt, dt);
+        gl.uniform1f(advectionProgram.uniforms.dissipation, config.VELOCITY_DISSIPATION);
+        blit(velocity.second[1]);
+        velocity.swap();
+
+        gl.uniform1i(advectionProgram.uniforms.uVelocity, velocity.first[2]);
+        gl.uniform1i(advectionProgram.uniforms.uSource, density.first[2]);
+        gl.uniform1f(advectionProgram.uniforms.dissipation, config.DENSITY_DISSIPATION);
+        blit(density.second[1]);
+        density.swap();
+
+        for (var i = 0, len = pointers.length; i < len; i++) {
+            var pointer = pointers[i];
+
+            if (pointer.moved) {
+                splat(pointer.x, pointer.y, pointer.dx, pointer.dy, pointer.color);
+                pointer.moved = false;
+            }
+        }
+
+        curlProgram.bind();
+        gl.uniform2f(curlProgram.uniforms.texelSize, 1.0 / textureWidth, 1.0 / textureHeight);
+        gl.uniform1i(curlProgram.uniforms.uVelocity, velocity.first[2]);
+        blit(curl[1]);
+
+        vorticityProgram.bind();
+        gl.uniform2f(vorticityProgram.uniforms.texelSize, 1.0 / textureWidth, 1.0 / textureHeight);
+        gl.uniform1i(vorticityProgram.uniforms.uVelocity, velocity.first[2]);
+        gl.uniform1i(vorticityProgram.uniforms.uCurl, curl[2]);
+        gl.uniform1f(vorticityProgram.uniforms.curl, config.CURL);
+        gl.uniform1f(vorticityProgram.uniforms.dt, dt);
+        blit(velocity.second[1]);
+        velocity.swap();
+
+        divergenceProgram.bind();
+        gl.uniform2f(divergenceProgram.uniforms.texelSize, 1.0 / textureWidth, 1.0 / textureHeight);
+        gl.uniform1i(divergenceProgram.uniforms.uVelocity, velocity.first[2]);
+        blit(divergence[1]);
+
+        clearProgram.bind();
+
+        var pressureTexId = pressure.first[2];
+
+        gl.activeTexture(gl.TEXTURE0 + pressureTexId);
+        gl.bindTexture(gl.TEXTURE_2D, pressure.first[0]);
+        gl.uniform1i(clearProgram.uniforms.uTexture, pressureTexId);
+        gl.uniform1f(clearProgram.uniforms.value, config.PRESSURE_DISSIPATION);
+        blit(pressure.second[1]);
+        pressure.swap();
+
+        pressureProgram.bind();
+        gl.uniform2f(pressureProgram.uniforms.texelSize, 1.0 / textureWidth, 1.0 / textureHeight);
+        gl.uniform1i(pressureProgram.uniforms.uDivergence, divergence[2]);
+        pressureTexId = pressure.first[2];
+        gl.activeTexture(gl.TEXTURE0 + pressureTexId);
+
+        for (var _i = 0; _i < config.PRESSURE_ITERATIONS; _i++) {
+            gl.bindTexture(gl.TEXTURE_2D, pressure.first[0]);
+            gl.uniform1i(pressureProgram.uniforms.uPressure, pressureTexId);
+            blit(pressure.second[1]);
+            pressure.swap();
+        }
+
+        gradienSubtractProgram.bind();
+        gl.uniform2f(gradienSubtractProgram.uniforms.texelSize, 1.0 / textureWidth, 1.0 / textureHeight);
+        gl.uniform1i(gradienSubtractProgram.uniforms.uPressure, pressure.first[2]);
+        gl.uniform1i(gradienSubtractProgram.uniforms.uVelocity, velocity.first[2]);
+        blit(velocity.second[1]);
+        velocity.swap();
+
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+        displayProgram.bind();
+        gl.uniform1i(displayProgram.uniforms.uTexture, density.first[2]);
+        blit(null);
+
+        requestAnimationFrame(update);
+
+    }
+
+    function splat(x, y, dx, dy, color) {
+
+        splatProgram.bind();
+        gl.uniform1i(splatProgram.uniforms.uTarget, velocity.first[2]);
+        gl.uniform1f(splatProgram.uniforms.aspectRatio, canvas.width / canvas.height);
+        gl.uniform2f(splatProgram.uniforms.point, x / canvas.width, 1.0 - y / canvas.height);
+        gl.uniform3f(splatProgram.uniforms.color, dx, -dy, 1.0);
+        gl.uniform1f(splatProgram.uniforms.radius, config.SPLAT_RADIUS);
+        blit(velocity.second[1]);
+        velocity.swap();
+
+        gl.uniform1i(splatProgram.uniforms.uTarget, density.first[2]);
+        gl.uniform3f(splatProgram.uniforms.color, color[0] * 0.3, color[1] * 0.3, color[2] * 0.3);
+        blit(density.second[1]);
+        density.swap();
+
+    }
+
+    function resizeCanvas() {
+
+        (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) && (canvas.width = canvas.clientWidth, canvas.height = canvas.clientHeight, initFramebuffers());
+
+    }
+
+    var count = 0;
+    var colorArr = [Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2];
+
+    canvas.addEventListener('mousemove', function (e) {
+
+        count++;
+
+        (count > 25) && (colorArr = [Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2], count = 0);
+
+        pointers[0].down = true;
+        pointers[0].color = colorArr;
+        pointers[0].moved = pointers[0].down;
+        pointers[0].dx = (e.offsetX - pointers[0].x) * 10.0;
+        pointers[0].dy = (e.offsetY - pointers[0].y) * 10.0;
+        pointers[0].x = e.offsetX;
+        pointers[0].y = e.offsetY;
+
+    });
+
+    canvas.addEventListener('touchmove', function (e) {
+
+        e.preventDefault();
+
+        var touches = e.targetTouches;
+
+        count++;
+
+        (count > 25) && (colorArr = [Math.random() + 0.2, Math.random() + 0.2, Math.random() + 0.2], count = 0);
+
+        for (var i = 0, len = touches.length; i < len; i++) {
+
+            if (i >= pointers.length) pointers.push(new pointerPrototype());
+
+            pointers[i].id = touches[i].identifier;
+            pointers[i].down = true;
+            pointers[i].x = touches[i].pageX;
+            pointers[i].y = touches[i].pageY;
+            pointers[i].color = colorArr;
+
+            var pointer = pointers[i];
+
+            pointer.moved = pointer.down;
+            pointer.dx = (touches[i].pageX - pointer.x) * 10.0;
+            pointer.dy = (touches[i].pageY - pointer.y) * 10.0;
+            pointer.x = touches[i].pageX;
+            pointer.y = touches[i].pageY;
+
+        }
+
+    }, false);
+
+    function m(t) {
+
+        for (var e, n = document.getElementById(t), i = n.innerHTML.replace("&amp;", "&").split(""), a = "", o = 0, s = i.length; s > o; o++) {
+            e = i[o].replace("&", "&amp");
+            a += e.trim() ? '<span class="letter-' + o + '">' + e + "</span>" : "&nbsp;";
+        }
+
+        n.innerHTML = a;
+
+        setTimeout(function () {
+            n.className = "transition-in";
+        }, 500 * Math.random() + 500);
+
+    }
+
+    window.onload = function () {
+        m("h1");
+    };
+</script>
+{% endblock %}
+
+{% block body %}
+<header class="page-header">
+
+        <img src="{{ url_for('static', filename='assets/logo.png') }}" alt="Logo" style="height: 65px; width: auto; vertical-align: middle; align-self: center; margin-top: 2px;">
+
+    <div class="quick-nav">
+        <button class="nav-btn" data-target="hero">Home</button>
+        <button class="nav-btn" data-target="features">Features</button>
+        <button class="nav-btn" data-target="how-it-works">How it works</button>
+    </div>
+</header>
+<main>
+    <div class="hero-features-bg">
+    <canvas id="smoke-canvas"></canvas>
+    <section id="hero" class="landing-hero">
+        <div class="glass-card">
+            <div class="glass-left">
+                <h1>Early Detection. Faster Healing.</h1>
+                <p>Sentinel Diagnostics brings AI-powered screening to your fingertips. Fast results, clear guidance, and compassionate care.</p>
+                <div class="cta-buttons" id="ctaButtons">
+                    <div class="slider-indicator" id="sliderIndicator"></div>
+                    <button class="liquid-btn active" id="getStartedBtn" data-url="{{ url_for('signup_page') }}">
+                        Get Started
+                    </button>
+                    <button class="liquid-btn" id="signInBtn" data-url="{{ url_for('login_page') }}">
+                        Sign In
+                    </button>
+                </div>
+            </div>
+            <div class="glass-right">
+                <h2 style="color:#dfeff1; margin:0 0 8px 0;">What we offer</h2>
+                <ul style="color:#c7d8da; margin-top:8px; line-height:1.6;">
+                    <li>AI-assisted screenings for lung and brain cancers</li>
+                    <li>Secure patient dashboards and appointment management</li>
+                    <li>Connect with doctors, get telehealth consultations</li>
+                </ul>
+            </div>
+        </div>
+
+    </section>
+    
+
+    <!-- Features Section -->
+    <section id="features" class="features-section">
+        <div class="features-container">
+            <h2 class="features-title">Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon ai">🧠</div>
+                    <h3 class="feature-title">AI Segmentation</h3>
+                    <p class="feature-description">Advanced AI analysis for early cancer detection using cutting-edge machine learning algorithms.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon consultation">👥</div>
+                    <h3 class="feature-title">Expert Consultations</h3>
+                    <p class="feature-description">Connect to specialists for personalized guidance and comprehensive medical consultations.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon healing">❤️</div>
+                    <h3 class="feature-title">Healing Resources</h3>
+                    <p class="feature-description">Access therapy guides, nutrition plans & support networks for your healing journey.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="howworks-footer-bg">
+    <section id="how-it-works" class="how-it-works">
+        <div class="how-it-works-container">
+            <h2 class="how-it-works-title">How It Works</h2>
+            <div class="timeline-wrapper">
+                <div class="timeline-line"></div>
+                <div class="steps-timeline">
+                    <div class="timeline-step">
+                        <div class="timeline-badge number-1">1</div>
+                        <div class="timeline-title">Upload Scan</div>
+                        <div class="timeline-desc">Securely upload your medical images to start the analysis — quick and private.</div>
+                    </div>
+                    <div class="timeline-step">
+                        <div class="timeline-badge number-2">2</div>
+                        <div class="timeline-title">AI Analysis</div>
+                        <div class="timeline-desc">Our AI runs deep segmentation and anomaly detection to flag areas of concern.</div>
+                    </div>
+                    <div class="timeline-step">
+                        <div class="timeline-badge number-3">3</div>
+                        <div class="timeline-title">Get Results</div>
+                        <div class="timeline-desc">Receive easy-to-read reports and visual overlays highlighting findings.</div>
+                    </div>
+                    <div class="timeline-step">
+                        <div class="timeline-badge number-4">4</div>
+                        <div class="timeline-title">Consult & Plan</div>
+                        <div class="timeline-desc">Connect with our specialists to review reports and plan next steps.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact & Footer Section -->
+    <section class="contact-footer">
+        <div class="contact-footer-container">
+            <div class="contact-card">
+                <h3 class="section-title">Contact Us</h3>
+                <div class="contact-info">
+                    Have questions about our AI-powered cancer screening services? We're here to help you navigate your health journey with confidence and care.
+                </div>
+                <a href="mailto:hackathonproject.victoriors@gmail.com" class="contact-email">
+                    hackathonproject.victoriors@gmail.com
+                </a>
+                <br>
+                <span style="color: #cbd6da; font-size: 14px;">+91 992073662</span>
+            </div>
+            <div class="doctors-needed-card">
+                <h3 class="section-title">Doctors Needed</h3>
+                <div class="contact-info">
+                    We're expanding! Join our network of experts and help transform healthcare through AI-powered diagnostics.
+                </div>
+                <a href="{{ url_for('signup_page') }}" class="apply-btn">Apply Now</a>
+            </div>
+        </div>
+    </section>
+    </div>
+</main>
+{% endblock %}

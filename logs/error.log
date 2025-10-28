@@ -1,0 +1,7 @@
+2025/10/26 09:53:23 [emerg] 2984#21008: CreateFile() "D:\deployed-hackathon\mime.types" failed (2: The system cannot find the file specified) in D:\deployed-hackathon\nginx-windows.conf:9
+2025/10/26 09:57:49 [warn] 23672#15296: duplicate extension "woff", content type: "application/font-woff", previous content type: "font/woff" in ./mime.types:23
+2025/10/26 09:57:49 [emerg] 23672#15296: CreateDirectory() "D:\deployed-hackathon/temp/client_body_temp" failed (3: The system cannot find the path specified)
+2025/10/26 10:07:36 [emerg] 15108#7028: CreateFile() "D:\deployed-hackathon/conf/nginx.conf" failed (3: The system cannot find the path specified)
+2025/10/26 10:07:36 [emerg] 14636#8124: CreateFile() "D:\deployed-hackathon/conf/nginx.conf" failed (3: The system cannot find the path specified)
+2025/10/26 10:15:50 [emerg] 10908#19944: CreateDirectory() "D:\deployed-hackathon/temp/client_body_temp" failed (3: The system cannot find the path specified)
+2025/10/26 10:57:11 [emerg] 24732#21928: CreateDirectory() "D:\deployed-hackathon/temp/client_body_temp" failed (3: The system cannot find the path specified)

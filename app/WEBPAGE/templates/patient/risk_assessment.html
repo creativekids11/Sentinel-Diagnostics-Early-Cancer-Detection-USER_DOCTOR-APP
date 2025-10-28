@@ -1,0 +1,2082 @@
+{% extends "layouts/patient.html" %}
+
+{% block title %}Risk Assessment{% endblock %}
+
+{% block content %}
+<div class="risk-assessment-page">
+    <!-- Header Section -->
+    <div class="assessment-header">
+        <div class="header-content">
+            <h1 class="assessment-title">Health Risk Assessment</h1>
+            <p class="assessment-subtitle">Evaluate your health risks and get personalized insights</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-card">
+                <div class="stat-icon">🏥</div>
+                <div class="stat-info">
+                    <span class="stat-number">{{ current_user.fullname.split()[0] if current_user and current_user.fullname else 'Patient' }}</span>
+                    <span class="stat-label">Welcome</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assessment Types Grid -->
+    <div class="assessment-grid">
+        <!-- Lung Cancer Assessment -->
+        <div class="assessment-card lung-cancer-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <img src="/static/icons/lung_cancer.png" alt="Lung Cancer" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" style="display: block;">
+                    <span style="display: none; font-size: 2rem;">🫁</span>
+                </div>
+                <div class="card-info">
+                    <h3>Lung Cancer Risk</h3>
+                    <p>Comprehensive lung cancer risk evaluation</p>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="assessment-features">
+                    <span class="feature-tag">Questionnaire</span>
+                    <span class="feature-tag">AI Prediction</span>
+                    <span class="feature-tag">Detailed Report</span>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-primary" onclick="showAssessment('lung-cancer')">
+                        Start Assessment
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brain Tumour Assessment -->
+        <div class="assessment-card brain-cancer-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <img src="/static/icons/brain_tumor.png" alt="Brain Tumour" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" style="display: block;">
+                    <span style="display: none; font-size: 2rem;">🧠</span>
+                </div>
+                <div class="card-info">
+                    <h3>Brain Tumour Risk</h3>
+                    <p>Preliminary brain tumour screening questionnaire</p>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="assessment-features">
+                    <span class="feature-tag">Questionnaire</span>
+                    <span class="feature-tag">Risk Scoring</span>
+                    <span class="feature-tag">Medical Disclaimer</span>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-primary" onclick="showAssessment('brain-cancer')">
+                        Start Assessment
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Breast Cancer Assessment -->
+        <div class="assessment-card breast-cancer-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <img src="/static/icons/breast_cancer.png" alt="Breast Cancer" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" style="display: block;">
+                    <span style="display: none; font-size: 2rem;">🩰</span>
+                </div>
+                <div class="card-info">
+                    <h3>Breast Cancer Risk</h3>
+                    <p>Preliminary breast cancer screening questionnaire</p>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="assessment-features">
+                    <span class="feature-tag">Questionnaire</span>
+                    <span class="feature-tag">Risk Scoring</span>
+                    <span class="feature-tag">Medical Disclaimer</span>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-primary" onclick="showAssessment('breast-cancer')">
+                        Start Assessment
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Risk Assessment History -->
+    <div class="history-section">
+        <div class="history-header">
+            <h2 class="history-title">Risk Assessment History</h2>
+            <p class="history-subtitle">View your previous assessment results and track your health journey</p>
+        </div>
+
+        <div class="history-table-container">
+            <table class="history-table" id="assessmentHistoryTable">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Assessment Type</th>
+                        <th>Risk Level</th>
+                        <th>Risk Score</th>
+                        <th>Raw Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="assessmentHistoryBody">
+                    <tr class="empty-row">
+                        <td colspan="6" class="empty-message">
+                            <div class="empty-state">
+                                <span class="empty-icon">📊</span>
+                                <p>No assessments completed yet</p>
+                                <small>Complete an assessment above to see your history here</small>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Assessment Modal -->
+    <div id="assessmentModal" class="assessment-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Risk Assessment</h2>
+                <button class="close-btn" onclick="closeAssessment()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Lung Cancer Questionnaire (AI-powered) -->
+                <div id="lung-cancer-form" class="assessment-form" style="display: none;">
+                    <div class="progress-steps mb-4">
+                        <div class="step-item">
+                            <div class="step-icon">1</div>
+                            <div>Questions <span id="lc-currentQuestion">1</span>/11</div>
+                        </div>
+                    </div>
+
+                    <div class="question-card">
+                        <div class="text-center mb-4">
+                            <h2 class="question-title" id="lc-questionText">Do you have yellow fingers?</h2>
+                        </div>
+
+                        <div class="options-container">
+                            <button type="button" class="option-btn" data-value="No">
+                                <span class="emoji-icon">❌</span>
+                                No
+                            </button>
+                            
+                            <button type="button" class="option-btn" data-value="Yes">
+                                <span class="emoji-icon">✅</span>
+                                Yes
+                            </button>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="button" class="continue-btn" id="lc-continueBtn" disabled>Continue →</button>
+                        </div>
+                    </div>
+                    <p class="helper-text mt-3 text-center">This quick questionnaire helps our AI estimate your preliminary lung cancer risk. It is not a diagnosis.</p>
+                </div>
+
+                <!-- Brain Tumour Questionnaire -->
+                <div id="brain-cancer-form" class="assessment-form" style="display: none;">
+                    <div class="progress-steps mb-4">
+                        <div class="step-item">
+                            <div class="step-icon">1</div>
+                            <div>Questions <span id="bc-currentQuestion">1</span>/15</div>
+                        </div>
+                    </div>
+
+                    <div class="question-card">
+                        <div class="text-center mb-4">
+                            <h2 class="question-title" id="bc-questionText">Have you had new or worsening severe headaches in the past few weeks?</h2>
+                        </div>
+
+                        <div class="options-container">
+                            <button type="button" class="option-btn" data-value="0">
+                                <span class="emoji-icon">❌</span>
+                                No
+                            </button>
+                            
+                            <button type="button" class="option-btn" data-value="1">
+                                <span class="emoji-icon">✅</span>
+                                Yes
+                            </button>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="button" class="continue-btn" id="bc-continueBtn" disabled>Continue →</button>
+                        </div>
+                    </div>
+                    <p class="helper-text mt-3 text-center">This questionnaire screens for possible brain tumour symptoms. It is not a diagnosis — consult a doctor for concerns.</p>
+                </div>
+
+                <!-- Breast Cancer Questionnaire -->
+                <div id="breast-cancer-form" class="assessment-form" style="display: none;">
+                    <div class="progress-steps mb-4">
+                        <div class="step-item">
+                            <div class="step-icon">1</div>
+                            <div>Questions <span id="brc-currentQuestion">1</span>/15</div>
+                        </div>
+                    </div>
+
+                    <div class="question-card">
+                        <div class="text-center mb-4">
+                            <h2 class="question-title" id="brc-questionText">Have you noticed a new lump or thickening in your breast or underarm?</h2>
+                        </div>
+
+                        <div class="options-container">
+                            <button type="button" class="option-btn" data-value="0">
+                                <span class="emoji-icon">❌</span>
+                                No
+                            </button>
+                            
+                            <button type="button" class="option-btn" data-value="1">
+                                <span class="emoji-icon">✅</span>
+                                Yes
+                            </button>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="button" class="continue-btn" id="brc-continueBtn" disabled>Continue →</button>
+                        </div>
+                    </div>
+                    <p class="helper-text mt-3 text-center">This questionnaire screens for possible breast cancer symptoms. It is not a diagnosis — consult a doctor for concerns.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeAssessment()">Cancel</button>
+                <button class="btn-primary" id="genericCalcBtn" onclick="calculateRisk()">Calculate Risk</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Modal -->
+    <div id="resultsModal" class="results-modal">
+        <div class="modal-content results-content">
+            <div class="modal-header">
+                <h2>Risk Assessment Results</h2>
+                <button class="close-btn" onclick="closeResults()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="results-summary">
+                    <div class="risk-score">
+                        <div class="score-circle" id="riskScoreCircle">
+                            <span class="score-number" id="riskScore">0</span>
+                            <span class="score-label">Risk Score</span>
+                        </div>
+                        <div class="risk-level" id="riskLevel">Low Risk</div>
+                    </div>
+                    <div class="results-details" id="resultsDetails">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+                <div class="recommendations" id="recommendations">
+                    <!-- Recommendations will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeResults()">Close</button>
+                <button class="btn-primary" onclick="saveAssessment()">Save Assessment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assessment Details Modal -->
+    <div id="detailsModal" class="assessment-modal">
+        <div class="modal-content details-content">
+            <div class="modal-header">
+                <h2 id="detailsModalTitle">Assessment Details</h2>
+                <button class="close-btn" onclick="closeDetailsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="assessment-summary">
+                    <div class="summary-header">
+                        <div class="summary-info">
+                            <h3 id="detailsAssessmentType">Assessment Type</h3>
+                            <p id="detailsDateTime">Date & Time</p>
+                        </div>
+                        <div class="summary-score">
+                            <div class="score-display">
+                                <div class="score-circle" id="detailsScoreCircle">
+                                    <span class="score-number" id="detailsRiskScore">0</span>
+                                    <span class="score-label">Risk Score</span>
+                                </div>
+                                <div class="risk-level" id="detailsRiskLevel">Low Risk</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="questions-section">
+                    <h4>Questions & Answers</h4>
+                    <div id="questionsList" class="questions-list">
+                        <!-- Questions and answers will be populated here -->
+                    </div>
+                </div>
+
+                <div class="assessment-notes">
+                    <div class="note-item">
+                        <strong>Note:</strong> This assessment provides preliminary screening information only and is not a medical diagnosis. Please consult with healthcare professionals for proper medical advice.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Assessment modal functionality
+function showAssessment(type) {
+    document.getElementById('assessmentModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+
+    // Hide all forms
+    document.querySelectorAll('.assessment-form').forEach(form => {
+        form.style.display = 'none';
+    });
+
+    // Show selected form
+    document.getElementById(type + '-form').style.display = 'block';
+
+    // Update modal title
+    const titles = {
+        'lung-cancer': 'Lung Cancer Risk Assessment',
+        'brain-cancer': 'Brain Tumour Risk Assessment',
+        'breast-cancer': 'Breast Cancer Risk Assessment'
+    };
+    document.getElementById('modalTitle').textContent = titles[type];
+
+    // For Lung AI questionnaire hide generic button and initialize
+    const genericBtn = document.getElementById('genericCalcBtn');
+    if (type === 'lung-cancer') {
+        if (genericBtn) genericBtn.style.display = 'none';
+        if (typeof initLungQuestionnaire === 'function') {
+            initLungQuestionnaire();
+        }
+    } else if (type === 'brain-cancer') {
+        if (genericBtn) genericBtn.style.display = 'none';
+        if (typeof initBrainQuestionnaire === 'function') {
+            initBrainQuestionnaire();
+        }
+    } else if (type === 'breast-cancer') {
+        if (genericBtn) genericBtn.style.display = 'none';
+        if (typeof initBreastQuestionnaire === 'function') {
+            initBreastQuestionnaire();
+        }
+    } else if (genericBtn) {
+        genericBtn.style.display = '';
+    }
+}
+
+function closeAssessment() {
+    document.getElementById('assessmentModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function closeResults() {
+    document.getElementById('resultsModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+async function calculateRisk() {
+    const formData = new FormData();
+
+    const ageBucket = document.getElementById('age_bucket').value;
+    const smoke = document.querySelector('input[name="smoke"]:checked')?.value === 'true';
+    const familyHistory = document.querySelector('input[name="family_history"]:checked')?.value === 'true';
+    const symptoms = Array.from(document.querySelectorAll('input[name="symptoms"]:checked')).map(cb => cb.value);
+
+    if (!ageBucket || !document.querySelector('input[name="smoke"]:checked') || !document.querySelector('input[name="family_history"]:checked')) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+
+    formData.append('age_bucket', ageBucket);
+    formData.append('smoke', smoke);
+    formData.append('family_history', familyHistory);
+    formData.append('symptoms_count', symptoms.length);
+
+    try {
+        const response = await fetch('/risk-assessment', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+        showResults('lung-cancer', result);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error calculating risk. Please try again.');
+    }
+}
+
+function showResults(type, result) {
+    closeAssessment();
+    document.getElementById('resultsModal').style.display = 'block';
+
+    // Update score
+    document.getElementById('riskScore').textContent = result.score || 0;
+    document.getElementById('riskLevel').textContent = getRiskLevel(result.score || 0);
+
+    // Update score circle color
+    const circle = document.getElementById('riskScoreCircle');
+    circle.className = 'score-circle ' + getRiskClass(result.score || 0);
+
+    // Show results details
+    const details = document.getElementById('resultsDetails');
+    details.innerHTML = generateResultsDetails(type, result);
+
+    // Show recommendations
+    const recommendations = document.getElementById('recommendations');
+    recommendations.innerHTML = generateRecommendations(type, result.score || 0);
+}
+
+function getRiskLevel(score) {
+    if (score >= 6) return 'High Risk';
+    if (score >= 3) return 'Moderate Risk';
+    return 'Low Risk';
+}
+
+function getRiskClass(score) {
+    if (score >= 6) return 'high-risk';
+    if (score >= 3) return 'moderate-risk';
+    return 'low-risk';
+}
+
+function generateResultsDetails(type, result) {
+    const details = {
+        'lung-cancer': `
+            <div class="result-item">
+                <h4>Risk Factors Identified:</h4>
+                <ul>
+                    <li>Age group contributes ${result.score >= 3 ? 'significantly' : 'minimally'} to risk</li>
+                    <li>Smoking status: ${result.smoke ? 'High risk factor' : 'Not a risk factor'}</li>
+                    <li>Family history: ${result.family_history ? 'Present' : 'Not present'}</li>
+                    <li>Symptoms count: ${result.symptoms_count || 0} reported</li>
+                </ul>
+            </div>
+        `
+    };
+    return details[type] || '<p>Assessment completed successfully.</p>';
+}
+
+function generateRecommendations(type, score) {
+    const recommendations = {
+        'lung-cancer': `
+            <div class="recommendations-section">
+                <h4>Recommended Actions:</h4>
+                <div class="recommendation-list">
+                    ${score >= 6 ? '<div class="urgent">⚠️ Consult a healthcare professional immediately</div>' : ''}
+                    ${score >= 3 ? '<div class="important">📅 Schedule regular check-ups</div>' : ''}
+                    <div class="general">🚭 Quit smoking if applicable</div>
+                    <div class="general">🏃‍♂️ Maintain regular exercise routine</div>
+                    <div class="general">🥗 Follow a balanced diet</div>
+                </div>
+            </div>
+        `,
+        'brain-cancer': `
+            <div class="recommendations-section">
+                <h4>Medical Recommendations:</h4>
+                <div class="recommendation-list">
+                    <div class="urgent">⚠️ This is screening only — seek professional medical advice</div>
+                    <div class="important">🏥 If symptoms are concerning, consult a neurologist immediately</div>
+                    <div class="general">📅 Regular health check-ups are important</div>
+                    <div class="general">🧠 Be aware of neurological symptoms and report changes</div>
+                </div>
+            </div>
+        `,
+        'breast-cancer': `
+            <div class="recommendations-section">
+                <h4>Medical Recommendations:</h4>
+                <div class="recommendation-list">
+                    <div class="urgent">⚠️ This is screening only — seek professional medical advice</div>
+                    <div class="important">🏥 If you detect a lump, discharge, or persistent breast change, immediately consult a doctor or visit a diagnostic centre for imaging and further tests.</div>
+                    <div class="general">📅 Regular self-exams and mammograms are recommended</div>
+                    <div class="general">🩰 Be aware of breast changes and report them promptly</div>
+                </div>
+            </div>
+        `
+    };
+    return recommendations[type] || '<p>Follow general healthy lifestyle guidelines.</p>';
+}
+
+// Assessment History Functions
+function getAssessmentHistory() {
+    const history = localStorage.getItem('riskAssessmentHistory');
+    return history ? JSON.parse(history) : [];
+}
+
+function updateAssessmentHistoryTable() {
+    const history = getAssessmentHistory();
+    const tbody = document.getElementById('assessmentHistoryBody');
+    
+    if (history.length === 0) {
+        tbody.innerHTML = `
+            <tr class="empty-row">
+                <td colspan="6" class="empty-message">
+                    <div class="empty-state">
+                        <span class="empty-icon">📊</span>
+                        <p>No assessments completed yet</p>
+                        <small>Complete an assessment above to see your history here</small>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    // Sort by timestamp (newest first)
+    history.sort((a, b) => b.timestamp - a.timestamp);
+
+    tbody.innerHTML = history.map(assessment => {
+        const typeDisplay = {
+            'lung-cancer': 'Lung Cancer',
+            'brain-tumour': '🧠 Brain Tumour',
+            'breast-cancer': 'Breast Cancer'
+        }[assessment.type] || assessment.type;
+
+        const riskClass = {
+            'Low Risk': 'risk-level-low',
+            'Moderate Risk': 'risk-level-moderate',
+            'High Risk': 'risk-level-high'
+        }[assessment.riskLevel] || '';
+
+        return `
+            <tr>
+                <td>${assessment.date}</td>
+                <td>
+                    <span class="assessment-type" data-type="${assessment.type}">${typeDisplay}</span>
+                </td>
+                <td><span class="${riskClass}">${assessment.riskLevel}</span></td>
+                <td>${assessment.riskScore}%</td>
+                <td>${assessment.rawScore}</td>
+                <td>
+                    <button class="action-btn view" onclick="viewAssessment(${assessment.id})">View</button>
+                    <button class="action-btn delete" onclick="deleteAssessment(${assessment.id})">Delete</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function viewAssessment(id) {
+    const history = getAssessmentHistory();
+    const assessment = history.find(a => a.id === id);
+    if (!assessment) return;
+
+    // Populate modal with assessment details
+    const typeDisplay = {
+        'lung-cancer': 'Lung Cancer Risk Assessment',
+        'brain-tumour': '🧠 Brain Tumour Risk Assessment',
+        'breast-cancer': 'Breast Cancer Risk Assessment'
+    }[assessment.type] || assessment.type;
+
+    document.getElementById('detailsModalTitle').textContent = typeDisplay;
+    document.getElementById('detailsAssessmentType').textContent = typeDisplay;
+    document.getElementById('detailsDateTime').textContent = assessment.date;
+    document.getElementById('detailsRiskScore').textContent = assessment.riskScore;
+    document.getElementById('detailsRiskLevel').textContent = assessment.riskLevel;
+
+    // Set score circle color
+    const circle = document.getElementById('detailsScoreCircle');
+    const riskClass = {
+        'Low Risk': 'low-risk',
+        'Moderate Risk': 'moderate-risk',
+        'High Risk': 'high-risk'
+    }[assessment.riskLevel] || 'low-risk';
+    circle.className = 'score-circle ' + riskClass;
+
+    // Populate questions and answers
+    const questionsList = document.getElementById('questionsList');
+    if (assessment.questions && assessment.answers) {
+        questionsList.innerHTML = assessment.questions.map((question, index) => {
+            const answer = assessment.answers[index];
+            // Handle both string answers ("Yes"/"No") and numeric answers (1/0)
+            const isYes = answer === 1 || answer === "Yes";
+            const answerText = isYes ? 'Yes' : 'No';
+            const answerClass = isYes ? 'answer-yes' : 'answer-no';
+
+            // Clean question text (remove HTML tags for display)
+            const cleanQuestion = question.replace(/<[^>]*>/g, '');
+
+            return `
+                <div class="question-item">
+                    <div class="question-text">
+                        <strong>Q${index + 1}:</strong> ${cleanQuestion}
+                    </div>
+                    <div class="question-answer ${answerClass}">
+                        <span class="answer-icon">${isYes ? '✅' : '❌'}</span>
+                        <span class="answer-text">${answerText}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } else {
+        questionsList.innerHTML = '<p>No question data available for this assessment.</p>';
+    }
+
+    // Show modal
+    document.getElementById('detailsModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDetailsModal() {
+    document.getElementById('detailsModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function deleteAssessment(id) {
+    if (!confirm('Are you sure you want to delete this assessment?')) return;
+
+    const history = getAssessmentHistory();
+    const filteredHistory = history.filter(a => a.id !== id);
+    localStorage.setItem('riskAssessmentHistory', JSON.stringify(filteredHistory));
+    updateAssessmentHistoryTable();
+}
+
+// Load history on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateAssessmentHistoryTable();
+});
+
+function saveAssessment() {
+    // Get current assessment data
+    const riskScore = document.getElementById('riskScore').textContent;
+    const riskLevel = document.getElementById('riskLevel').textContent;
+    const assessmentType = document.getElementById('modalTitle').textContent.replace(' Risk Assessment', '').toLowerCase().replace(' ', '-');
+    
+    // Get raw score from results details
+    const detailsHtml = document.getElementById('resultsDetails').innerHTML;
+    let rawScore = 'N/A';
+    const rawScoreMatch = detailsHtml.match(/Raw score: <strong>([^<]+)<\/strong>/);
+    if (rawScoreMatch) {
+        rawScore = rawScoreMatch[1];
+    }
+
+    // Get questions and answers based on assessment type
+    let questions = [];
+    let answers = [];
+
+    if (assessmentType === 'lung-cancer') {
+        questions = lcQuestions;
+        answers = lcAnswers;
+    } else if (assessmentType === 'brain-tumour') {
+        questions = bcQuestions;
+        answers = bcAnswers;
+    } else if (assessmentType === 'breast-cancer') {
+        questions = brcQuestions;
+        answers = brcAnswers;
+    }
+
+    // Create assessment record with questions and answers
+    const assessmentRecord = {
+        id: Date.now(),
+        date: new Date().toLocaleString(),
+        type: assessmentType,
+        riskLevel: riskLevel,
+        riskScore: riskScore,
+        rawScore: rawScore,
+        questions: questions,
+        answers: answers,
+        timestamp: new Date().getTime()
+    };
+
+    // Save to localStorage
+    const history = getAssessmentHistory();
+    history.push(assessmentRecord);
+    localStorage.setItem('riskAssessmentHistory', JSON.stringify(history));
+
+    // Update table
+    updateAssessmentHistoryTable();
+
+    // Close modal and show success message
+    closeResults();
+    alert('Assessment saved successfully! You can view your results in the history table below.');
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const assessmentModal = document.getElementById('assessmentModal');
+    const resultsModal = document.getElementById('resultsModal');
+    const detailsModal = document.getElementById('detailsModal');
+
+    if (event.target === assessmentModal) {
+        closeAssessment();
+    }
+    if (event.target === resultsModal) {
+        closeResults();
+    }
+    if (event.target === detailsModal) {
+        closeDetailsModal();
+    }
+}
+
+// ---------------- Breast Cancer Questionnaire Logic ----------------
+const brcQuestions = [
+    "Have you noticed a new lump or thickening in your breast or underarm?",
+    "Has the shape or size of your breast changed recently (without injury or weight gain/loss)?",
+    "Have you seen dimpling, puckering, or indentation of breast skin?",
+    "Is there redness, scaling, or rash on the breast or nipple area?",
+    "Has there been unusual nipple discharge, especially bloody or clear (not milky)?",
+    "Is your nipple inverted (pulled inwards) when it was not before?",
+    "Do you have breast pain or tenderness not related to your menstrual cycle?",
+    "Have you noticed swelling in one breast or underarm that doesn't go away?",
+    "Have you had unexplained weight loss or fatigue recently?",
+    "Do you have a family history of breast cancer (mother, sister, daughter)?",
+    "Have you had any breast lumps or biopsies (benign or malignant) previously?",
+    "Have you had chest radiation therapy before (for any other condition)?",
+    "Did you have your first period before age 12?",
+    "Did your menopause occur after age 55?",
+    "Do you consume alcohol regularly or smoke?"
+];
+
+const brcWeights = [3.0, 2.0, 2.0, 1.0, 2.5, 1.5, 1.0, 1.5, 1.0, 2.5, 1.5, 1.5, 1.0, 1.0, 0.7];
+const brcS_max = brcWeights.reduce((a, b) => a + b, 0);
+const brcS_mid = brcS_max * 0.5;
+const brcK = brcS_max * 0.15;
+
+let brcCurrentQuestionIndex = 0;
+let brcAnswers = [];
+
+function initBreastQuestionnaire() {
+    const form = document.getElementById('breast-cancer-form');
+    if (!form) return;
+    brcCurrentQuestionIndex = 0;
+    brcAnswers = [];
+    const qText = document.getElementById('brc-questionText');
+    const qIdx = document.getElementById('brc-currentQuestion');
+    const cont = document.getElementById('brc-continueBtn');
+    if (qText) qText.innerHTML = brcQuestions[0];
+    if (qIdx) qIdx.textContent = '1';
+    if (cont) cont.disabled = true;
+    form.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+}
+
+// Handle option select within breast form
+document.addEventListener('click', function(ev) {
+    const btn = ev.target.closest('#breast-cancer-form .option-btn');
+    if (!btn) return;
+    document.querySelectorAll('#breast-cancer-form .option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    const cont = document.getElementById('brc-continueBtn');
+    if (cont) cont.disabled = false;
+});
+
+// Continue button to advance or calculate for breast
+document.getElementById('brc-continueBtn')?.addEventListener('click', () => {
+    const selected = document.querySelector('#breast-cancer-form .option-btn.selected');
+    if (!selected) return;
+    brcAnswers.push(Number(selected.dataset.value));
+    brcCurrentQuestionIndex++;
+    const qText = document.getElementById('brc-questionText');
+    const qIdx = document.getElementById('brc-currentQuestion');
+    const cont = document.getElementById('brc-continueBtn');
+    if (brcCurrentQuestionIndex < brcQuestions.length) {
+        if (qText) qText.innerHTML = brcQuestions[brcCurrentQuestionIndex];
+        if (qIdx) qIdx.textContent = String(brcCurrentQuestionIndex + 1);
+        document.querySelectorAll('#breast-cancer-form .option-btn').forEach(b => b.classList.remove('selected'));
+        if (cont) cont.disabled = true;
+    } else {
+        // Calculate score
+        let S = 0;
+        const yesContrib = [];
+        for (let i = 0; i < brcAnswers.length; i++) {
+            if (brcAnswers[i] === 1) {
+                S += brcWeights[i];
+                yesContrib.push(`${i + 1}. ${brcQuestions[i]} (w=${brcWeights[i]})`);
+            }
+        }
+        const logistic = (1 / (1 + Math.exp(-(S - brcS_mid) / brcK))) * 100;
+        const linear = (S / brcS_max) * 100;
+        const result = {
+            raw_score: S,
+            logistic_percent: logistic,
+            linear_percent: linear,
+            contributions: yesContrib
+        };
+        showResults('breast-cancer', result);
+    }
+});
+const bcQuestions = [
+    "Have you had new or worsening severe headaches in the past few weeks?",
+    "Do your headaches often occur with morning nausea or vomiting?",
+    "Have you had a new seizure (fit) or unexplained shaking/loss of awareness?",
+    "Have you noticed new weakness or numbness on one side of your face, arm or leg?",
+    "Have you had vision changes (blurry vision, double vision, or loss of side vision)?",
+    "Are you experiencing speech problems (difficulty finding words or slurred speech)?",
+    "Do you have problems with balance or coordination (frequent stumbling, dizziness)?",
+    "Have you noticed memory, concentration or thinking getting worse recently?",
+    "Have friends/family noticed large personality or behaviour changes (uncharacteristic)?",
+    "Do you feel excessively drowsy or faint for no clear reason?",
+    "Have you experienced persistent nausea/vomiting not explained by stomach issues?",
+    "Have you noticed hearing loss or ringing (tinnitus) on one side?",
+    "Have you previously had therapeutic head/brain radiation (e.g., radiotherapy)?",
+    "Do you have a close family member (parent/sibling/child) who had a brain tumour?",
+    "Have your symptoms been progressively worsening over weeks (rather than fleeting)?"
+];
+
+const bcWeights = [1.0, 1.2, 3.0, 2.5, 2.0, 1.8, 1.8, 1.5, 1.5, 1.2, 1.0, 1.0, 1.4, 0.8, 1.0];
+const bcS_max = bcWeights.reduce((a, b) => a + b, 0);
+const bcS_mid = bcS_max * 0.5;
+const bcK = bcS_max * 0.15;
+
+let bcCurrentQuestionIndex = 0;
+let bcAnswers = [];
+
+function initBrainQuestionnaire() {
+    const form = document.getElementById('brain-cancer-form');
+    if (!form) return;
+    bcCurrentQuestionIndex = 0;
+    bcAnswers = [];
+    const qText = document.getElementById('bc-questionText');
+    const qIdx = document.getElementById('bc-currentQuestion');
+    const cont = document.getElementById('bc-continueBtn');
+    if (qText) qText.innerHTML = bcQuestions[0];
+    if (qIdx) qIdx.textContent = '1';
+    if (cont) cont.disabled = true;
+    form.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+}
+
+// Handle option select within brain form
+document.addEventListener('click', function(ev) {
+    const btn = ev.target.closest('#brain-cancer-form .option-btn');
+    if (!btn) return;
+    document.querySelectorAll('#brain-cancer-form .option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    const cont = document.getElementById('bc-continueBtn');
+    if (cont) cont.disabled = false;
+});
+
+// Continue button to advance or calculate for brain
+document.getElementById('bc-continueBtn')?.addEventListener('click', () => {
+    const selected = document.querySelector('#brain-cancer-form .option-btn.selected');
+    if (!selected) return;
+    bcAnswers.push(Number(selected.dataset.value));
+    bcCurrentQuestionIndex++;
+    const qText = document.getElementById('bc-questionText');
+    const qIdx = document.getElementById('bc-currentQuestion');
+    const cont = document.getElementById('bc-continueBtn');
+    if (bcCurrentQuestionIndex < bcQuestions.length) {
+        if (qText) qText.innerHTML = bcQuestions[bcCurrentQuestionIndex];
+        if (qIdx) qIdx.textContent = String(bcCurrentQuestionIndex + 1);
+        document.querySelectorAll('#brain-cancer-form .option-btn').forEach(b => b.classList.remove('selected'));
+        if (cont) cont.disabled = true;
+    } else {
+        // Calculate score
+        let S = 0;
+        const yesContrib = [];
+        for (let i = 0; i < bcAnswers.length; i++) {
+            if (bcAnswers[i] === 1) {
+                S += bcWeights[i];
+                yesContrib.push(`${i + 1}. ${bcQuestions[i]} (w=${bcWeights[i]})`);
+            }
+        }
+        const logistic = (1 / (1 + Math.exp(-(S - bcS_mid) / bcK))) * 100;
+        const linear = (S / bcS_max) * 100;
+        const result = {
+            raw_score: S,
+            logistic_percent: logistic,
+            linear_percent: linear,
+            contributions: yesContrib
+        };
+        showResults('brain-cancer', result);
+    }
+});
+// Questions as per provided UI
+const lcQuestions = [
+    "Do you have <a href='https://en.wikipedia.org/wiki/Nicotine_staining' class='highlight-term' target='_blank'>yellow fingers</a>?",
+    "Do you experience <a href='https://en.wikipedia.org/wiki/Anxiety' class='highlight-term' target='_blank'>anxiety</a>?",
+    "Do you feel <a href='https://en.wikipedia.org/wiki/Peer_pressure' class='highlight-term' target='_blank'>peer pressure</a>?",
+    "Do you have any <a href='https://en.wikipedia.org/wiki/Chronic_condition' class='highlight-term' target='_blank'>chronic disease</a>?",
+    "Do you experience <a href='https://en.wikipedia.org/wiki/Fatigue' class='highlight-term' target='_blank'>fatigue</a>?",
+    "Do you have any <a href='https://en.wikipedia.org/wiki/Allergy' class='highlight-term' target='_blank'>allergies</a>?",
+    "Do you experience <a href='https://en.wikipedia.org/wiki/Wheeze' class='highlight-term' target='_blank'>wheezing</a>?",
+    "Do you consume <a href='https://en.wikipedia.org/wiki/Alcoholic_drink' class='highlight-term' target='_blank'>alcohol</a>?",
+    "Do you have <a href='https://en.wikipedia.org/wiki/Cough' class='highlight-term' target='_blank'>coughing</a>?",
+    "Do you have <a href='https://en.wikipedia.org/wiki/Dysphagia' class='highlight-term' target='_blank'>difficulty swallowing</a>?",
+    "Do you experience <a href='https://en.wikipedia.org/wiki/Chest_pain' class='highlight-term' target='_blank'>chest pain</a>?"
+];
+
+let lcCurrentQuestionIndex = 0;
+let lcAnswers = [];
+
+function initLungQuestionnaire() {
+    const form = document.getElementById('lung-cancer-form');
+    if (!form) return;
+    lcCurrentQuestionIndex = 0;
+    lcAnswers = [];
+    const qText = document.getElementById('lc-questionText');
+    const qIdx = document.getElementById('lc-currentQuestion');
+    const cont = document.getElementById('lc-continueBtn');
+    if (qText) qText.innerHTML = lcQuestions[0];
+    if (qIdx) qIdx.textContent = '1';
+    if (cont) cont.disabled = true;
+    form.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+}
+
+// Handle option select within lung form
+document.addEventListener('click', function(ev) {
+    const btn = ev.target.closest('#lung-cancer-form .option-btn');
+    if (!btn) return;
+    document.querySelectorAll('#lung-cancer-form .option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    const cont = document.getElementById('lc-continueBtn');
+    if (cont) cont.disabled = false;
+});
+
+// Continue button to advance or submit to AI
+document.getElementById('lc-continueBtn')?.addEventListener('click', async () => {
+    const selected = document.querySelector('#lung-cancer-form .option-btn.selected');
+    if (!selected) return;
+    lcAnswers.push(selected.dataset.value);
+    lcCurrentQuestionIndex++;
+    const qText = document.getElementById('lc-questionText');
+    const qIdx = document.getElementById('lc-currentQuestion');
+    const cont = document.getElementById('lc-continueBtn');
+    if (lcCurrentQuestionIndex < lcQuestions.length) {
+        if (qText) qText.innerHTML = lcQuestions[lcCurrentQuestionIndex];
+        if (qIdx) qIdx.textContent = String(lcCurrentQuestionIndex + 1);
+        document.querySelectorAll('#lung-cancer-form .option-btn').forEach(b => b.classList.remove('selected'));
+        if (cont) cont.disabled = true;
+    } else {
+        try {
+            if (cont) { cont.disabled = true; cont.textContent = 'Calculating…'; }
+            const resp = await fetch('/api/lung-ai/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answers: lcAnswers })
+            });
+            const result = await resp.json();
+            if (!resp.ok) throw new Error(result.error || 'Prediction failed');
+            showResults('lung-cancer', result);
+        } catch (e) {
+            alert('Error calculating AI risk: ' + (e.message || e));
+        } finally {
+            if (cont) { cont.textContent = 'Continue →'; cont.disabled = false; }
+        }
+    }
+});
+
+// Override results rendering to support percentage risk
+const _origShowResults = showResults;
+showResults = function(type, result) {
+    // Call original to set up modals and defaults
+    _origShowResults(type, { score: 0 });
+    // Then if AI result present, replace numbers and styling
+    if (result && typeof result.risk_percentage !== 'undefined') {
+        const scoreNum = Math.round(result.risk_percentage);
+        const level = (result.risk_level || 'Low') + ' Risk';
+        document.getElementById('riskScore').textContent = scoreNum;
+        document.getElementById('riskLevel').textContent = level;
+        const circle = document.getElementById('riskScoreCircle');
+        let cls = 'low-risk';
+        if ((result.risk_level || '').toLowerCase() === 'high') cls = 'high-risk';
+        else if ((result.risk_level || '').toLowerCase() === 'moderate') cls = 'moderate-risk';
+        circle.className = 'score-circle ' + cls;
+        const details = document.getElementById('resultsDetails');
+        details.innerHTML = `
+            <div class="result-item">
+                <h4>AI Prediction Summary</h4>
+                <ul>
+                    <li>Estimated risk probability: <strong>${result.risk_percentage.toFixed(2)}%</strong></li>
+                    <li>Risk level: <strong>${(result.risk_level || 'Low')}</strong></li>
+                    <li>Note: This is a preliminary screening tool and not a diagnosis.</li>
+                </ul>
+            </div>`;
+        const recommendations = document.getElementById('recommendations');
+        const baseScore = result.risk_percentage >= 66 ? 7 : (result.risk_percentage >= 33 ? 4 : 1);
+        recommendations.innerHTML = generateRecommendations(type, baseScore);
+    } else if (type === 'brain-cancer' && result) {
+        // Brain tumour specific results
+        const scoreNum = Math.round(result.logistic_percent);
+        let level = 'Low Risk';
+        let cls = 'low-risk';
+        if (result.logistic_percent >= 66) {
+            level = 'High Risk';
+            cls = 'high-risk';
+        } else if (result.logistic_percent >= 33) {
+            level = 'Moderate Risk';
+            cls = 'moderate-risk';
+        }
+        document.getElementById('riskScore').textContent = scoreNum;
+        document.getElementById('riskLevel').textContent = level;
+        const circle = document.getElementById('riskScoreCircle');
+        circle.className = 'score-circle ' + cls;
+        const details = document.getElementById('resultsDetails');
+        details.innerHTML = `
+            <div class="result-item">
+                <h4>Screening Results</h4>
+                <ul>
+                    <li>Raw score: <strong>${result.raw_score.toFixed(2)} / ${bcS_max.toFixed(2)}</strong></li>
+                    <li>Logistic risk estimate: <strong>${result.logistic_percent.toFixed(1)}%</strong></li>
+                    <li>Linear risk estimate: <strong>${result.linear_percent.toFixed(1)}%</strong></li>
+                    <li><em>This is a preliminary screening tool — not a diagnosis.</em></li>
+                </ul>
+                ${result.contributions.length ? `<details><summary>Contributing 'Yes' answers and weights</summary><pre>${result.contributions.join('\n')}</pre></details>` : '<p>No symptoms reported.</p>'}
+            </div>`;
+        const recommendations = document.getElementById('recommendations');
+        recommendations.innerHTML = `
+            <div class="recommendations-section">
+                <h4>Important Medical Advice</h4>
+                <div class="recommendation-list">
+                    <div class="urgent">⚠️ This tool does <em>not</em> diagnose. If you have concerning symptoms (new seizures, focal weakness, severe headaches, or progressive neurological change), seek urgent medical evaluation.</div>
+                    <div class="important">📅 Diagnosis requires neurological exam and imaging (MRI/CT).</div>
+                    <div class="general">🏥 Consult a healthcare professional for any concerns.</div>
+                    <div class="general">📖 Based on Mayo Clinic, NHS, and other medical sources.</div>
+                </div>
+            </div>`;
+    } else if (type === 'breast-cancer' && result) {
+        // Breast cancer specific results
+        const scoreNum = Math.round(result.logistic_percent);
+        let level = 'Low Risk';
+        let cls = 'low-risk';
+        if (result.logistic_percent >= 66) {
+            level = 'High Risk';
+            cls = 'high-risk';
+        } else if (result.logistic_percent >= 33) {
+            level = 'Moderate Risk';
+            cls = 'moderate-risk';
+        }
+        document.getElementById('riskScore').textContent = scoreNum;
+        document.getElementById('riskLevel').textContent = level;
+        const circle = document.getElementById('riskScoreCircle');
+        circle.className = 'score-circle ' + cls;
+        const details = document.getElementById('resultsDetails');
+        details.innerHTML = `
+            <div class="result-item">
+                <h4>Screening Results</h4>
+                <ul>
+                    <li>Raw score: <strong>${result.raw_score.toFixed(2)} / ${brcS_max.toFixed(2)}</strong></li>
+                    <li>Logistic risk estimate: <strong>${result.logistic_percent.toFixed(1)}%</strong></li>
+                    <li>Linear risk estimate: <strong>${result.linear_percent.toFixed(1)}%</strong></li>
+                    <li><em>This is a preliminary screening tool — not a diagnosis.</em></li>
+                </ul>
+                ${result.contributions.length ? `<details><summary>Contributing 'Yes' answers and weights</summary><pre>${result.contributions.join('\n')}</pre></details>` : '<p>No symptoms reported.</p>'}
+            </div>`;
+        const recommendations = document.getElementById('recommendations');
+        recommendations.innerHTML = `
+            <div class="recommendations-section">
+                <h4>Important Medical Advice</h4>
+                <div class="recommendation-list">
+                    <div class="urgent">⚠️ This tool does <em>not</em> diagnose. Any breast change should be checked by a healthcare provider. Early evaluation saves lives.</div>
+                    <div class="important">🏥 If you detect a lump, discharge, or persistent breast change, immediately consult a doctor or visit a diagnostic centre for imaging and further tests.</div>
+                    <div class="general">📅 Regular self-exams and mammograms are recommended.</div>
+                    <div class="general">📖 Based on NCCN, WHO, CDC, and American Cancer Society guidelines.</div>
+                </div>
+            </div>`;
+    }
+}
+</script>
+
+<style>
+* {
+    color: var(--drac-foreground);
+}
+
+.main-content {
+    background: var(--drac-bg);
+}
+/* Risk Assessment Page Styles */
+.risk-assessment-page {
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    background: var(--drac-bg);
+    min-height: 100vh;
+}
+
+/* Header Section */
+.assessment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(189, 147, 249, 0.1), rgba(139, 233, 253, 0.05));
+    border-radius: 20px;
+    border: 1px solid rgba(189, 147, 249, 0.2);
+}
+
+.assessment-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--drac-foreground);
+    margin: 0 0 0.5rem 0;
+    background: linear-gradient(135deg, #bd93f9, #8be9fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.assessment-subtitle {
+    color: var(--drac-foreground);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.header-stats {
+    display: flex;
+    gap: 1rem;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-icon {
+    font-size: 2rem;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-number {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--drac-foreground);
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--drac-foreground);
+}
+
+/* Assessment Grid */
+.assessment-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Assessment Cards */
+.assessment-card {
+    background: var(--drac-current);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.assessment-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border-color: rgba(189, 147, 249, 0.3);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    background: linear-gradient(135deg, #bd93f9, #9b59b6);
+}
+
+.card-icon img {
+    width: 32px;
+    height: 32px;
+}
+
+.card-info h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--drac-foreground);
+    margin: 0 0 0.5rem 0;
+}
+
+.card-info p {
+    color: var(--drac-comment);
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.assessment-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.feature-tag {
+    padding: 0.25rem 0.75rem;
+    background: rgba(139, 233, 253, 0.1);
+    border: 1px solid rgba(139, 233, 253, 0.3);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #8be9fd;
+}
+
+.card-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 0.875rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    font-size: 0.95rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--drac-purple), #9b59b6);
+    color: var(--drac-foreground);
+    box-shadow: 0 4px 15px rgba(189, 147, 249, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(189, 147, 249, 0.4);
+    background: linear-gradient(135deg, #9b59b6, var(--drac-purple));
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(189, 147, 249, 0.3);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--drac-foreground);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+/* Modal Styles */
+.assessment-modal, .results-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.modal-content {
+    background: var(--drac-card);
+    margin: 5% auto;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--drac-foreground);
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--drac-comment);
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--drac-foreground);
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Form Styles */
+.form-section {
+    margin-bottom: 2.5rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.form-section h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--drac-foreground);
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--drac-purple);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.form-section h3::before {
+    content: '📋';
+    font-size: 1.1rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--drac-foreground);
+    font-size: 0.9rem;
+}
+
+.form-control {
+    padding: 0.875rem 1rem;
+    border-radius: 12px;
+    background: var(--drac-bg-darker);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    color: var(--drac-foreground);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--drac-purple);
+    box-shadow: 0 0 0 3px rgba(189, 147, 249, 0.2);
+    background: var(--drac-card);
+    transform: translateY(-1px);
+}
+
+.form-control:hover {
+    border-color: rgba(189, 147, 249, 0.4);
+    background: var(--drac-card);
+}
+
+.form-control option {
+    background: var(--drac-bg-darker);
+    color: var(--drac-foreground);
+    padding: 0.5rem;
+}
+
+.form-control option:hover {
+    background: var(--drac-purple);
+}
+
+.radio-group, .health-conditions, .symptoms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.radio-label, .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    background: rgba(255, 255, 255, 0.02);
+    position: relative;
+    overflow: hidden;
+}
+
+.radio-label:hover, .checkbox-label:hover {
+    background: rgba(189, 147, 249, 0.1);
+    border-color: rgba(189, 147, 249, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(189, 147, 249, 0.2);
+}
+
+.radio-label:active, .checkbox-label:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(189, 147, 249, 0.1);
+}
+
+.radio-label input[type="radio"], .checkbox-label input[type="checkbox"] {
+    margin: 0;
+    width: 20px;
+    height: 20px;
+    accent-color: var(--drac-purple);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.radio-label input[type="radio"]:checked, .checkbox-label input[type="checkbox"]:checked {
+    transform: scale(1.1);
+}
+
+.radio-label::before, .checkbox-label::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(189, 147, 249, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.radio-label:hover::before, .checkbox-label:hover::before {
+    left: 100%;
+}
+
+/* Results Modal Styles */
+.results-content {
+    max-width: 600px;
+}
+
+.results-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.risk-score {
+    text-align: center;
+}
+
+.score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    transition: all 0.3s;
+}
+
+.score-circle.low-risk {
+    background: linear-gradient(135deg, #50fa7b, #2ecc71);
+    box-shadow: 0 0 20px rgba(80, 250, 123, 0.3);
+}
+
+.score-circle.moderate-risk {
+    background: linear-gradient(135deg, #ffb86c, #e67e22);
+    box-shadow: 0 0 20px rgba(255, 184, 108, 0.3);
+}
+
+.score-circle.high-risk {
+    background: linear-gradient(135deg, #ff5555, #d63031);
+    box-shadow: 0 0 20px rgba(255, 85, 85, 0.3);
+}
+
+.score-number {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: white;
+    line-height: 1;
+}
+
+.score-label {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+}
+
+.risk-level {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.results-details {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.result-item h4 {
+    color: #fff;
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+}
+
+.result-item ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.result-item li {
+    color: #9ca3af;
+    margin-bottom: 0.5rem;
+}
+
+.recommendations {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.recommendations-section h4 {
+    color: #fff;
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+}
+
+.recommendation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.recommendation-list div {
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.recommendation-list .urgent {
+    background: rgba(255, 85, 85, 0.1);
+    border: 1px solid rgba(255, 85, 85, 0.3);
+    color: #ff6b6b;
+    font-weight: 600;
+}
+
+.recommendation-list .important {
+    background: rgba(255, 184, 108, 0.1);
+    border: 1px solid rgba(255, 184, 108, 0.3);
+    color: #ffb86c;
+}
+
+.recommendation-list .general {
+    background: rgba(80, 250, 123, 0.1);
+    border: 1px solid rgba(80, 250, 123, 0.3);
+    color: #50fa7b;
+}
+
+/* History Section */
+.history-section {
+    margin-top: 3rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(189, 147, 249, 0.05), rgba(139, 233, 253, 0.02));
+    border-radius: 20px;
+    border: 1px solid rgba(189, 147, 249, 0.1);
+}
+
+.history-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.history-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--drac-foreground);
+    margin: 0 0 0.5rem 0;
+    background: linear-gradient(135deg, #bd93f9, #8be9fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.history-subtitle {
+    color: var(--drac-comment);
+    font-size: 1rem;
+    margin: 0;
+}
+
+.history-table-container {
+    overflow-x: auto;
+    border-radius: 12px;
+    background: var(--drac-card);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.history-table thead {
+    background: linear-gradient(135deg, var(--drac-purple), #9b59b6);
+    color: white;
+}
+
+.history-table th {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.history-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--drac-foreground);
+}
+
+.history-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.history-table tbody tr:hover {
+    background: rgba(189, 147, 249, 0.05);
+}
+
+.history-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Risk Level Colors */
+.risk-level-low {
+    color: #50fa7b;
+    font-weight: 600;
+}
+
+.risk-level-moderate {
+    color: #ffb86c;
+    font-weight: 600;
+}
+
+.risk-level-high {
+    color: #ff5555;
+    font-weight: 600;
+}
+
+/* Assessment Type Icons */
+.assessment-type {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.assessment-type::before {
+    font-size: 1.2rem;
+}
+
+.assessment-type[data-type="lung-cancer"]::before {
+    content: "🫁";
+}
+
+.assessment-type[data-type="brain-cancer"]::before {
+    content: "🧠";
+}
+
+.assessment-type[data-type="breast-cancer"]::before {
+    content: "🩰";
+}
+
+/* Empty State */
+.empty-row {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.empty-message {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    color: var(--drac-comment);
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.empty-state small {
+    color: var(--drac-comment);
+    opacity: 0.7;
+}
+
+/* Action Buttons */
+.action-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.action-btn.view {
+    background: rgba(139, 233, 253, 0.1);
+    color: #8be9fd;
+    border: 1px solid rgba(139, 233, 253, 0.3);
+}
+
+.action-btn.view:hover {
+    background: rgba(139, 233, 253, 0.2);
+    transform: translateY(-1px);
+}
+
+.action-btn.delete {
+    background: rgba(255, 85, 85, 0.1);
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 85, 85, 0.3);
+    margin-left: 0.5rem;
+}
+
+.action-btn.delete:hover {
+    background: rgba(255, 85, 85, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Assessment Details Modal Styles */
+.details-content {
+    max-width: 900px;
+}
+
+.assessment-summary {
+    margin-bottom: 2rem;
+}
+
+.summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 2rem;
+}
+
+.summary-info h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--drac-foreground);
+    margin: 0 0 0.5rem 0;
+}
+
+.summary-info p {
+    color: var(--drac-comment);
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.summary-score {
+    text-align: center;
+}
+
+.score-display .score-circle {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 0.5rem;
+}
+
+.score-display .score-number {
+    font-size: 1.5rem;
+}
+
+.score-display .score-label {
+    font-size: 0.7rem;
+}
+
+.score-display .risk-level {
+    font-size: 1rem;
+}
+
+.questions-section h4 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--drac-foreground);
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--drac-purple);
+}
+
+.questions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.question-item {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+}
+
+.question-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(189, 147, 249, 0.2);
+}
+
+.question-text {
+    color: var(--drac-foreground);
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.question-answer {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+.answer-yes {
+    color: #50fa7b;
+}
+
+.answer-no {
+    color: #ff6b6b;
+}
+
+.answer-icon {
+    font-size: 1.2rem;
+}
+
+.answer-text {
+    font-size: 1rem;
+}
+
+.assessment-notes {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 184, 108, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 184, 108, 0.3);
+}
+
+.note-item {
+    color: #ffb86c;
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .history-table th,
+    .history-table td {
+        padding: 0.75rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    .history-table th:nth-child(6),
+    .history-table td:nth-child(6) {
+        display: none;
+    }
+
+    .history-title {
+        font-size: 1.5rem;
+    }
+
+    .summary-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .question-item {
+        padding: 1rem;
+    }
+
+    .question-text {
+        font-size: 0.9rem;
+    }
+
+    .details-content {
+        max-width: 95%;
+    }
+}
+:root {
+    --bg-dark: #282A36;
+    --text-gray: #6272A4;
+    --card-bg: #44475A;
+    --text-light: #F8F8F2;
+    --primary-blue: #6272A4;
+    --highlight-color: #FF79C6;
+}
+body, .modal-body {
+    background: var(--bg-dark) !important;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: var(--text-light);
+}
+.progress-steps {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+    gap: 2rem;
+}
+.step-item {
+    text-align: center;
+    min-width: 120px;
+}
+.step-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-blue);
+    color: var(--text-light);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+.question-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    padding: 2rem;
+    max-width: 700px;
+    margin: 0 auto;
+}
+.option-btn {
+    display: block;
+    width: 100%;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border: 2px solid var(--text-gray);
+    border-radius: 12px;
+    background: var(--card-bg);
+    color: var(--text-light);
+    text-align: left;
+    transition: all 0.2s;
+}
+.option-btn:hover {
+    border-color: var(--text-light);
+    background: var(--bg-dark);
+}
+.option-btn.selected {
+    border-color: var(--text-light);
+    background: var(--bg-dark);
+    font-weight: bold;
+}
+.question-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-light);
+}
+.helper-text {
+    color: var(--text-gray);
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+}
+.continue-btn {
+    background: var(--primary-blue);
+    color: var(--text-light);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 2rem;
+    font-weight: 500;
+    margin-top: 1rem;
+}
+.continue-btn:hover {
+    background: var(--text-gray);
+}
+.emoji-icon {
+    font-size: 1.2rem;
+    margin-right: 0.5rem;
+}
+.highlight-term {
+    color: var(--highlight-color);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.highlight-term:hover {
+    text-decoration: underline;
+}
+</style>
+{% endblock %}

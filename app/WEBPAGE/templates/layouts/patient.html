@@ -1,0 +1,1715 @@
+{% extends "layouts/base.html" %}
+
+{% block body %}
+<div class="sidebar">
+    <div class="logo">
+        <img src="{{ url_for('static', filename='assets/logo.png') }}" alt="Logo" style="height: 60px; width: auto;">
+    </div>
+    <div class="nav-link-group">
+        <a href="{{ url_for('user_dashboard') }}" class="nav-link {% if request.endpoint == 'user_dashboard' %}nav-link-active{% endif %}">
+            <img src="/static/icons/Dashboard.png" alt="Dashboard" style="height: 20px; margin-right: 5px;"> Dashboard
+        </a>
+        <a href="{{ url_for('risk_assessment_page') }}" class="nav-link {% if request.endpoint == 'risk_assessment_page' %}nav-link-active{% endif %}">
+            <img src="/static/icons/Risk_assessments.png" alt="Risk Assessment" style="height: 20px; margin-right: 5px;"> Risk Assessment
+        </a>
+        <a href="{{ url_for('appointment_page') }}" class="nav-link {% if request.endpoint in ['appointment_page', 'cancel_appointment'] %}nav-link-active{% endif %}">
+            <img src="/static/icons/Appointments.png" alt="Appointments" style="height: 20px; margin-right: 5px;"> Appointments
+        </a>
+        <a href="{{ url_for('patient_cases') }}" class="nav-link {% if request.endpoint in ['patient_cases', 'new_patient_case', 'view_patient_case'] %}nav-link-active{% endif %}">
+            <img src="/static/icons/Cases.png" alt="My Cases" style="height: 20px; margin-right: 5px;"> My Cases
+        </a>
+        <a href="{{ url_for('messages') }}" class="nav-link {% if request.endpoint == 'messages' %}nav-link-active{% endif %}">
+            <img src="/static/icons/Messages.png" alt="Messages" style="height: 20px; margin-right: 5px;"> Messages
+        </a>
+        <a href="{{ url_for('patient_reports') }}" class="nav-link {% if request.endpoint == 'patient_reports' %}nav-link-active{% endif %}">
+            <img src="/static/icons/Report.png" alt="Reports" style="height: 20px; margin-right: 5px;"> Reports
+        </a>
+        <a href="{{ url_for('patient_aiscanner_page') }}" class="nav-link {% if request.endpoint == 'patient_aiscanner_page' %}nav-link-active{% endif %}">
+            <img src="/static/icons/AI_Scanner.png" alt="AI Scanner" style="height: 20px; margin-right: 5px;"> AI Scanner
+        </a>
+        <a href="{{ url_for('manage_plans') }}" class="nav-link {% if request.endpoint == 'manage_plans' %}nav-link-active{% endif %}">
+            <img src="/static/icons/manage_plans.png" alt="Manage Plans" style="height: 20px; margin-right: 5px;"> Manage Plans
+        </a>
+    </div>
+    </div>
+</div>
+
+<div class="main-content" style="padding: 0 20px 20px 20px;">
+    <header class="header" style="margin-left:-20px; margin-right:-20px;">
+        <div class="language-selector" style="margin-left: 20px; margin-right: auto; display: flex; align-items: center;">
+            <div id="google_translate_element"></div>
+        </div>
+        <div class="header-right" style="margin-left:auto; display:flex; align-items:center; gap:12px; position: relative;">
+            <!-- Notification Bell -->
+            <div class="notification-bell" style="position: relative; cursor: pointer;" onclick="toggleNotifications()">
+                <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%; transition: all 0.3s ease;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color: var(--drac-foreground);">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                    </svg>
+                    <span id="notificationBadge" class="notification-badge" style="position: absolute; top: -2px; right: -2px; background: #ff4757; color: white; border-radius: 50%; min-width: 18px; height: 18px; display: none; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; border: 2px solid var(--drac-bg);">0</span>
+                </div>
+            </div>
+            
+            {% if current_user %}
+            <div class="header-profile" style="display:flex; align-items:center; gap:10px; cursor:pointer; position: relative;">
+                <div class="profile-avatar" style="background-color: var(--drac-purple); width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#111; font-weight:700; min-width:42px; min-height:42px;">
+                {{ current_user.fullname[0] if current_user and current_user.fullname else 'U' }}
+                </div>
+                <div style="display:flex; flex-direction:column; align-items:flex-start;">
+                    <div class="profile-name" style="font-weight:700;">{{ current_user.fullname if current_user and current_user.fullname else 'User' }}</div>
+                    {% if user_subscription and user_subscription.plan != 'free' %}
+                    <div class="subscription-badge-header subscription-{{ user_subscription.plan }}">
+                        {{ user_subscription.plan }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            <a href="{{ url_for('logout') }}" class="action-btn" style="background: #e74c3c; text-decoration: none; color: inherit">Sign Out</a>
+
+            <!-- Patient Profile Popup -->
+            <div id="patientProfilePopup" class="card" style="max-height: 0; overflow: auto; position:absolute; top: 56px; right: 0; width: 290px; max-width: 90vw; background:var(--drac-card); border:1px solid var(--drac-comment); border-radius:12px; box-shadow:0 10px 28px rgba(0,0,0,0.45); color:var(--drac-foreground); z-index: 1100; box-sizing: border-box; transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out; opacity: 0;">
+                <div class="card-body py-3 px-3 text-center">
+                    <div class="mx-auto d-flex align-items-center justify-content-center" style="width:68px; height:68px; border-radius:50%; background: var(--drac-purple); color: var(--drac-bg); font-weight:700; font-size:28px;">{{ current_user.fullname[0] if current_user and current_user.fullname else 'U' }}</div>
+                    <div class="mt-2" style="font-size:1.05rem; font-weight: 800; line-height:1.1; word-wrap: break-word;">{{ current_user.fullname if current_user and current_user.fullname else 'User' }}</div>
+                    
+                    <!-- Subscription Status -->
+                    <div class="mt-2 mb-3">
+                        {% if user_subscription and user_subscription.plan != 'free' %}
+                        <div class="subscription-badge-popup subscription-{{ user_subscription.plan }}" style="display: inline-block; font-size: 12px; padding: 4px 8px; border-radius: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: white;">
+                            {{ user_subscription.plan }} Plan
+                        </div>
+                        {% if user_subscription.expires_at %}
+                        <div style="font-size: 11px; color: var(--drac-comment); margin-top: 4px;">
+                            Valid until {{ user_subscription.expires_at[:10] }}
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div style="font-size: 12px; color: var(--drac-comment); padding: 4px 8px; border: 1px solid var(--drac-comment); border-radius: 10px; display: inline-block;">
+                            Free Plan
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="#" id="patientEditProfileBtn" class="edit-profile-btn mt-2 p-2 d-flex align-items-center justify-content-between" style="border:1px solid var(--drac-comment); border-radius:10px; background: linear-gradient(0deg, rgba(255,255,255,0.02), rgba(255,255,255,0.02)); text-decoration:none; color:var(--drac-foreground); transition: background-color .15s ease, border-color .15s ease;">
+                        <div class="d-flex align-items-center gap-2">
+                            <span style="font-size:16px;">👤</span>
+                            <span style="font-weight:700;">Edit Profile</span>
+                        </div>
+                        <span class="status-arrow">&gt;</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Edit Profile Modal -->
+            <div id="patientEditProfileModal" class="edit-profile-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1200; align-items: center; justify-content: center;">
+                <div class="edit-profile-content" style="background: var(--drac-card); border: 1px solid var(--drac-comment); border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                    <div class="edit-profile-header" style="padding: 20px 24px; border-bottom: 1px solid var(--drac-comment); display: flex; align-items: center; justify-content: space-between;">
+                        <h3 style="margin: 0; color: var(--drac-foreground); font-weight: 700;">Edit Profile</h3>
+                        <button id="closePatientEditProfileModal" class="close-modal-btn" style="background: none; border: none; color: var(--drac-comment); font-size: 24px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background-color 0.2s;">×</button>
+                    </div>
+                    <form id="patientEditProfileForm" class="edit-profile-form" style="padding: 24px;">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="patientEditFullName" style="display: block; margin-bottom: 8px; color: var(--drac-foreground); font-weight: 600;">Full Name</label>
+                            <input type="text" id="patientEditFullName" name="fullname" style="width: 100%; padding: 12px; border: 1px solid var(--drac-comment); border-radius: 8px; background: var(--drac-bg); color: var(--drac-foreground); font-size: 14px;" value="{{ current_user.fullname if current_user and current_user.fullname else '' }}" readonly>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="patientEditEmail" style="display: block; margin-bottom: 8px; color: var(--drac-foreground); font-weight: 600;">Email</label>
+                            <input type="email" id="patientEditEmail" name="email" style="width: 100%; padding: 12px; border: 1px solid var(--drac-comment); border-radius: 8px; background: var(--drac-bg); color: var(--drac-foreground); font-size: 14px;" value="{{ current_user.email if current_user and current_user.email else '' }}" readonly>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="patientEditPhone" style="display: block; margin-bottom: 8px; color: var(--drac-foreground); font-weight: 600;">Phone Number</label>
+                            <input type="tel" id="patientEditPhone" name="phone" style="width: 100%; padding: 12px; border: 1px solid var(--drac-comment); border-radius: 8px; background: var(--drac-bg); color: var(--drac-foreground); font-size: 14px;" value="{{ current_user.phone if current_user and current_user.phone else '' }}">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="patientEditDob" style="display: block; margin-bottom: 8px; color: var(--drac-foreground); font-weight: 600;">Date of Birth</label>
+                            <div class="custom-date-input-container" style="position: relative;">
+                                <input type="text" id="patientEditDob" name="date_of_birth" placeholder="Select your date of birth" readonly style="width: 100%; padding: 12px 45px 12px 12px; border: 1px solid var(--drac-comment); border-radius: 8px; background: var(--drac-bg); color: var(--drac-foreground); font-size: 14px; cursor: pointer;" value="{{ current_user.date_of_birth if current_user and current_user.date_of_birth else '' }}">
+                                <div class="custom-date-icon" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--drac-comment); font-size: 16px; pointer-events: none; transition: color 0.2s;">📅</div>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 24px;">
+                            <label for="patientEditAddress" style="display: block; margin-bottom: 8px; color: var(--drac-foreground); font-weight: 600;">Address</label>
+                            <textarea id="patientEditAddress" name="address" rows="3" style="width: 100%; padding: 12px; border: 1px solid var(--drac-comment); border-radius: 8px; background: var(--drac-bg); color: var(--drac-foreground); font-size: 14px; resize: vertical;" placeholder="Enter your address">{{ current_user.address if current_user and current_user.address else '' }}</textarea>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 24px;">
+                            <label for="patientEditProfilePhoto" style="display: block; margin-bottom: 8px; color: var(--drac-foreground); font-weight: 600;">Profile Photo</label>
+                            <input type="file" id="patientEditProfilePhoto" name="profile_photo" accept="image/*" style="width: 100%; padding: 12px; border: 1px solid var(--drac-comment); border-radius: 8px; background: var(--drac-bg); color: var(--drac-foreground); font-size: 14px;">
+                            <small style="color: var(--drac-comment); font-size: 12px; margin-top: 4px; display: block;">Upload a new profile photo (optional)</small>
+                        </div>
+                        <div class="theme" style="margin-bottom: 24px;">
+							<label for="theme" style="display: block; margin-bottom: 8px; color: var(--drac-foreground); font-weight: 600;">Theme</label>
+							<label class="switch">
+  								<input type="checkbox" id="theme-toggle">
+  								<span class="slider round"></span>
+							</label>
+						</div>
+                        <div class="form-actions" style="display: flex; gap: 12px; justify-content: flex-end;">
+                            <button type="button" id="cancelPatientEditProfile" class="cancel-btn" style="padding: 10px 20px; border: 1px solid var(--drac-comment); border-radius: 8px; background: transparent; color: var(--drac-foreground); cursor: pointer; transition: background-color 0.2s;">Cancel</button>
+                            <button type="submit" class="save-btn" style="padding: 10px 20px; border: none; border-radius: 8px; background: var(--drac-purple); color: #111; font-weight: 600; cursor: pointer; transition: background-color 0.2s;">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Notifications Modal -->
+            <div id="notificationsModal" class="notifications-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1300; align-items: center; justify-content: center;">
+                <div class="notifications-content" style="background: var(--drac-card); border: 1px solid var(--drac-comment); border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <div class="notifications-header" style="padding: 20px 24px; border-bottom: 1px solid var(--drac-comment); display: flex; align-items: center; justify-content: space-between;">
+                        <h3 style="margin: 0; color: var(--drac-foreground); font-weight: 700;">🔔 Notifications</h3>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="clearAllNotifications" class="clear-notifications-btn" style="background: none; border: 1px solid var(--drac-comment); border-radius: 6px; color: var(--drac-foreground); padding: 6px 12px; font-size: 12px; cursor: pointer; transition: all 0.2s;">Clear All</button>
+                            <button id="closeNotificationsModal" class="close-modal-btn" style="background: none; border: none; color: var(--drac-comment); font-size: 24px; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background-color 0.2s;">×</button>
+                        </div>
+                    </div>
+                    <div id="notificationsContent" class="notifications-list" style="padding: 0;">
+                        <div class="loading-notification" style="padding: 40px; text-align: center; color: var(--drac-comment);">
+                            Loading notifications...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Date Picker Modal -->
+            <div id="customDatePickerModal" class="custom-date-picker-modal">
+                <div class="custom-date-picker-content">
+                    <div class="custom-date-picker-header">
+                        <div>
+                            <h4>Select Date of Birth</h4>
+                            <small style="color: var(--drac-comment); font-size: 12px; margin-top: 4px; display: block;">Age must be between 18 and 115 years</small>
+                        </div>
+                        <button id="closeCustomDatePicker" class="custom-date-picker-close">×</button>
+                    </div>
+                    <div class="custom-date-picker-body">
+                        <!-- Month/Year Navigation -->
+                        <div class="date-picker-nav">
+                            <button id="prevMonth" class="nav-btn">‹</button>
+                            <div class="month-year-display" id="monthYearDisplay">December 2024</div>
+                            <button id="nextMonth" class="nav-btn">›</button>
+                        </div>
+
+                        <!-- Year Selection View (hidden by default) -->
+                        <div class="year-selection-view" id="yearSelectionView" style="display: none;">
+                            <div class="year-grid" id="yearGrid">
+                                <!-- Years will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Day Labels -->
+                        <div class="day-labels">
+                            <div class="day-label">Sun</div>
+                            <div class="day-label">Mon</div>
+                            <div class="day-label">Tue</div>
+                            <div class="day-label">Wed</div>
+                            <div class="day-label">Thu</div>
+                            <div class="day-label">Fri</div>
+                            <div class="day-label">Sat</div>
+                        </div>
+
+                        <!-- Calendar Grid -->
+                        <div id="calendarGrid" class="calendar-grid">
+                            <!-- Days will be populated by JavaScript -->
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="date-picker-actions">
+                            <button id="todayBtn" class="action-btn secondary">Today</button>
+                            <div>
+                                <button id="cancelDatePicker" class="action-btn cancel">Cancel</button>
+                                <button id="confirmDatePicker" class="action-btn confirm">Select</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <main style="padding: 0 20px;">
+        <div class="greeting" style="font-size: 1.5em; margin-bottom: 20px;">
+            {{ greeting }}
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                notifications.error("{{ message }}");
+                            });
+                        </script>
+                    {% elif category == 'success' %}
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                notifications.success("{{ message }}");
+                            });
+                        </script>
+                    {% elif category == 'warning' %}
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                notifications.warning("{{ message }}");
+                            });
+                        </script>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <style>
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fff;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: rgb(235, 235, 235);
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: #1d1d1d;
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px #1d1d1d;
+        }
+
+        input:checked + .slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+
+        /* Rounded sliders */
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+        /* Patient Profile Styles */
+        .header-profile {
+            cursor: pointer;
+        }
+        .header-profile:hover {
+            opacity: 0.8;
+        }
+
+        /* Edit Profile button hover */
+        .edit-profile-btn:hover {
+            background: rgba(255,255,255,0.06) !important;
+            border-color: var(--drac-foreground) !important;
+        }
+
+        /* Status arrow */
+        .status-arrow {
+            color: var(--drac-comment);
+            font-weight: 900;
+        }
+
+        /* Subscription Badge Styles */
+        .subscription-badge-header {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .subscription-badge-popup {
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .subscription-premium {
+            background: linear-gradient(45deg, #ff6b35, #ff8e53);
+        }
+        
+        .subscription-pro {
+            background: linear-gradient(45deg, #8b5cf6, #a78bfa);
+        }
+
+        /* Edit Profile Modal Styles */
+        .edit-profile-modal {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1200;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .edit-profile-modal.show {
+            opacity: 1;
+        }
+        .edit-profile-content {
+            background: var(--drac-card);
+            border: 1px solid var(--drac-comment);
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .edit-profile-modal.show .edit-profile-content {
+            transform: scale(1);
+        }
+        .edit-profile-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--drac-comment);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .edit-profile-header h3 {
+            margin: 0;
+            color: var(--drac-foreground);
+            font-weight: 700;
+        }
+        .close-modal-btn {
+            background: none;
+            border: none;
+            color: var(--drac-comment);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .close-modal-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--drac-foreground);
+        }
+        .edit-profile-form {
+            padding: 24px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--drac-foreground);
+            font-weight: 600;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--drac-comment);
+            border-radius: 8px;
+            background: var(--drac-bg);
+            color: var(--drac-foreground);
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .date-input-container input:focus {
+            outline: none;
+            border-color: var(--drac-purple);
+            box-shadow: 0 0 0 2px rgba(189, 147, 249, 0.2);
+        }
+        
+        /* Readonly input styles (Full Name and Email only) */
+        #patientEditFullName[readonly],
+        #patientEditEmail[readonly] {
+            filter: blur(1px);
+            opacity: 0.7;
+            cursor: not-allowed;
+            position: relative;
+        }
+        #patientEditFullName[readonly]:hover,
+        #patientEditEmail[readonly]:hover {
+            filter: blur(2px);
+            opacity: 0.5;
+        }
+        #patientEditFullName[readonly]:hover::after,
+        #patientEditEmail[readonly]:hover::after {
+            content: '🚫';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: var(--drac-red, #ff5555);
+            pointer-events: none;
+            z-index: 10;
+        }
+        .date-input-container {
+            position: relative;
+        }
+        .date-input-container input {
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .date-input-container input:hover {
+            border-color: rgba(189, 147, 249, 0.5);
+        }
+        .date-input-container input::-webkit-calendar-picker-indicator {
+            opacity: 0;
+            cursor: pointer;
+        }
+        .date-icon {
+            transition: color 0.2s, transform 0.2s;
+        }
+        .date-input-container input:focus + .date-icon,
+        .date-input-container:hover .date-icon {
+            color: var(--drac-purple);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .date-input-container input:invalid {
+            border-color: var(--drac-red, #ff5555);
+        }
+        .date-input-container input:valid {
+            border-color: var(--drac-green, #50fa7b);
+        }
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        .cancel-btn {
+            padding: 10px 20px;
+            border: 1px solid var(--drac-comment);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--drac-foreground);
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .cancel-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--drac-foreground);
+        }
+        .save-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: var(--drac-purple);
+            color: #111;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .save-btn:hover {
+            background: #bd93f9;
+        }
+        .save-btn:disabled {
+            background: var(--drac-comment);
+            cursor: not-allowed;
+        }
+        
+        /* Sage AI Assistant button styles */
+        .va-toggle {
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 60%, #f97316 100%);
+            color: white !important;
+            border-radius: 32px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+            transition: all 0.3s ease;
+        }
+        .va-toggle:hover {
+            /* slightly intensified variant of the same gradient on hover */
+            background: linear-gradient(135deg, #9b4fe6 0%, #e84b8f 60%, #ee7a2a 100%) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.45) !important;
+        }
+        
+        .va-toggle:active {
+            transform: translateY(0px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.35) !important;
+        }
+
+        /* Custom Date Picker Styles */
+        .custom-date-input-container {
+            position: relative;
+        }
+        .custom-date-input-container input {
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .custom-date-input-container input:hover {
+            border-color: rgba(189, 147, 249, 0.5);
+        }
+        .custom-date-input-container input:focus {
+            outline: none;
+            border-color: var(--drac-purple);
+            box-shadow: 0 0 0 2px rgba(189, 147, 249, 0.2);
+        }
+        .custom-date-icon {
+            transition: color 0.2s, transform 0.2s;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        .custom-date-input-container input:focus + .custom-date-icon,
+        .custom-date-input-container:hover .custom-date-icon {
+            color: var(--drac-purple);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .custom-date-picker-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1300;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .custom-date-picker-modal.show {
+            display: flex;
+            opacity: 1;
+        }
+        .custom-date-picker-content {
+            background: var(--drac-card);
+            border: 1px solid var(--drac-comment);
+            border-radius: 16px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+            max-width: 320px;
+            width: 90%;
+            transform: scale(0.9) translateY(20px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .custom-date-picker-modal.show .custom-date-picker-content {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+        .custom-date-picker-header {
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid var(--drac-comment);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .custom-date-picker-header h4 {
+            margin: 0;
+            color: var(--drac-foreground);
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .custom-date-picker-close {
+            background: none;
+            border: none;
+            color: var(--drac-comment);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .custom-date-picker-close:hover {
+            background: rgba(255,255,255,0.1);
+            color: var(--drac-foreground);
+        }
+        .custom-date-picker-body {
+            padding: 24px;
+        }
+        .date-picker-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--drac-comment);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-btn:hover {
+            background: rgba(189, 147, 249, 0.1);
+            color: var(--drac-purple);
+        }
+        .month-year-display {
+            font-weight: 700;
+            color: var(--drac-foreground);
+            font-size: 16px;
+            min-width: 140px;
+            text-align: center;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .month-year-display:hover {
+            background: rgba(189, 147, 249, 0.1);
+            color: var(--drac-purple);
+        }
+        .year-selection-view {
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease;
+        }
+        .year-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        .year-option {
+            padding: 12px 8px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            color: var(--drac-foreground);
+            border: 1px solid transparent;
+        }
+        .year-option:hover {
+            background: rgba(189, 147, 249, 0.1);
+            color: var(--drac-purple);
+            border-color: var(--drac-purple);
+        }
+        .year-option.selected {
+            background: var(--drac-purple);
+            color: #111;
+            border-color: var(--drac-purple);
+        }
+        .year-option.current-year {
+            background: rgba(80, 250, 123, 0.1);
+            color: var(--drac-green);
+            border-color: var(--drac-green);
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .day-labels {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+        .day-label {
+            color: var(--drac-comment);
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            padding: 8px 0;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .calendar-day {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--drac-foreground);
+            position: relative;
+        }
+        .calendar-day:hover {
+            background: rgba(189, 147, 249, 0.1);
+            color: var(--drac-purple);
+        }
+        .calendar-day.today {
+            background: rgba(80, 250, 123, 0.1);
+            color: var(--drac-green);
+            font-weight: 700;
+        }
+        .calendar-day.selected {
+            background: var(--drac-purple);
+            color: #111;
+            font-weight: 700;
+        }
+        .calendar-day.disabled {
+            color: var(--drac-comment);
+            cursor: not-allowed;
+        }
+        .calendar-day.disabled:hover {
+            background: transparent;
+            color: var(--drac-comment);
+        }
+        .date-picker-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--drac-comment);
+        }
+        .action-btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        .action-btn.secondary {
+            flex: 1;
+            border: 1px solid var(--drac-comment);
+            background: transparent;
+            color: var(--drac-foreground);
+        }
+        .action-btn.secondary:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--drac-foreground);
+        }
+        .action-btn.cancel {
+            border: 1px solid var(--drac-comment);
+            background: transparent;
+            color: var(--drac-foreground);
+        }
+        .action-btn.cancel:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--drac-foreground);
+        }
+        .action-btn.confirm {
+            border: none;
+            background: var(--drac-purple);
+            color: #111;
+        }
+        .action-btn.confirm:hover {
+            background: #bd93f9;
+        }
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Notification Bell Styles */
+        .notification-bell:hover div {
+            background: rgba(255,255,255,0.2) !important;
+            transform: scale(1.05);
+        }
+        
+        .notification-badge {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Notifications Modal Styles */
+        .notifications-modal {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1300;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .notifications-modal.show {
+            opacity: 1;
+        }
+        .notifications-content {
+            background: var(--drac-card);
+            border: 1px solid var(--drac-comment);
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .notifications-modal.show .notifications-content {
+            transform: scale(1);
+        }
+        .notifications-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--drac-comment);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .notifications-header h3 {
+            margin: 0;
+            color: var(--drac-foreground);
+            font-weight: 700;
+        }
+        .clear-notifications-btn {
+            transition: all 0.2s;
+        }
+        .clear-notifications-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--drac-foreground);
+        }
+        .notification-item {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--drac-comment);
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .notification-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        .notification-item.unread {
+            background: rgba(189, 147, 249, 0.05);
+            border-left: 4px solid var(--drac-purple);
+        }
+        .notification-title {
+            font-weight: 600;
+            color: var(--drac-foreground);
+            margin: 0 0 4px 0;
+            font-size: 14px;
+        }
+        .notification-message {
+            color: var(--drac-comment);
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .notification-time {
+            color: var(--drac-comment);
+            font-size: 11px;
+        }
+        .notification-type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 8px;
+        }
+        .notification-type-message {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+        }
+        .notification-type-appointment {
+            background: rgba(189, 147, 249, 0.15);
+            color: var(--drac-purple);
+        }
+        .notification-type-report {
+            background: rgba(255, 184, 108, 0.15);
+            color: #ffb86c;
+        }
+        .notification-type-meeting {
+            background: rgba(255, 107, 157, 0.15);
+            color: #ff6b9d;
+        }
+        
+        /* Language Selector Styles */
+        .language-selector {
+            margin-left: 20px;
+            margin-right: auto;
+            display: flex;
+            align-items: center;
+        }
+        .language-selector #google_translate_element {
+            color: var(--drac-foreground);
+        }
+        .language-selector #google_translate_element select {
+            background: var(--drac-bg);
+            border: 1px solid var(--drac-comment);
+            color: var(--drac-foreground);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .language-selector #google_translate_element select:focus {
+            outline: none;
+            border-color: var(--drac-purple);
+            box-shadow: 0 0 0 2px rgba(189, 147, 249, 0.2);
+        }
+    </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Patient Profile Dropdown functionality
+        const patientHeaderProfile = document.querySelector('.header-profile');
+        const patientProfilePopup = document.getElementById('patientProfilePopup');
+        const patientEditProfileBtn = document.getElementById('patientEditProfileBtn');
+        const patientEditProfileModal = document.getElementById('patientEditProfileModal');
+        const closePatientEditProfileModal = document.getElementById('closePatientEditProfileModal');
+        const cancelPatientEditProfile = document.getElementById('cancelPatientEditProfile');
+        const patientEditProfileForm = document.getElementById('patientEditProfileForm');
+
+        function togglePatientProfilePopup() {
+            if (!patientProfilePopup) return;
+            if (patientProfilePopup.dataset.open === 'true') {
+                patientProfilePopup.style.maxHeight = '0px';
+                patientProfilePopup.style.opacity = '0';
+                patientProfilePopup.dataset.open = 'false';
+            } else {
+                patientProfilePopup.style.maxHeight = '400px'; // Increased from 200px to show full content
+                patientProfilePopup.style.opacity = '1';
+                patientProfilePopup.dataset.open = 'true';
+            }
+        }
+
+        function openPatientEditProfileModal() {
+            if (patientEditProfileModal) {
+                patientEditProfileModal.style.display = 'flex';
+                // Trigger reflow for animation
+                patientEditProfileModal.offsetHeight;
+                patientEditProfileModal.classList.add('show');
+                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            }
+        }
+
+        function closePatientEditProfileModalFunc() {
+            if (patientEditProfileModal) {
+                patientEditProfileModal.classList.remove('show');
+                setTimeout(() => {
+                    patientEditProfileModal.style.display = 'none';
+                }, 300); // Match transition duration
+                document.body.style.overflow = ''; // Restore scrolling
+            }
+        }
+
+        if (patientHeaderProfile) {
+            patientHeaderProfile.addEventListener('click', (e) => {
+                e.stopPropagation();
+                togglePatientProfilePopup();
+            });
+        }
+
+        if (patientEditProfileBtn) {
+            patientEditProfileBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Close the dropdown first
+                if (patientProfilePopup) {
+                    patientProfilePopup.style.maxHeight = '0px';
+                    patientProfilePopup.style.opacity = '0';
+                    patientProfilePopup.dataset.open = 'false';
+                }
+                openPatientEditProfileModal();
+            });
+        }
+
+        if (closePatientEditProfileModal) {
+            closePatientEditProfileModal.addEventListener('click', closePatientEditProfileModalFunc);
+        }
+
+        if (cancelPatientEditProfile) {
+            cancelPatientEditProfile.addEventListener('click', closePatientEditProfileModalFunc);
+        }
+
+        // Close modal when clicking outside
+        if (patientEditProfileModal) {
+            patientEditProfileModal.addEventListener('click', (e) => {
+                if (e.target === patientEditProfileModal) {
+                    closePatientEditProfileModalFunc();
+                }
+            });
+        }
+
+        // Close popup when clicking outside
+        document.addEventListener('click', (e) => {
+            if (patientProfilePopup && !patientProfilePopup.contains(e.target) && !patientHeaderProfile?.contains(e.target)) {
+                patientProfilePopup.style.maxHeight = '0px';
+                patientProfilePopup.style.opacity = '0';
+                patientProfilePopup.dataset.open = 'false';
+            }
+        });
+
+        // Handle form submission
+        if (patientEditProfileForm) {
+            patientEditProfileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const formData = new FormData(patientEditProfileForm);
+
+                try {
+                    const response = await fetch('/api/patient/profile', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        // Close modal
+                        closePatientEditProfileModalFunc();
+                        // Show success message
+                        alert('Profile updated successfully!');
+                        // Refresh the page to show updated profile info
+                        window.location.reload();
+                    } else {
+                        const error = await response.json();
+                        alert('Error updating profile: ' + (error.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Error updating profile:', error);
+                    alert('Error updating profile. Please try again.');
+                }
+            });
+        }
+
+        // Custom Date Picker functionality
+        const customDateInput = document.getElementById('patientEditDob');
+        const customDateIcon = document.querySelector('.custom-date-icon');
+        const customDatePickerModal = document.getElementById('customDatePickerModal');
+        const closeCustomDatePicker = document.getElementById('closeCustomDatePicker');
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const monthYearDisplay = document.getElementById('monthYearDisplay');
+        const yearSelectionView = document.getElementById('yearSelectionView');
+        const yearGrid = document.getElementById('yearGrid');
+        const calendarGrid = document.getElementById('calendarGrid');
+        const todayBtn = document.getElementById('todayBtn');
+        const cancelDatePicker = document.getElementById('cancelDatePicker');
+        const confirmDatePicker = document.getElementById('confirmDatePicker');
+
+        let currentDate = new Date();
+        let selectedDate = null;
+        let displayedMonth = currentDate.getMonth();
+        let displayedYear = currentDate.getFullYear();
+        let isYearSelectionMode = false;
+
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        function openCustomDatePicker() {
+            if (customDatePickerModal) {
+                customDatePickerModal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+
+                // Initialize with current selected date or today's date
+                if (customDateInput && customDateInput.value) {
+                    // Parse the display format "Month DD, YYYY"
+                    const dateParts = customDateInput.value.split(' ');
+                    if (dateParts.length === 3) {
+                        const monthName = dateParts[0];
+                        const day = parseInt(dateParts[1].replace(',', ''));
+                        const year = parseInt(dateParts[2]);
+
+                        const monthIndex = monthNames.indexOf(monthName);
+                        if (monthIndex !== -1) {
+                            selectedDate = new Date(year, monthIndex, day);
+                            displayedMonth = monthIndex;
+                            displayedYear = year;
+                        }
+                    }
+                } else {
+                    selectedDate = null;
+                }
+
+                renderCalendar();
+            }
+        }
+
+        function closeCustomDatePickerFunc() {
+            if (customDatePickerModal) {
+                customDatePickerModal.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function renderCalendar() {
+            // Update month/year display
+            monthYearDisplay.textContent = `${monthNames[displayedMonth]} ${displayedYear}`;
+
+            // Clear existing calendar
+            calendarGrid.innerHTML = '';
+
+            // Get first day of month and last day of month
+            const firstDay = new Date(displayedYear, displayedMonth, 1);
+            const lastDay = new Date(displayedYear, displayedMonth + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay()); // Start from Sunday
+
+            // Age validation limits
+            const today = new Date();
+            const minAge = 18;
+            const maxAge = 115;
+            const minDate = new Date(today.getFullYear() - maxAge, today.getMonth(), today.getDate());
+            const maxDate = new Date(today.getFullYear() - minAge, today.getMonth(), today.getDate());
+
+            // Generate calendar days
+            for (let i = 0; i < 42; i++) { // 6 weeks * 7 days
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+
+                const currentDay = new Date(startDate);
+                currentDay.setDate(startDate.getDate() + i);
+                const dayNumber = currentDay.getDate();
+
+                // Check if day is in current month
+                const isCurrentMonth = currentDay.getMonth() === displayedMonth;
+
+                if (isCurrentMonth) {
+                    dayElement.textContent = dayNumber;
+
+                    // Check age constraints
+                    const isValidAge = currentDay >= minDate && currentDay <= maxDate;
+
+                    if (!isValidAge) {
+                        dayElement.classList.add('disabled');
+                    } else {
+                        // Check if it's today
+                        const isToday = currentDay.toDateString() === today.toDateString();
+                        if (isToday) {
+                            dayElement.classList.add('today');
+                        }
+
+                        // Check if it's selected
+                        if (selectedDate && currentDay.toDateString() === selectedDate.toDateString()) {
+                            dayElement.classList.add('selected');
+                        }
+
+                        // Add click handler
+                        dayElement.addEventListener('click', () => {
+                            // Remove previous selection
+                            document.querySelectorAll('.calendar-day.selected').forEach(el => {
+                                el.classList.remove('selected');
+                            });
+
+                            // Set new selection
+                            selectedDate = new Date(currentDay);
+                            dayElement.classList.add('selected');
+                        });
+                    }
+                } else {
+                    dayElement.textContent = '';
+                    dayElement.style.cursor = 'default';
+                }
+
+                calendarGrid.appendChild(dayElement);
+            }
+        }
+
+        function renderYearSelection() {
+            yearGrid.innerHTML = '';
+            const currentYear = new Date().getFullYear();
+            const minYear = currentYear - 115;
+            const maxYear = currentYear - 18;
+
+            for (let year = maxYear; year >= minYear; year--) {
+                const yearElement = document.createElement('div');
+                yearElement.className = 'year-option';
+                yearElement.textContent = year;
+
+                if (year === displayedYear) {
+                    yearElement.classList.add('selected');
+                }
+
+                yearElement.addEventListener('click', () => {
+                    displayedYear = year;
+                    toggleYearSelection();
+                    renderCalendar();
+                });
+
+                yearGrid.appendChild(yearElement);
+            }
+        }
+
+        function toggleYearSelection() {
+            isYearSelectionMode = !isYearSelectionMode;
+
+            if (isYearSelectionMode) {
+                calendarGrid.style.display = 'none';
+                yearSelectionView.style.display = 'block';
+                monthYearDisplay.textContent = `${displayedYear}`;
+                renderYearSelection();
+            } else {
+                yearSelectionView.style.display = 'none';
+                calendarGrid.style.display = 'grid';
+                monthYearDisplay.textContent = `${monthNames[displayedMonth]} ${displayedYear}`;
+            }
+        }
+
+        function navigateMonth(direction) {
+            if (isYearSelectionMode) {
+                // Navigate years when in year selection mode
+                displayedYear += direction;
+                renderYearSelection();
+            } else {
+                // Navigate months when in calendar mode
+                displayedMonth += direction;
+                if (displayedMonth < 0) {
+                    displayedMonth = 11;
+                    displayedYear--;
+                } else if (displayedMonth > 11) {
+                    displayedMonth = 0;
+                    displayedYear++;
+                }
+                renderCalendar();
+            }
+        }
+
+        function goToToday() {
+            // Don't allow selecting today as it would make age 0
+            alert('Cannot select today\'s date. Please select a date that makes you at least 18 years old.');
+            return;
+        }
+
+        function confirmSelection() {
+            if (selectedDate) {
+                // Validate age constraints
+                const today = new Date();
+                const minAge = 18;
+                const maxAge = 115;
+                const minDate = new Date(today.getFullYear() - maxAge, today.getMonth(), today.getDate());
+                const maxDate = new Date(today.getFullYear() - minAge, today.getMonth(), today.getDate());
+
+                if (selectedDate < minDate || selectedDate > maxDate) {
+                    alert('Please select a date that makes you between 18 and 115 years old.');
+                    return;
+                }
+
+                // Format as "Month DD, YYYY"
+                const formattedDate = `${monthNames[selectedDate.getMonth()]} ${selectedDate.getDate()}, ${selectedDate.getFullYear()}`;
+                customDateInput.value = formattedDate;
+
+                // Also set a hidden input with ISO format for form submission
+                let hiddenInput = document.getElementById('patientEditDobIso');
+                if (!hiddenInput) {
+                    hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.id = 'patientEditDobIso';
+                    hiddenInput.name = 'date_of_birth_iso';
+                    customDateInput.parentNode.appendChild(hiddenInput);
+                }
+                hiddenInput.value = selectedDate.toISOString().split('T')[0];
+            }
+            closeCustomDatePickerFunc();
+        }
+
+        // Event listeners
+        if (customDateInput) {
+            customDateInput.addEventListener('click', openCustomDatePicker);
+        }
+
+        if (customDateIcon) {
+            customDateIcon.addEventListener('click', openCustomDatePicker);
+        }
+
+        if (closeCustomDatePicker) {
+            closeCustomDatePicker.addEventListener('click', closeCustomDatePickerFunc);
+        }
+
+        if (monthYearDisplay) {
+            monthYearDisplay.addEventListener('click', toggleYearSelection);
+        }
+
+        if (prevMonthBtn) {
+            prevMonthBtn.addEventListener('click', () => navigateMonth(-1));
+        }
+
+        if (nextMonthBtn) {
+            nextMonthBtn.addEventListener('click', () => navigateMonth(1));
+        }
+
+        if (todayBtn) {
+            todayBtn.addEventListener('click', goToToday);
+        }
+
+        if (cancelDatePicker) {
+            cancelDatePicker.addEventListener('click', closeCustomDatePickerFunc);
+        }
+
+        if (confirmDatePicker) {
+            confirmDatePicker.addEventListener('click', confirmSelection);
+        }
+
+        // Close modal when clicking outside
+        if (customDatePickerModal) {
+            customDatePickerModal.addEventListener('click', (e) => {
+                if (e.target === customDatePickerModal) {
+                    closeCustomDatePickerFunc();
+                }
+            });
+        }
+        
+        // ===== NOTIFICATION SYSTEM =====
+        
+        // Notification elements
+        const notificationBadge = document.getElementById('notificationBadge');
+        const notificationsModal = document.getElementById('notificationsModal');
+        const closeNotificationsModal = document.getElementById('closeNotificationsModal');
+        const clearAllNotificationsBtn = document.getElementById('clearAllNotifications');
+        const notificationsContent = document.getElementById('notificationsContent');
+        
+        // Global function for notification bell click
+        window.toggleNotifications = function() {
+            if (notificationsModal) {
+                notificationsModal.style.display = 'flex';
+                // Trigger reflow for animation
+                notificationsModal.offsetHeight;
+                notificationsModal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+                
+                // Load notifications
+                loadNotifications();
+                
+                // Reset unread count
+                resetNotificationCount();
+            }
+        };
+        
+        function closeNotificationsModalFunc() {
+            if (notificationsModal) {
+                notificationsModal.classList.remove('show');
+                setTimeout(() => {
+                    notificationsModal.style.display = 'none';
+                }, 300);
+                document.body.style.overflow = '';
+            }
+        }
+        
+        if (closeNotificationsModal) {
+            closeNotificationsModal.addEventListener('click', closeNotificationsModalFunc);
+        }
+        
+        if (clearAllNotificationsBtn) {
+            clearAllNotificationsBtn.addEventListener('click', clearAllNotifications);
+        }
+        
+        // Close modal when clicking outside
+        if (notificationsModal) {
+            notificationsModal.addEventListener('click', (e) => {
+                if (e.target === notificationsModal) {
+                    closeNotificationsModalFunc();
+                }
+            });
+        }
+        
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/api/notifications?limit=50');
+                const data = await response.json();
+                
+                displayNotifications(data.notifications);
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                notificationsContent.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--drac-comment);">Error loading notifications</div>';
+            }
+        }
+        
+        function displayNotifications(notifications) {
+            if (!notifications || notifications.length === 0) {
+                notificationsContent.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--drac-comment);">No notifications yet</div>';
+                return;
+            }
+            
+            const notificationHtml = notifications.map(notification => {
+                const timeAgo = getTimeAgo(notification.created_at);
+                const isUnread = notification.read_status === 0;
+                
+                return `
+                    <div class="notification-item ${isUnread ? 'unread' : ''}" onclick="markAsRead(${notification.id})">
+                        <div class="notification-title">
+                            ${notification.title}
+                            <span class="notification-type-badge notification-type-${notification.type}">${notification.type}</span>
+                        </div>
+                        <div class="notification-message">${notification.message}</div>
+                        <div class="notification-time">${timeAgo}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            notificationsContent.innerHTML = notificationHtml;
+        }
+        
+        window.markAsRead = async function(notificationId) {
+            try {
+                await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
+                // Reload notifications to update read status
+                loadNotifications();
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        };
+        
+        function getTimeAgo(dateString) {
+            const now = new Date();
+            const date = new Date(dateString);
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffInSeconds < 60) return 'Just now';
+            if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+            if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+            return `${Math.floor(diffInSeconds / 86400)}d ago`;
+        }
+        
+        async function updateNotificationBadge() {
+            try {
+                const response = await fetch('/api/notifications/unread-count');
+                const data = await response.json();
+                const count = data.unread_count;
+                
+                if (count > 0) {
+                    notificationBadge.textContent = count > 99 ? '99+' : count;
+                    notificationBadge.style.display = 'flex';
+                } else {
+                    notificationBadge.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error updating notification badge:', error);
+            }
+        }
+        
+        async function resetNotificationCount() {
+            try {
+                // Mark all unread notifications as read
+                const response = await fetch('/api/notifications?unread_only=true');
+                const data = await response.json();
+                
+                // Mark each unread notification as read
+                const promises = data.notifications.map(notification => 
+                    fetch(`/api/notifications/${notification.id}/read`, { method: 'POST' })
+                );
+                
+                await Promise.all(promises);
+                
+                // Update badge
+                updateNotificationBadge();
+            } catch (error) {
+                console.error('Error resetting notification count:', error);
+            }
+        }
+        
+        async function clearAllNotifications() {
+            try {
+                const response = await fetch('/api/notifications/clear-all', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    // Reload notifications
+                    loadNotifications();
+                    
+                    // Update badge
+                    updateNotificationBadge();
+                } else {
+                    console.error('Failed to clear notifications');
+                }
+            } catch (error) {
+                console.error('Error clearing notifications:', error);
+            }
+        }
+        
+        // Initialize notification badge on page load
+        updateNotificationBadge();
+        
+        // Update notification badge every 30 seconds
+        setInterval(updateNotificationBadge, 30000);
+    });
+    </script>
+
+    <!-- Google Translate Scripts -->
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,hi,mr,kn,ml,pa',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    <!-- Sage AI Assistant button (patient pages only) -->
+    <button class="va-toggle" style="position:fixed; right:24px; bottom:24px; z-index:10080; border:none; color:white; background: linear-gradient(135deg, #a855f7 0%, #ec4899 60%, #f97316 100%); box-shadow:0 8px 20px rgba(0,0,0,0.35); font-weight:600; display:flex; align-items:center; gap:10px; padding:0 8px; border-radius:32px; transition: all 0.3s ease;">
+        <div class="va-icon" style="width:56px; height:56px; display:flex; align-items:center; justify-content:center;">
+            <img src="{{ url_for('static', filename='icons/sage_icon.png') }}" alt="Sage" style="width:44px; height:44px; display:block;">
+        </div>
+        <span class="va-label" style="font-size:0.95rem;">Sage AI Assistant</span>
+    </button>
+    
+    <!-- Chat container (hidden by default) -->
+    <div id="sageChat" class="sage-chat" aria-hidden="true">
+        <div class="sage-chat-header">
+            <div style="font-weight:700;">🤖 Sage AI Assistant</div>
+            <div class="sage-header-actions">
+                <button id="sageStopNarration" class="sage-stop-btn" aria-label="Stop narration" title="Stop narration">⏹</button>
+                <button id="sageClose" class="va-close" aria-label="Close chat">×</button>
+            </div>
+        </div>
+        <div class="sage-chat-body" id="sageBody">
+            <!-- Messages will be populated by JavaScript -->
+        </div>
+        <div class="sage-chat-input">
+            <button id="sageVoice" class="voice-btn" title="Voice input">🎤</button>
+            <input id="sageInput" type="text" placeholder="Ask me anything about Sentinel Diagnostics..." aria-label="Message input">
+            <button id="sageSend" class="sage-send-btn">➤</button>
+        </div>
+    </div>
+
+    <!-- Add user role for Sage to detect -->
+    <div data-user-role="patient" style="display: none;"></div>
+
+    <!-- Include Sage Chat Widget -->
+    {% include 'AI_Assistant/chat_widget.html' %}
+    
+    <!-- Local intercept for medical/unrelated personal-health queries -->
+    <script>
+    (function(){
+        // Lightweight safeguard in case elements are not present yet
+        function onReady(fn){
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+            else fn();
+        }
+
+        onReady(function(){
+            const sageInput = document.getElementById('sageInput');
+            const sageSend = document.getElementById('sageSend');
+            const sageBody = document.getElementById('sageBody');
+
+            if (!sageInput || !sageSend || !sageBody) return; // nothing to do if widget not present
+
+            // Append message helper
+            function appendMessage(author, text, isHtml){
+                const wrap = document.createElement('div');
+                wrap.className = 'sage-msg sage-msg-' + (author === 'user' ? 'user' : 'assistant');
+                const inner = document.createElement('div');
+                inner.className = 'sage-msg-inner';
+                if (isHtml) inner.innerHTML = text;
+                else inner.textContent = text;
+                wrap.appendChild(inner);
+                sageBody.appendChild(wrap);
+                // scroll to bottom
+                sageBody.scrollTop = sageBody.scrollHeight;
+            }
+
+            // Very small keyword-based detector for personal medical/health queries
+            function isMedicalQuery(text){
+                if (!text) return false;
+                const t = text.toLowerCase();
+                // keywords that commonly indicate medical symptoms or medication questions
+                const keywords = ['fever','dizzy','dizziness','nausea','vomit','vomiting','headache','migraine','pain','chest pain','shortness of breath','bleeding','rash','allergic','allergy','medication','meds','prescription','dose','overdose','suffering','sore throat','cough','cold','flu','pregnant','pregnancy','loss of consciousness','faint','fainted','seizure'];
+                // also check for phrases indicating personal complaint
+                const personalPhrases = ['i am','i\'m','i’ve','i feel','i have','my'];
+
+                const hasKeyword = keywords.some(k => t.includes(k));
+                const hasPersonal = personalPhrases.some(p => t.includes(p));
+                return hasKeyword && hasPersonal;
+            }
+
+            // Local canned reply for medical queries
+            function handleMedicalQuery(originalText){
+                // show the user's message first
+                appendMessage('user', originalText, false);
+
+                const replyHtml = `
+                    It looks like this is a personal medical concern. For medical advice please book an appointment with a qualified doctor. 
+                    You can also try a general AI assistant for unrelated questions at <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer">chatgpt.com</a>.
+                    <div style="margin-top:8px;"><a href="/appointments" style="display:inline-block;padding:8px 12px;border-radius:8px;background:#6b46c1;color:#fff;text-decoration:none;font-weight:600;">Book an appointment</a></div>
+                `;
+
+                // show assistant reply
+                appendMessage('assistant', replyHtml, true);
+            }
+
+            // Intercept the send action in capture phase to prevent existing handlers from firing
+            sageSend.addEventListener('click', function(ev){
+                try{
+                    const text = sageInput.value && sageInput.value.trim();
+                    if (isMedicalQuery(text)){
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        handleMedicalQuery(text);
+                        sageInput.value = '';
+                        return;
+                    }
+                    // otherwise let the included widget handle the send
+                }catch(err){
+                    console.error('Medical intercept error', err);
+                }
+            }, true);
+
+            // Also intercept Enter key on input
+            sageInput.addEventListener('keydown', function(ev){
+                if (ev.key === 'Enter'){
+                    const text = sageInput.value && sageInput.value.trim();
+                    if (isMedicalQuery(text)){
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        handleMedicalQuery(text);
+                        sageInput.value = '';
+                        return;
+                    }
+                }
+            }, true);
+        });
+    })();
+    </script>
+{% endblock %}

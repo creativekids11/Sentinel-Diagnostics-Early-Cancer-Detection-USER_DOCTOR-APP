@@ -1,0 +1,1784 @@
+{% extends "layouts/doctor.html" %}
+{% block title %}AI Scanner{% endblock %}
+{% block content %}
+
+<style>
+    .ai-scanner-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .scanner-header {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(139, 233, 253, 0.2);
+    }
+
+    .scanner-title {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 10px;
+    }
+
+    .scanner-title h1 {
+        color: var(--drac-cyan);
+        font-size: 2rem;
+        margin: 0;
+        font-weight: 700;
+    }
+
+    .scanner-subtitle {
+        color: var(--drac-comment);
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    /* File Upload Section */
+    .upload-container {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(139, 233, 253, 0.1);
+    }
+
+    .upload-zone {
+        border: 3px dashed var(--drac-purple);
+        border-radius: 20px;
+        padding: 60px 40px;
+        text-align: center;
+        cursor: pointer;
+        background: rgba(139, 233, 253, 0.05);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .upload-zone:hover {
+        border-color: var(--drac-cyan);
+        background: rgba(139, 233, 253, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .upload-zone.drag-over {
+        border-color: var(--drac-green);
+        background: rgba(80, 250, 123, 0.2);
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(80, 250, 123, 0.3);
+    }
+
+    .upload-zone::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: conic-gradient(transparent, rgba(139, 233, 253, 0.1), transparent);
+        animation: rotate 10s linear infinite;
+        z-index: -1;
+    }
+
+    @keyframes rotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .upload-icon {
+        font-size: 4rem;
+        color: var(--drac-purple);
+        display: block;
+        margin-bottom: 20px;
+    }
+
+    .upload-text {
+        color: var(--drac-purple);
+        font-weight: bold;
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+    }
+
+    .upload-hint {
+        color: var(--drac-comment);
+        font-size: 1rem;
+        margin-bottom: 15px;
+    }
+
+    .file-types {
+        color: var(--drac-green);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .file-preview {
+        margin-top: 20px;
+        padding: 20px;
+        background: rgba(80, 250, 123, 0.1);
+        border-radius: 15px;
+        border: 1px solid var(--drac-green);
+        display: none;
+    }
+
+    .file-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--drac-green);
+        font-weight: 500;
+    }
+
+    /* Cancer Detection Buttons */
+    .detection-options {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(139, 233, 253, 0.1);
+    }
+
+    .options-title {
+        color: var(--drac-cyan);
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .cancer-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .cancer-btn {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border: 2px solid transparent;
+        border-radius: 18px;
+        padding: 25px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cancer-btn:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(139, 233, 253, 0.2);
+        border-color: var(--drac-cyan);
+    }
+
+    .cancer-btn.selected {
+        border-color: var(--drac-green);
+        background: linear-gradient(135deg, rgba(80, 250, 123, 0.2) 0%, var(--metric-gradient-2) 100%);
+        box-shadow: 0 10px 25px rgba(80, 250, 123, 0.3);
+    }
+
+    /* Breast Cancer Scan Type Selection Styles */
+    .breast-cancer-container {
+        position: relative;
+    }
+
+    .scan-type-selection {
+        border-top: 1px solid rgba(139, 233, 253, 0.2);
+        padding-top: 15px;
+        margin-top: 15px;
+    }
+
+    .scan-type-title {
+        color: var(--drac-cyan);
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    .scan-type-options {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .scan-type-option {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        background: rgba(139, 233, 253, 0.1);
+        border: 1px solid rgba(139, 233, 253, 0.2);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        color: var(--drac-foreground);
+    }
+
+    .scan-type-option:hover {
+        background: rgba(139, 233, 253, 0.2);
+        border-color: var(--drac-cyan);
+        transform: translateY(-1px);
+    }
+
+    .scan-type-option input[type="radio"]:checked + span {
+        color: var(--drac-cyan);
+        font-weight: 600;
+    }
+
+    .scan-type-option:has(input[type="radio"]:checked) {
+        background: rgba(139, 233, 253, 0.3);
+        border-color: var(--drac-cyan);
+        box-shadow: 0 4px 12px rgba(139, 233, 253, 0.2);
+    }
+
+    .breast-cancer-container.selected .scan-type-option:has(input[type="radio"]:checked) {
+        background: rgba(80, 250, 123, 0.2);
+        border-color: var(--drac-green);
+        box-shadow: 0 4px 12px rgba(80, 250, 123, 0.2);
+    }
+
+    .breast-cancer-container.selected .scan-type-option:has(input[type="radio"]:checked) span {
+        color: var(--drac-green);
+    }
+
+    .cancer-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transition: left 0.5s;
+    }
+
+    .cancer-btn:hover::before {
+        left: 100%;
+    }
+
+    .cancer-icon {
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+        display: block;
+    }
+
+    .cancer-name {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: var(--drac-cyan);
+        margin-bottom: 8px;
+    }
+
+    .cancer-desc {
+        font-size: 0.95rem;
+        color: var(--drac-comment);
+        line-height: 1.4;
+    }
+
+    /* Analysis Results */
+    .results-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .result-panel {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border-radius: 20px;
+        padding: 25px;
+        border: 1px solid rgba(139, 233, 253, 0.1);
+    }
+
+    .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(139, 233, 253, 0.2);
+    }
+
+    .panel-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--drac-cyan);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .image-container {
+        position: relative;
+        min-height: 400px;
+        background: var(--drac-bg-header);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed rgba(139, 233, 253, 0.3);
+    }
+
+    .placeholder {
+        text-align: center;
+        color: var(--drac-comment);
+    }
+
+    .placeholder-icon {
+        font-size: 4rem;
+        display: block;
+        margin-bottom: 15px;
+        opacity: 0.6;
+    }
+
+    /* Analysis Statistics */
+    .analysis-stats {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border-radius: 20px;
+        padding: 30px;
+        margin: 30px 0;
+        border: 1px solid rgba(139, 233, 253, 0.1);
+    }
+
+    .stats-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(139, 233, 253, 0.2);
+    }
+
+    .stats-title {
+        color: var(--drac-cyan);
+        font-size: 1.4rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: rgba(68, 71, 90, 0.5);
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        border: 1px solid rgba(139, 233, 253, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(139, 233, 253, 0.1);
+        border-color: var(--drac-cyan);
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: var(--drac-green);
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        color: var(--drac-comment);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-card.risk-high .stat-value {
+        color: var(--drac-red);
+    }
+
+    .stat-card.risk-medium .stat-value {
+        color: var(--drac-orange);
+    }
+
+    .stat-card.risk-low .stat-value {
+        color: var(--drac-green);
+    }
+
+    .findings-section {
+        background: rgba(40, 42, 54, 0.8);
+        border-radius: 15px;
+        padding: 25px;
+        border: 1px solid rgba(139, 233, 253, 0.1);
+    }
+
+    .findings-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(139, 233, 253, 0.2);
+    }
+
+    .findings-icon {
+        font-size: 1.2rem;
+    }
+
+    .findings-title {
+        color: var(--drac-cyan);
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .findings-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .finding-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        color: var(--drac-foreground);
+        line-height: 1.5;
+    }
+
+    .finding-bullet {
+        color: var(--drac-cyan);
+        font-weight: bold;
+        margin-top: 2px;
+    }
+
+    .finding-text {
+        flex: 1;
+    }
+
+    /* AI Report Editor */
+    .editor-container {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border-radius: 20px;
+        padding: 30px;
+        margin-top: 30px;
+        border: 1px solid rgba(139, 233, 253, 0.1);
+    }
+
+    .editor-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 25px;
+    }
+
+    .editor-title {
+        color: var(--drac-cyan);
+        font-size: 1.4rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .editor-toolbar {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        background: #515b778a;
+        padding: 15px 20px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(139, 233, 253, 0.2);
+    }
+
+    .tool-btn {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border: 1px solid rgba(139, 233, 253, 0.3);
+        border-radius: 10px;
+        padding: 10px 15px;
+        color: var(--drac-foreground);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .tool-btn:hover {
+        background: var(--drac-cyan);
+        color: var(--drac-bg);
+        transform: translateY(-2px);
+    }
+
+    .tool-btn.active {
+        background: var(--drac-green);
+        color: var(--drac-bg);
+        box-shadow: 0 4px 12px rgba(80, 250, 123, 0.3);
+    }
+
+    .brush-settings {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--drac-comment);
+        font-size: 0.9rem;
+    }
+
+    .brush-size, .brush-transparency {
+        width: 100px;
+        height: 8px;
+        background: rgba(139, 233, 253, 0.3);
+        border-radius: 4px;
+        outline: none;
+        cursor: pointer;
+    }
+
+    .canvas-container {
+        position: relative;
+        background: var(--drac-bg-header);
+        border-radius: 15px;
+        min-height: 500px;
+        border: 2px solid rgba(139, 233, 253, 0.2);
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .edit-canvas {
+        width: 100%;
+        height: 100%;
+        cursor: crosshair;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+
+    .action-btn {
+        padding: 12px 25px;
+        border-radius: 12px;
+        border: none;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-analyze {
+        background: linear-gradient(135deg, var(--drac-purple), var(--drac-pink));
+        color: white;
+    }
+
+    .btn-analyze:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(189, 147, 249, 0.4);
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, var(--drac-green), #45b7a8);
+        color: white;
+    }
+
+    .btn-done {
+        background: linear-gradient(135deg, var(--drac-orange), #ffb86c);
+        color: white;
+    }
+
+    .btn-reset {
+        background: linear-gradient(135deg, var(--drac-red), #ff6b85);
+        color: white;
+    }
+
+    .btn-save:hover, .btn-done:hover, .btn-reset:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(80, 250, 123, 0.4);
+    }
+
+    .btn-reset {
+        background: linear-gradient(135deg, var(--drac-red), #e74c3c);
+        color: white;
+    }
+
+    .btn-reset:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 85, 85, 0.4);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .results-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .cancer-buttons {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .ai-scanner-container {
+            padding: 15px;
+        }
+        
+        .scanner-header,
+        .upload-container,
+        .detection-options,
+        .result-panel,
+        .editor-container {
+            padding: 20px;
+        }
+        
+        .editor-toolbar {
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+    }
+
+    /* Payment Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+        background: linear-gradient(135deg, var(--drac-bg-header) 0%, var(--drac-bg) 100%);
+        margin: 10% auto;
+        padding: 0;
+        border: 1px solid rgba(139, 233, 253, 0.2);
+        border-radius: 20px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        animation: modalFadeIn 0.3s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+        from { opacity: 0; transform: translateY(-50px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, var(--drac-purple) 0%, var(--drac-pink) 100%);
+        color: white;
+        padding: 20px 30px;
+        border-radius: 20px 20px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 600;
+    }
+
+    .modal-close {
+        font-size: 2rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .modal-close:hover {
+        color: var(--drac-red);
+        transform: scale(1.2);
+    }
+
+    .modal-body {
+        padding: 30px;
+    }
+
+    .payment-info {
+        text-align: center;
+    }
+
+    .payment-amount {
+        margin-bottom: 20px;
+    }
+
+    .amount {
+        font-size: 3rem;
+        font-weight: bold;
+        color: var(--drac-green);
+        display: block;
+    }
+
+    .per-analysis {
+        color: var(--drac-comment);
+        font-size: 1rem;
+    }
+
+    .payment-description {
+        margin-bottom: 25px;
+        line-height: 1.6;
+    }
+
+    .payment-description p {
+        margin: 10px 0;
+        color: var(--drac-foreground);
+    }
+
+    .balance-info {
+        background: rgba(68, 71, 90, 0.5);
+        border-radius: 15px;
+        padding: 20px;
+        border: 1px solid rgba(139, 233, 253, 0.2);
+        margin-top: 20px;
+    }
+
+    .balance-title {
+        color: var(--drac-cyan);
+        font-weight: 600;
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    .current-balance {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--drac-green);
+        margin-bottom: 10px;
+    }
+
+    .insufficient-balance {
+        color: var(--drac-red);
+        font-weight: 600;
+    }
+
+    .trial-notice {
+        color: var(--drac-orange);
+        font-weight: 600;
+        font-style: italic;
+    }
+
+    .modal-footer {
+        padding: 20px 30px 30px;
+        border-top: 1px solid rgba(139, 233, 253, 0.2);
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+    }
+
+    .btn-cancel, .btn-confirm {
+        padding: 12px 25px;
+        border-radius: 12px;
+        border: none;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-cancel {
+        background: linear-gradient(135deg, var(--drac-red), #e74c3c);
+        color: white;
+    }
+
+    .btn-cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 85, 85, 0.4);
+    }
+
+    .btn-confirm {
+        background: linear-gradient(135deg, var(--drac-green), #45b7a8);
+        color: white;
+    }
+
+    .btn-confirm:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(80, 250, 123, 0.4);
+    }
+
+    .btn-confirm:disabled {
+        background: var(--drac-comment);
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+</style>
+
+<div class="ai-scanner-container">
+    <!-- Header Section -->
+    <div class="scanner-header">
+        <div class="scanner-title">
+            <div>
+                <h1>AI Cancer Detection Scanner</h1>
+                <p class="scanner-subtitle">Advanced medical imaging analysis with AI-powered tumor detection</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Upload Section -->
+    <div class="upload-container">
+        <h2 style="color: var(--drac-cyan); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            Upload Medical Scan
+        </h2>
+        <form method="POST" action="{{ url_for('aiscanner_upload') }}" enctype="multipart/form-data" id="uploadForm">
+            <input type="hidden" name="scan_type" id="scanType" value="">
+            <div class="upload-zone" onclick="document.getElementById('fileUpload').click()" 
+                 ondragover="handleDragOver(event)" 
+                 ondragleave="handleDragLeave(event)" 
+                 ondrop="handleDrop(event)">
+                <span class="upload-icon"></span>
+                <div class="upload-text">Drop your medical scan here or click to browse</div>
+                <div class="upload-hint">Drag & drop your file or click to select</div>
+                <div class="file-types">Supported: PNG, JPG, JPEG, DICOM (.dcm) • Max size: 50MB</div>
+                <input type="file" id="fileUpload" name="scan" accept=".png,.jpg,.jpeg,.dcm" style="display: none;" onchange="handleFileUpload(this);">
+            </div>
+            <div class="file-preview" id="filePreview">
+                <div class="file-info">
+                    <div>
+                        <span id="fileName">No file selected</span>
+                    </div>
+                    <div>
+                        <span id="fileSize">0 MB</span>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Cancer Detection Options -->
+    <div class="detection-options">
+        <h2 class="options-title">
+            Select Cancer Detection Type
+        </h2>
+        <div class="cancer-buttons">
+            <div class="cancer-btn breast-cancer-container" onclick="selectBreastCancerContainer()" id="btn-breast">
+                <span class="cancer-icon">🎗️</span>
+                <div class="cancer-name">Breast Cancer Detection</div>
+                <div class="cancer-desc">Advanced AI-powered breast tumor detection and analysis</div>
+                
+                <!-- Breast Cancer Scan Type Selection -->
+                <div class="scan-type-selection" style="margin-top: 15px;">
+                    <div class="scan-type-title" style="color: var(--drac-cyan); font-size: 0.95rem; font-weight: 600; margin-bottom: 10px;">
+                        Choose Scan Type:
+                    </div>
+                    <div class="scan-type-options" style="display: flex; gap: 10px; justify-content: center;">
+                        <label class="scan-type-option" style="display: flex; align-items: center; gap: 5px; padding: 8px 12px; background: rgba(139, 233, 253, 0.1); border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+                            <input type="radio" name="breast-scan-type" value="breast-mri" onclick="selectBreastScanType('breast-mri')" style="accent-color: var(--drac-cyan);">
+                            <span style="font-size: 0.9rem; color: var(--drac-foreground);">Mammography</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="cancer-btn" onclick="selectCancerType('lung')" id="btn-lung">
+                <span class="cancer-icon">🫁</span>
+                <div class="cancer-name">Lung Cancer</div>
+                <div class="cancer-desc">CT scan & X-ray analysis for pulmonary nodule detection</div>
+            </div>
+            <div class="cancer-btn" onclick="selectCancerType('brain')" id="btn-brain">
+                <span class="cancer-icon">🧠</span>
+                <div class="cancer-name">Brain Tumor</div>
+                <div class="cancer-desc">MRI scan analysis for intracranial mass detection</div>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button class="action-btn btn-analyze" onclick="submitAnalysis()">
+                Start AI Analysis
+            </button>
+        </div>
+    </div>
+
+    <!-- Analysis Results -->
+    <div class="results-container">
+        <div class="result-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    Original Scan
+                </div>
+                <div style="color: var(--drac-comment); font-size: 0.9rem;">Input Image</div>
+            </div>
+            <div class="image-container" id="originalImage">
+                {% if orig_img %}
+                    <img src="data:image/png;base64,{{ orig_img }}" style="max-width: 100%; max-height: 400px; border-radius: 12px;">
+                {% else %}
+                    <div class="placeholder">
+                        <span class="placeholder-icon"></span>
+                        <div>Upload a medical scan to begin analysis</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="result-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    AI Detection Result
+                </div>
+                <div style="color: var(--drac-comment); font-size: 0.9rem;">YOLO Object Detection</div>
+            </div>
+            <div class="image-container" id="aiResult">
+                {% if session.scan_analysis and session.scan_analysis.ai_results and session.scan_analysis.ai_results._internal_annotated_image %}
+                    <img src="data:image/png;base64,{{ session.scan_analysis.ai_results._internal_annotated_image }}" style="max-width: 100%; max-height: 400px; border-radius: 12px;">
+                {% elif overlay_img %}
+                    <img src="data:image/png;base64,{{ overlay_img }}" style="max-width: 100%; max-height: 400px; border-radius: 12px;">
+                {% else %}
+                    <div class="placeholder">
+                        <span class="placeholder-icon"></span>
+                        <div>AI analysis results will appear here</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Analysis Statistics -->
+    {% if session.scan_analysis and session.scan_analysis.ai_results and not session.scan_analysis.ai_results.get('error') %}
+    <div class="analysis-stats">
+        <div class="stats-header">
+            <div class="stats-title">
+                AI Analysis Report
+            </div>
+            <div style="color: var(--drac-comment); font-size: 0.9rem;">
+                Detailed diagnostic insights
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"></div>
+                <div class="stat-value">{{ session.scan_analysis.ai_results.confidence | default(0) }}%</div>
+                <div class="stat-label">Confidence Level</div>
+            </div>
+            
+            <div class="stat-card risk-{{ (session.scan_analysis.ai_results.risk_level | default('unknown')).lower() }}">
+                <div class="stat-icon"></div>
+                <div class="stat-value">
+                    {{ session.scan_analysis.ai_results.risk_level | default('Unknown') }}
+                </div>
+                <div class="stat-label">Risk Assessment</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-value">{{ session.scan_analysis.ai_results.num_tumors | default(0) }}</div>
+                <div class="stat-label">Tumors Detected</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🫁</div>
+                <div class="stat-value">{{ session.scan_analysis.ai_results.num_lung_lobes | default(0) }}</div>
+                <div class="stat-label">Lung Lobes</div>
+            </div>
+        </div>
+        
+        <div class="findings-section">
+            <div class="findings-header">
+                <span class="findings-icon"></span>
+                <span class="findings-title">Clinical Findings</span>
+            </div>
+            <div class="findings-list">
+                {% for finding in (session.scan_analysis.ai_results.findings | default(['No findings available'])) %}
+                <div class="finding-item">
+                    <span class="finding-bullet">•</span>
+                    <span class="finding-text">{{ finding }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        {% if session.scan_analysis.ai_results.yolo_detections %}
+        <div class="findings-section">
+            <div class="findings-header">
+                <span class="findings-icon">🎯</span>
+                <span class="findings-title">Detected Objects</span>
+            </div>
+            <div class="findings-list">
+                {% for detection in session.scan_analysis.ai_results.yolo_detections %}
+                <div class="finding-item">
+                    <span class="finding-bullet">📍</span>
+                    <span class="finding-text">
+                        <strong>{{ detection.class }}</strong> - Confidence: {{ "%.1f"|format(detection.confidence * 100) }}% 
+                        <span style="color: var(--drac-comment); font-size: 0.9em;">
+                            [{{ detection.bbox[0] }}, {{ detection.bbox[1] }}, {{ detection.bbox[2] }}, {{ detection.bbox[3] }}]
+                        </span>
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if session.scan_analysis and session.scan_analysis.ai_results %}
+    <!-- AI Report Editor -->
+    <div class="editor-container">
+        <div class="editor-header">
+            <div class="editor-title">
+                AI Report Editor
+            </div>
+            <div style="color: var(--drac-comment); font-size: 0.9rem;">
+                Enhance AI results with manual annotations
+            </div>
+        </div>
+
+        <div class="editor-toolbar">
+            <button class="tool-btn active" onclick="selectTool('brush')" id="tool-brush">
+                Highlight Brush
+            </button>
+            <button class="tool-btn" onclick="selectTool('eraser')" id="tool-eraser">
+                Eraser
+            </button>
+            <button class="tool-btn" onclick="selectTool('ai-eraser')" id="tool-ai-eraser">
+                Erase AI Results
+            </button>
+            
+            <div class="brush-settings">
+                <label>Brush Size:</label>
+                <input type="range" class="brush-size" id="brushSize" min="2" max="20" value="8" onchange="updateBrushSize(this.value)">
+                <span id="brushSizeValue">8px</span>
+            </div>
+            
+            <div class="brush-settings">
+                <label>Color:</label>
+                <input type="color" id="brushColor" value="#ff5555" onchange="updateBrushColor(this.value)" style="width: 40px; height: 30px; border: none; border-radius: 5px; cursor: pointer;">
+            </div>
+            
+            <div class="brush-settings">
+                <label>Transparency:</label>
+                <input type="range" class="brush-transparency" id="brushTransparency" min="10" max="90" value="70" onchange="updateBrushTransparency(this.value)">
+                <span id="transparencyValue">70%</span>
+            </div>
+        </div>
+
+        <div class="canvas-container" style="display: flex; justify-content: center; align-items: center;">
+            <canvas class="edit-canvas" id="editCanvas" width="1000" height="700"
+                    data-orig-img="{{ session.scan_analysis.orig_img if session.scan_analysis and session.scan_analysis.orig_img else '' }}"
+                    data-overlay-img="{{ overlay_img if overlay_img else '' }}"></canvas>
+        </div>
+
+        <div class="action-buttons">
+            <button class="action-btn btn-reset" onclick="clearCanvas()">
+                Clear All
+            </button>
+            <button class="action-btn btn-save" onclick="saveReport()">
+                Save Report
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Payment Confirmation Modal -->
+<div id="paymentModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>AI Analysis Payment</h3>
+            <span class="modal-close" onclick="closePaymentModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="payment-info">
+                <div class="payment-amount">
+                    <span class="amount">₹200</span>
+                    <span class="per-analysis">per AI analysis</span>
+                </div>
+                <div class="payment-description">
+                    <p>You are about to perform AI-powered cancer detection analysis on your uploaded medical scan.</p>
+                    <p>This analysis uses advanced machine learning algorithms to detect potential abnormalities and provide diagnostic insights.</p>
+                </div>
+                <div class="balance-info" id="balanceInfo">
+                    <!-- Balance information will be loaded here -->
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closePaymentModal()">Cancel</button>
+            <button class="btn-confirm" onclick="confirmPayment()" id="confirmBtn">Proceed with Payment</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentCancerType = null;
+    let currentBreastScanType = null; // 'breast-mri'
+    let canvas, ctx;
+    let isDrawing = false;
+    let currentTool = 'brush';
+    let brushSize = 8;
+    let brushColor = '#ff5555';
+    let brushTransparency = 70;
+    let lastX = 0;
+    let lastY = 0;
+
+    // Memory-based drawing system
+    let originalImageData = null;
+    let aiResultsLayer = null;
+    let originalImageObj = null;
+    let aiResultsImgObj = null;
+    let drawingLayers = [];
+    let currentStroke = [];
+    let allStrokes = [];
+
+    // Undo functionality
+    let undoStack = [];
+    let maxUndo = 20;
+
+    // Initialize canvas when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        canvas = document.getElementById('editCanvas');
+        ctx = canvas.getContext('2d');
+        
+        // Set canvas size to match container
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Canvas event listeners
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        
+        // Touch events for mobile
+        canvas.addEventListener('touchstart', handleTouch);
+        canvas.addEventListener('touchmove', handleTouch);
+        canvas.addEventListener('touchend', stopDrawing);
+
+        // Load existing analysis data into canvas if available
+        loadExistingAnalysis();
+    });
+
+    function resizeCanvas() {
+        const container = canvas.parentElement;
+        canvas.width = container.clientWidth - 4; // Account for border
+        // Ensure canvas has a usable height even if container height is collapsed
+        canvas.height = Math.max(500, container.clientHeight - 4);
+        
+        // Reset canvas styles after resize
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function selectCancerType(type) {
+        // Remove selected class from all buttons
+        document.querySelectorAll('.cancer-btn').forEach(btn => btn.classList.remove('selected'));
+        
+        // Add selected class to clicked button
+        document.getElementById('btn-' + type).classList.add('selected');
+        
+        // Reset breast scan type selection when switching away from breast cancer
+        if (type !== 'breast') {
+            currentBreastScanType = null;
+            // Clear breast scan type radio buttons
+            document.querySelectorAll('input[name="breast-scan-type"]').forEach(radio => {
+                radio.checked = false;
+            });
+        }
+        
+        // Update hidden input
+        document.getElementById('scanType').value = type;
+        currentCancerType = type;
+        
+        console.log('Selected cancer type:', type);
+    }
+
+    function selectBreastScanType(scanType) {
+        currentBreastScanType = scanType;
+        
+        // Automatically select breast cancer when a scan type is chosen
+        selectCancerType('breast');
+        
+        // Update the scan type value to include the specific breast scan type
+        document.getElementById('scanType').value = scanType;
+        
+        console.log('Selected breast scan type:', scanType);
+    }
+
+    function selectBreastCancerContainer() {
+        // Select breast cancer type
+        selectCancerType('breast');
+        
+        // If no scan type is selected, don't set a default - let user choose
+        if (!currentBreastScanType) {
+            console.log('Breast cancer selected - please choose scan type');
+        }
+    }
+
+    function handleFileUpload(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const fileName = file.name;
+            const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+            
+            // Update file preview
+            document.getElementById('fileName').textContent = fileName;
+            document.getElementById('fileSize').textContent = `${fileSize} MB`;
+            document.getElementById('filePreview').style.display = 'block';
+            
+            // Preview the image
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const originalContainer = document.getElementById('originalImage');
+                originalContainer.innerHTML = `
+                    <img src="${e.target.result}" style="max-width: 100%; max-height: 400px; border-radius: 12px;">
+                `;
+                
+                // Load image onto canvas for editing
+                loadImageToCanvas(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function handleDragOver(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const uploadZone = event.currentTarget;
+        uploadZone.classList.add('drag-over');
+    }
+
+    function handleDragLeave(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const uploadZone = event.currentTarget;
+        // Only remove class if we're actually leaving the upload zone (not entering a child element)
+        if (!uploadZone.contains(event.relatedTarget)) {
+            uploadZone.classList.remove('drag-over');
+        }
+    }
+
+    function handleDrop(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const uploadZone = event.currentTarget;
+        uploadZone.classList.remove('drag-over');
+        
+        const files = event.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            
+            // Validate file type
+            const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/dicom'];
+            const fileExtension = file.name.toLowerCase().split('.').pop();
+            const allowedExtensions = ['png', 'jpg', 'jpeg', 'dcm'];
+            
+            if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+                alert('Please upload a valid medical scan file (PNG, JPG, JPEG, or DICOM).');
+                return;
+            }
+            
+            // Validate file size (50MB limit)
+            const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+            if (file.size > maxSize) {
+                alert('File size exceeds 50MB limit. Please choose a smaller file.');
+                return;
+            }
+            
+            // Set the file to the hidden input
+            const fileInput = document.getElementById('fileUpload');
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            fileInput.files = dt.files;
+            
+            // Process the file
+            handleFileUpload(fileInput);
+        }
+    }
+
+    function loadImageToCanvas(imageSrc) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+            // Clear canvas and draw the image
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Calculate scaling to fit image in canvas while maintaining aspect ratio
+            const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+            const x = (canvas.width - img.width * scale) / 2;
+            const y = (canvas.height - img.height * scale) / 2;
+            
+            ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+            // Keep a reference to the original image and its transform for redraws
+            originalImageObj = img;
+
+            // Store original image data (pixel snapshot) as a fallback
+            try { originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height); } catch (e) { originalImageData = null; }
+            
+            // Store original image for saving
+            sessionStorage.setItem('originalImage', imageSrc);
+            sessionStorage.setItem('imageScale', scale);
+            sessionStorage.setItem('imageOffsetX', x);
+            sessionStorage.setItem('imageOffsetY', y);
+            
+            // Load AI results if they exist
+            loadAIResults();
+            
+            // Redraw all layers
+            redrawCanvas();
+        };
+        img.src = imageSrc;
+    }
+
+    function loadAIResults() {
+        // Load AI results overlay if it exists in session
+        const aiResults = sessionStorage.getItem('aiResultsLayer');
+        if (aiResults) {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = function() {
+                // Keep a reference to the AI overlay image and redraw properly scaled
+                aiResultsImgObj = img;
+                redrawCanvas();
+            };
+            img.src = aiResults;
+        }
+    }
+
+    // Composite all layers: original image, AI overlay, then user annotations
+    function redrawCanvas() {
+        // clear
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // draw original image (if available) using the stored Image object and scale/offset
+        const scale = parseFloat(sessionStorage.getItem('imageScale')) || null;
+        const offX = parseFloat(sessionStorage.getItem('imageOffsetX')) || 0;
+        const offY = parseFloat(sessionStorage.getItem('imageOffsetY')) || 0;
+        if (originalImageObj && scale) {
+            try { ctx.drawImage(originalImageObj, offX, offY, originalImageObj.width * scale, originalImageObj.height * scale); } catch (e) { /* ignore */ }
+        } else if (originalImageData) {
+            try { ctx.putImageData(originalImageData, 0, 0); } catch (e) { /* ignore */ }
+        }
+
+        // draw AI results overlay on top (scaled the same as original)
+        if (aiResultsImgObj && scale) {
+            try { ctx.drawImage(aiResultsImgObj, offX, offY, aiResultsImgObj.width * scale, aiResultsImgObj.height * scale); } catch (e) { /* ignore */ }
+        }
+
+        // TODO: re-draw saved strokes/annotations (if we store them as objects)
+        // For now user drawing is applied directly to the canvas, so nothing else to replay.
+    }
+
+    function loadExistingAnalysis() {
+        // Load existing analysis data from the canvas data attributes
+        const canvas = document.getElementById('editCanvas');
+        const origImgData = canvas.getAttribute('data-orig-img');
+        const overlayImgData = canvas.getAttribute('data-overlay-img');
+        
+        if (origImgData) {
+            // Load original image into canvas
+            loadImageToCanvas("data:image/png;base64," + origImgData);
+            
+            // Store overlay for AI results layer
+            if (overlayImgData) {
+                sessionStorage.setItem('aiResultsLayer', "data:image/png;base64," + overlayImgData);
+                // Load AI results will be called by loadImageToCanvas
+            }
+        }
+    }
+
+    function submitAnalysis() {
+        const fileInput = document.getElementById('fileUpload');
+        if (!fileInput.files || !fileInput.files[0]) {
+            alert('Please upload a medical scan first.');
+            return;
+        }
+        
+        // Check if a cancer type is selected
+        if (!currentCancerType) {
+            alert('Please select a cancer detection type first.');
+            return;
+        }
+        
+        // Check if breast cancer is selected but no scan type is chosen
+        if (currentCancerType === 'breast' && !currentBreastScanType) {
+            alert('Please select Mammography for breast cancer detection.');
+            return;
+        }
+        
+        // Show confirmation popup about ₹200 charge
+        const confirmed = confirm('You will be charged ₹200 per upload. Do you still want to proceed?');
+        if (!confirmed) {
+            return;
+        }
+        
+        // Check user balance and subscription status before proceeding
+        checkBalanceAndProceed();
+    }
+
+    function selectTool(tool) {
+        // Remove active class from all tools
+        document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+        
+        // Add active class to selected tool
+        document.getElementById('tool-' + tool).classList.add('active');
+        
+        currentTool = tool;
+        
+        // Update cursor and drawing mode
+        switch(tool) {
+            case 'brush':
+                canvas.style.cursor = 'crosshair';
+                break;
+            case 'eraser':
+                canvas.style.cursor = 'grab';
+                break;
+            case 'ai-eraser':
+                canvas.style.cursor = 'not-allowed';
+                break;
+        }
+    }
+
+    function updateBrushSize(size) {
+        brushSize = size;
+        document.getElementById('brushSizeValue').textContent = size + 'px';
+    }
+
+    function updateBrushColor(color) {
+        brushColor = color;
+    }
+
+    function updateBrushTransparency(transparency) {
+        brushTransparency = transparency;
+        document.getElementById('transparencyValue').textContent = transparency + '%';
+    }
+
+    function startDrawing(event) {
+        isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        lastX = (event.clientX || event.touches[0].clientX) - rect.left;
+        lastY = (event.clientY || event.touches[0].clientY) - rect.top;
+
+        // Save current state for undo
+        if (undoStack.length >= maxUndo) {
+            undoStack.shift();
+        }
+        undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    }
+
+    function draw(event) {
+        if (!isDrawing) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const x = (event.clientX || event.touches[0].clientX) - rect.left;
+        const y = (event.clientY || event.touches[0].clientY) - rect.top;
+
+        ctx.globalCompositeOperation = 'source-over';
+        // If the doctor selects the default red brush, render it as green on the canvas
+        // (this preserves the AI overlay visibility while signaling a positive highlight)
+        let strokeColor = brushColor;
+        if (brushColor && brushColor.toLowerCase() === '#ff5555') {
+            strokeColor = '#00ff00';
+        }
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = brushSize;
+        ctx.globalAlpha = brushTransparency / 100;
+
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+
+        lastX = x;
+        lastY = y;
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+        lastX = 0;
+        lastY = 0;
+    }
+
+    function undo() {
+        if (undoStack.length > 0) {
+            const previousState = undoStack.pop();
+            ctx.putImageData(previousState, 0, 0);
+        } else {
+            console.log('Nothing to undo.');
+        }
+    }
+
+    // NOTE: Duplicate simple loader and initializer removed. The primary
+    // initialization and full `loadExistingAnalysis()` are defined earlier
+    // (see the first DOMContentLoaded handler). This avoids duplicate
+    // definitions and prevents runtime errors when optional buttons
+    // like `undoButton` / `clearButton` are not present in the DOM.
+
+    function handleTouch(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 
+                                          e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+
+    function getMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        return [
+            e.clientX - rect.left,
+            e.clientY - rect.top
+        ];
+    }
+
+    function clearCanvas() {
+        if (confirm('Are you sure you want to clear all annotations?')) {
+            // Clear only user annotations and reload the original + AI overlay
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawingLayers = [];
+            allStrokes = [];
+            currentStroke = [];
+            // reload the original image and AI overlay
+            loadExistingAnalysis();
+        }
+    }
+
+    function saveReport() {
+        // Confirm and download the composed canvas as a PNG (client-side)
+        const confirmed = confirm('Do you want to download the report as a PNG file?');
+        if (!confirmed) return;
+
+    // Trigger a client-side download of the current canvas (should already contain
+    // original image + AI overlay + user annotations as drawn).
+    downloadCanvas();
+    }
+
+    function downloadReportAsPNG() {
+        // Use finalized image if available, otherwise current canvas
+        const finalizedImage = sessionStorage.getItem('finalizedImage');
+        const annotatedImage = finalizedImage || canvas.toDataURL('image/png');
+        
+        // Get original image data from session/analysis
+        const originalImage = sessionStorage.getItem('originalImage') || '';
+        
+        // Prepare annotation metadata
+        const annotationMetadata = allStrokes.map(stroke => ({
+            color: stroke.color,
+            size: stroke.size,
+            transparency: stroke.transparency,
+            pointCount: stroke.points.length
+        }));
+        
+        // Prepare data to send to generate PNG endpoint
+        const reportData = {
+            scan_type: currentCancerType || 'unknown',
+            original_image: originalImage,
+            annotated_image: annotatedImage,
+            ai_findings: {
+                confidence: '87.3%',
+                diagnosis: 'Suspicious regions detected - clinical review recommended',
+                recommendations: 'Further diagnostic imaging and biopsy may be required'
+            },
+            annotations: annotationMetadata
+        };
+        
+        // Show loading state
+        const saveBtn = document.querySelector('.btn-save');
+        const originalText = saveBtn.textContent;
+        saveBtn.textContent = 'Generating PNG...';
+        saveBtn.disabled = true;
+        
+        // Send data to backend to generate PNG
+        fetch('/doctor/ai-scanner/generate-png', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(reportData)
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            } else {
+                throw new Error('Failed to generate PNG');
+            }
+        })
+        .then(blob => {
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `ai_cancer_report_${currentCancerType || 'scan'}_${new Date().getTime()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            alert('Report PNG downloaded successfully!');
+            
+            // Clear drawing layers but keep original image
+            drawingLayers = [];
+            allStrokes = [];
+            currentStroke = [];
+            aiResultsImgObj = null;
+            sessionStorage.removeItem('finalizedImage');
+            
+            // Reset to original image if available
+            const canvas = document.getElementById('editCanvas');
+            const origImgData = canvas.getAttribute('data-orig-img');
+            if (origImgData) {
+                loadImageToCanvas("data:image/png;base64," + origImgData);
+            }
+        })
+        .catch(error => {
+            console.error('Error generating PNG:', error);
+            alert('Error generating PNG report. Please try again.');
+        })
+        .finally(() => {
+            // Reset button state
+            const saveBtn = document.querySelector('.btn-save');
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
+        });
+    }
+
+    function checkBalanceAndProceed() {
+        // Show loading state
+        const analyzeBtn = document.querySelector('.btn-analyze');
+        const originalText = analyzeBtn.textContent;
+        analyzeBtn.textContent = 'Checking Balance...';
+        analyzeBtn.disabled = true;
+        
+        // Fetch user balance and subscription info
+        fetch('/doctor/get_balance_info', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error checking balance: ' + data.error);
+                return;
+            }
+            
+            const balance = data.balance || 0;
+            const isTrial = data.is_trial || false;
+            const isPremium = data.is_premium || false;
+            
+            // If user is on trial or premium, allow free analysis
+            if (isTrial || isPremium) {
+                document.getElementById('uploadForm').submit();
+                return;
+            }
+            
+            // Check if user has sufficient balance
+            if (balance >= 200) {
+                // Show payment confirmation modal
+                showPaymentModal(balance);
+            } else {
+                // Show insufficient balance modal
+                showPaymentModal(balance, true);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking balance:', error);
+            alert('Error checking balance. Please try again.');
+        })
+        .finally(() => {
+            // Reset button state
+            analyzeBtn.textContent = originalText;
+            analyzeBtn.disabled = false;
+        });
+    }
+    
+    function showPaymentModal(balance, insufficient = false) {
+        const modal = document.getElementById('paymentModal');
+        const balanceInfo = document.getElementById('balanceInfo');
+        const confirmBtn = document.getElementById('confirmBtn');
+        
+        // Update balance information
+        if (insufficient) {
+            balanceInfo.innerHTML = `
+                <span class="balance-title">Current Balance</span>
+                <span class="current-balance">₹${balance}</span>
+                <span class="insufficient-balance">Insufficient balance for AI analysis</span>
+                <p style="margin-top: 10px; color: var(--drac-comment); font-size: 0.9rem;">
+                    You need ₹200 to perform AI analysis. Please upgrade your plan or add funds to continue.
+                </p>
+            `;
+            confirmBtn.textContent = 'Upgrade Plan';
+            confirmBtn.onclick = function() {
+                window.location.href = '/doctor/manage-plans';
+            };
+        } else {
+            balanceInfo.innerHTML = `
+                <span class="balance-title">Current Balance</span>
+                <span class="current-balance">₹${balance}</span>
+                <p style="margin-top: 10px; color: var(--drac-comment); font-size: 0.9rem;">
+                    ₹200 will be deducted from your balance for this analysis.
+                </p>
+            `;
+            confirmBtn.textContent = 'Proceed with Payment';
+            // onclick is already set in HTML
+        }
+        
+        modal.style.display = 'block';
+    }
+    
+    function closePaymentModal() {
+        document.getElementById('paymentModal').style.display = 'none';
+    }
+    
+    function confirmPayment() {
+        // Close modal and submit form
+        closePaymentModal();
+        document.getElementById('uploadForm').submit();
+    }
+</script>
+
+<!-- Payment Confirmation Modal -->
+<div id="paymentModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>AI Analysis Payment</h3>
+            <span class="modal-close" onclick="closePaymentModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="payment-info">
+                <div class="payment-amount">
+                    <span class="amount">₹200</span>
+                    <span class="per-analysis">per AI analysis</span>
+                </div>
+                <div class="payment-description">
+                    <p>You are about to perform AI-powered cancer detection analysis on your uploaded medical scan.</p>
+                    <p>This analysis uses advanced machine learning algorithms to detect potential abnormalities and provide diagnostic insights.</p>
+                </div>
+                <div class="balance-info" id="balanceInfo">
+                    <!-- Balance information will be loaded here -->
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closePaymentModal()">Cancel</button>
+            <button class="btn-confirm" onclick="confirmPayment()" id="confirmBtn">Proceed with Payment</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

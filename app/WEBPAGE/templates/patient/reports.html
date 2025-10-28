@@ -1,0 +1,88 @@
+{% extends "layouts/patient.html" %}
+{% block title %}My Reports{% endblock %}
+{% block content %}
+
+<div class="data-card">
+    <h2>📊 My Reports Archive</h2>
+    {% include 'shared/reports_table.html' %}
+</div>
+
+<script>
+// Load reports when page loads
+document.addEventListener('DOMContentLoaded', loadReports);
+
+function loadReports() {
+    fetch('/api/reports')
+    .then(response => response.json())
+    .then(reports => {
+        const tbody = document.getElementById('reports-table-body');
+        tbody.innerHTML = '';
+        
+        if (reports.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No reports found.</td></tr>';
+            return;
+        }
+        
+        reports.forEach(report => {
+            const row = document.createElement('tr');
+            
+            // Format date
+            const date = new Date(report.created_at);
+            const formattedDate = date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+            
+            row.innerHTML = `
+                <td>R-${String(report.id).padStart(10, '0')}</td>
+                <td>${report.patient_name}</td>
+                <td>${report.report_title || 'Medical Report'}</td>
+                <td>${report.diagnosis || 'N/A'}</td>
+                <td>${formattedDate}</td>
+                <td>
+                    <button class="action-btn" onclick="viewPDF(${report.id})">View PDF</button>
+                    <button class="action-btn" onclick="downloadPDF(${report.id})">Download PDF</button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+    })
+    .catch(error => {
+        console.error('Error loading reports:', error);
+        document.getElementById('reports-table-body').innerHTML = 
+            '<tr><td colspan="6" style="text-align: center;">Error loading reports</td></tr>';
+    });
+}
+
+function viewPDF(reportId) {
+    // Open PDF in a new window/tab for viewing
+    window.open(`/api/reports/${reportId}/pdf?view=true`, '_blank');
+}
+
+function downloadPDF(reportId) {
+    // Fetch report data to get the title for filename
+    fetch(`/api/reports/${reportId}`)
+    .then(response => response.json())
+    .then(report => {
+        if (!report) {
+            alert('Report not found');
+            return;
+        }
+
+        // Create a temporary link to download the PDF with custom filename
+        const link = document.createElement('a');
+        link.href = `/api/reports/${reportId}/pdf`;
+        link.download = `${report.report_title || 'Medical_Report'}.pdf`.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    })
+    .catch(error => {
+        console.error('Error fetching report:', error);
+        alert('Error loading report data');
+    });
+}
+</script>
+{% endblock %}

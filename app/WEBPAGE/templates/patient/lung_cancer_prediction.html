@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lung Cancer Risk Assessment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #282A36;
+            --text-gray: #6272A4;
+            --card-bg: #44475A;
+            --text-light: #F8F8F2;
+            --primary-blue: #6272A4;
+            --highlight-color: #FF79C6;
+        }
+
+        body {
+            background: var(--bg-dark);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        .navbar {
+            background: var(--card-bg);
+            border-bottom: 2px solid var(--primary-blue);
+        }
+
+        .navbar-brand, .nav-link {
+            color: var(--text-light) !important;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            gap: 2rem;
+        }
+
+        .step-item {
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-blue);
+            color: var(--text-light);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .question-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            padding: 2rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border: 2px solid var(--text-gray);
+            border-radius: 12px;
+            background: var(--card-bg);
+            color: var(--text-light);
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover {
+            border-color: var(--text-light);
+            background: var(--bg-dark);
+        }
+
+        .option-btn.selected {
+            border-color: var(--text-light);
+            background: var(--bg-dark);
+            font-weight: bold;
+        }
+
+        .question-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        .helper-text {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .continue-btn {
+            background: var(--primary-blue);
+            color: var(--text-light);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 2rem;
+            font-weight: 500;
+            margin-top: 1rem;
+        }
+
+        .continue-btn:hover {
+            background: var(--text-gray);
+        }
+
+        .emoji-icon {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+        }
+
+        .highlight-term {
+            color: var(--highlight-color);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .highlight-term:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="/static/icons/Healing_center.png" alt="HealthCare" style="height: 30px;">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('home') }}">
+                            <img src="/static/icons/Dashboard.png" alt="Home" style="height: 20px; margin-right: 5px;"> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/risk-assessment">
+                            <img src="/static/icons/Risk_assessments.png" alt="Risk Assessment" style="height: 20px; margin-right: 5px;"> Risk Assessment
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <!-- Progress Steps -->
+        <div class="progress-steps mb-5">
+            <div class="step-item">
+                <div class="step-icon">1</div>
+                <div>Questions <span id="currentQuestion">1</span>/11</div>
+            </div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="question-card">
+            <div class="text-center mb-4">
+                <h2 class="question-title" id="questionText">Do you have yellow fingers?</h2>
+            </div>
+
+            <div class="options-container">
+                <button class="option-btn" data-value="No">
+                    <span class="emoji-icon">❌</span>
+                    No
+                </button>
+                
+                <button class="option-btn" data-value="Yes">
+                    <span class="emoji-icon">✅</span>
+                    Yes
+                </button>
+            </div>
+
+            <div class="text-center">
+                <button class="continue-btn" disabled>Continue →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            "Do you have <a href='https://en.wikipedia.org/wiki/Nicotine_staining' class='highlight-term' target='_blank'>yellow fingers</a>?",
+            "Do you experience <a href='https://en.wikipedia.org/wiki/Anxiety' class='highlight-term' target='_blank'>anxiety</a>?",
+            "Do you feel <a href='https://en.wikipedia.org/wiki/Peer_pressure' class='highlight-term' target='_blank'>peer pressure</a>?",
+            "Do you have any <a href='https://en.wikipedia.org/wiki/Chronic_condition' class='highlight-term' target='_blank'>chronic disease</a>?",
+            "Do you experience <a href='https://en.wikipedia.org/wiki/Fatigue' class='highlight-term' target='_blank'>fatigue</a>?",
+            "Do you have any <a href='https://en.wikipedia.org/wiki/Allergy' class='highlight-term' target='_blank'>allergies</a>?",
+            "Do you experience <a href='https://en.wikipedia.org/wiki/Wheeze' class='highlight-term' target='_blank'>wheezing</a>?",
+            "Do you consume <a href='https://en.wikipedia.org/wiki/Alcoholic_drink' class='highlight-term' target='_blank'>alcohol</a>?",
+            "Do you have <a href='https://en.wikipedia.org/wiki/Cough' class='highlight-term' target='_blank'>coughing</a>?",
+            "Do you have <a href='https://en.wikipedia.org/wiki/Dysphagia' class='highlight-term' target='_blank'>difficulty swallowing</a>?",
+            "Do you experience <a href='https://en.wikipedia.org/wiki/Chest_pain' class='highlight-term' target='_blank'>chest pain</a>?"
+        ];
+
+        let currentQuestionIndex = 0;
+        const answers = [];
+        const continueBtn = document.querySelector('.continue-btn');
+        const questionText = document.getElementById('questionText');
+        const currentQuestionSpan = document.getElementById('currentQuestion');
+
+        // Handle option selection
+        document.querySelectorAll('.option-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                continueBtn.disabled = false;
+            });
+        });
+
+        // Handle continue button
+        continueBtn.addEventListener('click', () => {
+            const selectedOption = document.querySelector('.option-btn.selected');
+            if (selectedOption) {
+                answers.push(selectedOption.dataset.value);
+                
+                // Move to next question or show thank you
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.length) {
+                    // Show next question
+                    questionText.innerHTML = questions[currentQuestionIndex];
+                    currentQuestionSpan.textContent = currentQuestionIndex + 1;
+                    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+                    continueBtn.disabled = true;
+                } else {
+                    // Show thank you message
+                    const questionCard = document.querySelector('.question-card');
+                    questionCard.innerHTML = `
+                        <div class="text-center">
+                            <h2 class="question-title">Thank you for completing the survey!</h2>
+                            <p class="helper-text">Your responses have been recorded.</p>
+                        </div>
+                    `;
+                }
+            }
+        });
+
+        // Also update the initial question
+        questionText.innerHTML = questions[0];
+    </script>
+</body>
+</html>

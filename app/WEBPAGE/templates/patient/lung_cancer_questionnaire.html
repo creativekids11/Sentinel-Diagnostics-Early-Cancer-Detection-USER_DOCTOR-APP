@@ -1,0 +1,243 @@
+{% extends "layouts/patient.html" %}
+{% block title %}Lung Cancer Risk Assessment{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <!-- Progress Steps -->
+    <div class="progress-steps mb-5" style="display: flex; justify-content: center; margin-bottom: 2rem; gap: 2rem;">
+        <div class="step-item" style="text-align: center; min-width: 120px;">
+            <div class="step-icon" style="width: 24px; height: 24px; border-radius: 50%; background: var(--drac-purple); color: var(--text-foreground); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.5rem;">1</div>
+            <div>Questions <span id="currentQuestion">1</span>/11</div>
+        </div>
+    </div>
+
+    <!-- Question Card -->
+    <div class="question-card" style="background: var(--card-bg); border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); padding: 2rem; max-width: 700px; margin: 0 auto;">
+        <div class="text-center mb-4">
+            <h2 class="question-title" id="questionText" style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-foreground);">Do you have yellow fingers?</h2>
+        </div>
+
+        <div class="options-container">
+            <button class="option-btn" data-value="No" style="display: block; width: 100%; padding: 1.25rem; margin-bottom: 1rem; border: 2px solid var(--text-muted); border-radius: 12px; background: var(--card-bg); color: var(--text-foreground); text-align: left; transition: all 0.2s; cursor: pointer;">
+                <span class="emoji-icon" style="font-size: 1.2rem; margin-right: 0.5rem;">❌</span>
+                No
+            </button>
+            
+            <button class="option-btn" data-value="Yes" style="display: block; width: 100%; padding: 1.25rem; margin-bottom: 1rem; border: 2px solid var(--text-muted); border-radius: 12px; background: var(--card-bg); color: var(--text-foreground); text-align: left; transition: all 0.2s; cursor: pointer;">
+                <span class="emoji-icon" style="font-size: 1.2rem; margin-right: 0.5rem;">✅</span>
+                Yes
+            </button>
+        </div>
+
+        <div class="text-center">
+            <button class="continue-btn" disabled style="background: var(--drac-purple); color: var(--text-foreground); border: none; border-radius: 8px; padding: 0.75rem 2rem; font-weight: 500; margin-top: 1rem; cursor: pointer; opacity: 0.5; transition: all 0.2s;">Continue →</button>
+        </div>
+    </div>
+
+    <!-- Results Section (hidden initially) -->
+    <div id="resultsSection" style="display: none; max-width: 700px; margin: 2rem auto;">
+        <div class="data-card">
+            <h2 style="text-align: center; color: var(--drac-pink); margin-bottom: 1.5rem;">Assessment Complete</h2>
+            <div id="resultContent" style="text-align: center;">
+                <div class="result-card" style="background: rgba(255, 255, 255, 0.02); padding: 2rem; border-radius: 12px; margin-bottom: 1rem;">
+                    <h3>Risk Assessment Result</h3>
+                    <div id="riskLevel" style="font-size: 2rem; font-weight: bold; margin: 1rem 0;"></div>
+                    <div id="riskDescription" style="color: var(--text-muted); margin-bottom: 1rem;"></div>
+                    <div id="riskScore" style="font-size: 1.2rem; color: var(--drac-cyan);"></div>
+                </div>
+                <button onclick="restartAssessment()" class="btn-primary" style="background: linear-gradient(135deg, var(--drac-purple), var(--drac-pink)); border: none; padding: 0.75rem 2rem; border-radius: 8px; color: white; cursor: pointer; margin-top: 1rem;">Take Assessment Again</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .option-btn {
+        display: block;
+        width: 100%;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        border: 2px solid var(--text-muted);
+        border-radius: 12px;
+        background: var(--card-bg);
+        color: var(--text-foreground);
+        text-align: left;
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transform: scale(1);
+    }
+    
+    .option-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        opacity: 0;
+        transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        border-radius: 10px;
+        z-index: -1;
+    }
+    
+    .option-btn:hover {
+        border-color: var(--text-foreground);
+        background: var(--drac-bg);
+        transform: translateY(-2px) scale(1.02);
+    }
+
+    .option-btn.selected {
+        border-color: var(--drac-pink);
+        background: var(--drac-bg);
+        font-weight: bold;
+        box-shadow: 0 0 20px rgba(255, 121, 198, 0.3);
+        transform: scale(1.02) rotate(1deg);
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+    }
+    
+    .option-btn.selected::before {
+        opacity: 1;
+    }
+
+    .continue-btn:not([disabled]) {
+        opacity: 1;
+        background: linear-gradient(135deg, var(--drac-purple), var(--drac-pink));
+    }
+
+    .continue-btn:not([disabled]):hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(189, 147, 249, 0.4);
+    }
+
+    .highlight-term {
+        color: var(--drac-pink);
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .highlight-term:hover {
+        text-decoration: underline;
+        color: var(--drac-cyan);
+    }
+
+    .risk-low {
+        color: var(--drac-green);
+    }
+
+    .risk-moderate {
+        color: var(--drac-orange);
+    }
+
+    .risk-high {
+        color: var(--drac-red);
+    }
+</style>
+
+<script>
+    const questions = [
+        "Do you have <a href='https://en.wikipedia.org/wiki/Nicotine_staining' class='highlight-term' target='_blank'>yellow fingers</a>?",
+        "Do you experience <a href='https://en.wikipedia.org/wiki/Anxiety' class='highlight-term' target='_blank'>anxiety</a>?",
+        "Do you feel <a href='https://en.wikipedia.org/wiki/Peer_pressure' class='highlight-term' target='_blank'>peer pressure</a>?",
+        "Do you have any <a href='https://en.wikipedia.org/wiki/Chronic_condition' class='highlight-term' target='_blank'>chronic disease</a>?",
+        "Do you experience <a href='https://en.wikipedia.org/wiki/Fatigue' class='highlight-term' target='_blank'>fatigue</a>?",
+        "Do you have any <a href='https://en.wikipedia.org/wiki/Allergy' class='highlight-term' target='_blank'>allergies</a>?",
+        "Do you experience <a href='https://en.wikipedia.org/wiki/Wheeze' class='highlight-term' target='_blank'>wheezing</a>?",
+        "Do you consume <a href='https://en.wikipedia.org/wiki/Alcoholic_drink' class='highlight-term' target='_blank'>alcohol</a>?",
+        "Do you have <a href='https://en.wikipedia.org/wiki/Cough' class='highlight-term' target='_blank'>coughing</a>?",
+        "Do you have <a href='https://en.wikipedia.org/wiki/Dysphagia' class='highlight-term' target='_blank'>difficulty swallowing</a>?",
+        "Do you experience <a href='https://en.wikipedia.org/wiki/Chest_pain' class='highlight-term' target='_blank'>chest pain</a>?"
+    ];
+
+    let currentQuestionIndex = 0;
+    const answers = [];
+    const continueBtn = document.querySelector('.continue-btn');
+    const questionText = document.getElementById('questionText');
+    const currentQuestionSpan = document.getElementById('currentQuestion');
+
+    // Handle option selection
+    document.querySelectorAll('.option-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            continueBtn.disabled = false;
+        });
+    });
+
+    // Handle continue button
+    continueBtn.addEventListener('click', () => {
+        const selectedOption = document.querySelector('.option-btn.selected');
+        if (selectedOption) {
+            answers.push(selectedOption.dataset.value);
+            
+            // Move to next question or show results
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                // Show next question
+                questionText.innerHTML = questions[currentQuestionIndex];
+                currentQuestionSpan.textContent = currentQuestionIndex + 1;
+                document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+                continueBtn.disabled = true;
+            } else {
+                // Calculate and show results
+                showResults();
+            }
+        }
+    });
+
+    function showResults() {
+        // Hide question card
+        document.querySelector('.question-card').style.display = 'none';
+        document.querySelector('.progress-steps').style.display = 'none';
+        
+        // Calculate risk based on answers
+        const yesCount = answers.filter(answer => answer === 'Yes').length;
+        const riskPercentage = Math.round((yesCount / questions.length) * 100);
+        
+        let riskLevel, riskClass, riskDescription;
+        
+        if (riskPercentage <= 30) {
+            riskLevel = 'LOW RISK';
+            riskClass = 'risk-low';
+            riskDescription = 'Based on your responses, you have a low risk for lung cancer. Continue maintaining healthy habits and regular check-ups.';
+        } else if (riskPercentage <= 60) {
+            riskLevel = 'MODERATE RISK';
+            riskClass = 'risk-moderate';
+            riskDescription = 'Your responses indicate a moderate risk. Consider lifestyle changes and consult with a healthcare professional for personalized advice.';
+        } else {
+            riskLevel = 'HIGH RISK';
+            riskClass = 'risk-high';
+            riskDescription = 'Your responses suggest a higher risk profile. We strongly recommend consulting with a healthcare professional for further evaluation and guidance.';
+        }
+        
+        // Display results
+        document.getElementById('riskLevel').textContent = riskLevel;
+        document.getElementById('riskLevel').className = riskClass;
+        document.getElementById('riskDescription').textContent = riskDescription;
+        document.getElementById('riskScore').textContent = `Risk Score: ${riskPercentage}%`;
+        document.getElementById('resultsSection').style.display = 'block';
+    }
+
+    function restartAssessment() {
+        // Reset state
+        currentQuestionIndex = 0;
+        answers.length = 0;
+        
+        // Reset UI
+        questionText.innerHTML = questions[0];
+        currentQuestionSpan.textContent = '1';
+        document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+        continueBtn.disabled = true;
+        
+        // Show question card again
+        document.querySelector('.question-card').style.display = 'block';
+        document.querySelector('.progress-steps').style.display = 'flex';
+        document.getElementById('resultsSection').style.display = 'none';
+    }
+
+    // Initialize first question
+    questionText.innerHTML = questions[0];
+</script>
+{% endblock %}

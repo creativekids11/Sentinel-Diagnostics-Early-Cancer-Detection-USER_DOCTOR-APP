@@ -1,0 +1,975 @@
+{% extends "layouts/doctor.html" %}
+
+{% block content %}
+<div class="modern-plans-container">
+    <div class="plans-header">
+        <div class="plans-title-section">
+            <div class="plans-icon">
+                <i class="fas fa-crown"></i>
+            </div>
+            <div class="plans-title-content">
+                <h1 class="plans-main-title">Manage Your Subscription Plans</h1>
+                <p class="plans-subtitle">Choose the perfect plan for your medical practice</p>
+                {% if current_plan and expires_at %}
+                    {% set expires_date = expires_at[:10] %}
+                    <div class="current-subscription">
+                        <div class="subscription-badge {{ current_plan }}">
+                            <i class="fas fa-{% if current_plan == 'trial' %}clock{% else %}gem{% endif %}"></i>
+                            <span>{{ current_plan.title() }} Plan Active</span>
+                        </div>
+                        <p class="expires-info">Valid until {{ expires_date }}</p>
+                        {% if balance is defined %}
+                        <div class="balance-info">
+                            <span class="balance-label">Current Balance:</span>
+                            <span class="balance-amount">₹{{ balance }}</span>
+                            <button class="pay-now-btn" onclick="openBalanceModal()">
+                                <i class="fas fa-plus-circle"></i>
+                                Add Balance
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="plans-grid">
+        <!-- Trial Version -->
+        <div class="plan-card trial-plan">
+            <div class="plan-header">
+                <h3 class="plan-name">Trial Version</h3>
+                <p class="plan-description">1-Minute Full Access</p>
+                <div class="plan-price">
+                    <span class="currency">₹</span>
+                    <span class="amount">0</span>
+                    <span class="period">/1 minute</span>
+                </div>
+            </div>
+            <div class="plan-features">
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>Full access to all portal features</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>Patient management system</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>AI scanner with risk assessment</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>Appointment scheduling</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>Case management and reports</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-clock feature-icon limited"></i>
+                    <span>Limited to 1 minute duration</span>
+                </div>
+            </div>
+            <div class="plan-footer">
+                {% if current_plan == 'trial' %}
+                    {% if trial_active %}
+                    <button class="plan-button current-plan-btn" disabled>
+                        <i class="fas fa-clock"></i>
+                        Trial Active (<span id="trial-countdown">{{ trial_remaining }}</span>s)
+                    </button>
+                    {% else %}
+                    <button class="plan-button expired-btn" disabled>
+                        <i class="fas fa-times-circle"></i>
+                        Trial Expired
+                    </button>
+                    {% endif %}
+                {% elif trial_used %}
+                <button class="plan-button unavailable-btn" disabled>
+                    <i class="fas fa-ban"></i>
+                    Trial Already Used
+                </button>
+                {% elif current_plan == 'premium' %}
+                <button class="plan-button premium-active-btn" disabled>
+                    <i class="fas fa-gem"></i>
+                    Premium Active
+                </button>
+                {% else %}
+                <form method="POST" action="{{ url_for('doctor_start_trial') }}" style="margin: 0;">
+                    <button type="submit" class="plan-button trial-btn">
+                        <i class="fas fa-play"></i>
+                        Start Trial
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Premium Version -->
+        <div class="plan-card premium-plan">
+            <div class="plan-header">
+                <h3 class="plan-name">Premium Version</h3>
+                <p class="plan-description">Unlimited Access</p>
+                <div class="plan-price">
+                    <span class="currency">₹</span>
+                    <span class="amount">5</span>
+                    <span class="period">/month</span>
+                </div>
+            </div>
+            <div class="plan-features">
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>Full access to all portal features</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>Unlimited patient management</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>Advanced AI scanner with risk assessment</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>Unlimited appointment scheduling</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>Unlimited case management</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check feature-icon available"></i>
+                    <span>Priority customer support</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-infinity feature-icon unlimited"></i>
+                    <span>No time limits or restrictions</span>
+                </div>
+            </div>
+            <div class="plan-footer">
+                {% if current_plan == 'premium' %}
+                <button class="plan-button current-plan-btn" disabled>
+                    <i class="fas fa-gem"></i>
+                    Current Plan
+                </button>
+                <form method="POST" action="{{ url_for('doctor_downgrade_plan') }}" style="margin: 0; margin-top: 0.5rem;">
+                    <input type="hidden" name="target_plan" value="trial">
+                    <button type="submit" class="plan-button downgrade-btn" onclick="return confirm('Are you sure you want to downgrade to Trial plan? You will have 1 minute of full access.')">
+                        <i class="fas fa-arrow-down"></i>
+                        Downgrade to Trial
+                    </button>
+                </form>
+                {% else %}
+                <form method="POST" action="{{ url_for('doctor_upgrade_plan') }}" style="margin: 0;">
+                    <input type="hidden" name="plan_type" value="premium">
+                    <button type="submit" class="plan-button premium-btn">
+                        <i class="fas fa-crown"></i>
+                        Subscribe to Premium
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Balance Top-up Modal -->
+    <div id="balanceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Balance</h2>
+                <span class="close" onclick="closeBalanceModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="qr-section">
+                    <h3>Scan QR Code to Pay</h3>
+                    <div class="qr-code">
+                        <img src="{{ url_for('static', filename='images/payments/fampay_qr.svg') }}" alt="UPI QR Code" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkFSIENvZGU8L3RleHQ+PC9zdmc+'">
+                        <p class="qr-placeholder">UPI QR Code</p>
+                    </div>
+                    <p class="upi-id">UPI ID: jayhatapaki@fam</p>
+                </div>
+                <form id="balanceForm" onsubmit="submitBalancePayment(event)">
+                    <div class="form-group">
+                        <label for="amount">Amount to Add (₹)</label>
+                        <input type="number" id="amount" name="amount" min="100" max="10000" step="50" required placeholder="Enter amount (₹100 - ₹10,000)">
+                    </div>
+                    <div class="form-group">
+                        <label for="transactionId">Transaction ID</label>
+                        <input type="text" id="transactionId" name="transactionId" required placeholder="Enter UPI transaction ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="userMessage">Message (Optional)</label>
+                        <textarea id="userMessage" name="userMessage" placeholder="Any additional message for admin"></textarea>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="emailReceipt" name="emailReceipt" checked>
+                            <span class="checkmark"></span>
+                            Email me receipt after verification
+                        </label>
+                    </div>
+                    <button type="submit" class="submit-btn">I Have Paid - Submit for Verification</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscription Benefits Section -->
+    <div class="benefits-section">
+        <h2 class="benefits-title">Why Choose Premium?</h2>
+        <div class="benefits-grid">
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <i class="fas fa-stethoscope"></i>
+                </div>
+                <h3 class="benefit-title">Complete Patient Care</h3>
+                <p class="benefit-description">Manage unlimited patients with comprehensive medical records and history tracking.</p>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h3 class="benefit-title">AI-Powered Diagnostics</h3>
+                <p class="benefit-description">Access advanced AI scanner for lung, brain, and breast cancer detection with risk assessment.</p>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <h3 class="benefit-title">Smart Scheduling</h3>
+                <p class="benefit-description">Efficient appointment management with automated reminders and notifications.</p>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="benefit-title">Analytics & Reports</h3>
+                <p class="benefit-description">Generate detailed medical reports and track patient progress over time.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.modern-plans-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: var(--drac-bg);
+    color: var(--drac-foreground);
+    min-height: 100vh;
+}
+
+.plans-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.plans-title-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.plans-icon {
+    background: linear-gradient(135deg, var(--drac-purple), var(--drac-pink));
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+    box-shadow: 0 10px 30px rgba(189, 147, 249, 0.3);
+}
+
+.plans-main-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0;
+    background: linear-gradient(135deg, var(--drac-purple), var(--drac-pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.plans-subtitle {
+    font-size: 1.2rem;
+    color: var(--drac-comment);
+    margin: 0;
+}
+
+.current-subscription {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(189, 147, 249, 0.1);
+    border: 1px solid var(--drac-purple);
+    border-radius: 12px;
+    display: inline-block;
+}
+
+.subscription-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.subscription-badge.trial {
+    color: var(--drac-orange);
+}
+
+.subscription-badge.premium {
+    color: var(--drac-purple);
+}
+
+.expires-info {
+    font-size: 0.9rem;
+    color: var(--drac-comment);
+    margin: 0;
+}
+
+.balance-info {
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.balance-label {
+    font-size: 0.9rem;
+    color: var(--drac-comment);
+}
+
+.balance-amount {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--drac-green);
+}
+
+.plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 4rem;
+}
+
+.plan-card {
+    background: var(--drac-card);
+    border: 1px solid var(--drac-comment);
+    border-radius: 16px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.plan-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border-color: var(--drac-purple);
+}
+
+.trial-plan {
+    border-color: var(--drac-orange);
+    background: linear-gradient(135deg, rgba(255, 184, 108, 0.05), rgba(255, 121, 198, 0.05));
+}
+
+.premium-plan {
+    border-color: var(--drac-purple);
+    background: linear-gradient(135deg, rgba(189, 147, 249, 0.05), rgba(255, 121, 198, 0.05));
+    position: relative;
+}
+
+.premium-plan::before {
+    content: "RECOMMENDED";
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: linear-gradient(135deg, var(--drac-purple), var(--drac-pink));
+    color: white;
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-bottom-left-radius: 12px;
+}
+
+.plan-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--drac-comment);
+}
+
+.plan-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+}
+
+.plan-description {
+    color: var(--drac-comment);
+    margin: 0 0 1rem 0;
+}
+
+.plan-price {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.currency {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--drac-green);
+}
+
+.amount {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--drac-green);
+}
+
+.period {
+    font-size: 1rem;
+    color: var(--drac-comment);
+}
+
+.plan-features {
+    margin-bottom: 2rem;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(98, 114, 164, 0.1);
+}
+
+.feature-item:last-child {
+    border-bottom: none;
+}
+
+.feature-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+.feature-icon.available {
+    background: var(--drac-green);
+    color: var(--drac-bg);
+}
+
+.feature-icon.unavailable {
+    background: var(--drac-red);
+    color: var(--drac-bg);
+}
+
+.feature-icon.limited {
+    background: var(--drac-orange);
+    color: var(--drac-bg);
+}
+
+.feature-icon.unlimited {
+    background: var(--drac-purple);
+    color: var(--drac-bg);
+}
+
+.plan-button {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.current-plan-btn {
+    background: var(--drac-comment);
+    color: var(--drac-bg);
+    cursor: not-allowed;
+}
+
+.trial-btn {
+    background: linear-gradient(135deg, var(--drac-orange), var(--drac-pink));
+    color: white;
+}
+
+.trial-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(255, 184, 108, 0.3);
+}
+
+.premium-btn {
+    background: linear-gradient(135deg, var(--drac-purple), var(--drac-pink));
+    color: white;
+}
+
+.premium-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(189, 147, 249, 0.3);
+}
+
+.downgrade-btn, .unavailable-btn, .expired-btn {
+    background: var(--drac-red);
+    color: white;
+    cursor: not-allowed;
+}
+
+.premium-active-btn {
+    background: var(--drac-purple);
+    color: white;
+    cursor: not-allowed;
+}
+
+.benefits-section {
+    text-align: center;
+    padding-top: 3rem;
+    border-top: 1px solid var(--drac-comment);
+}
+
+.benefits-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: var(--drac-purple);
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.benefit-card {
+    background: var(--drac-card);
+    border: 1px solid var(--drac-comment);
+    border-radius: 12px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+}
+
+.benefit-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--drac-purple);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.benefit-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--drac-purple), var(--drac-pink));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem auto;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.benefit-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.benefit-description {
+    color: var(--drac-comment);
+    line-height: 1.6;
+}
+
+/* Subscription badges for header */
+.subscription-badge-header {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.subscription-badge-header.trial {
+    background: var(--drac-orange);
+    color: var(--drac-bg);
+}
+
+.subscription-badge-header.premium {
+    background: var(--drac-purple);
+    color: white;
+}
+
+.subscription-badge-popup.trial {
+    background: var(--drac-orange);
+}
+
+.subscription-badge-popup.premium {
+    background: var(--drac-purple);
+}
+
+/* Trial countdown styling */
+#trial-countdown {
+    font-weight: 700;
+    color: var(--drac-orange);
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: var(--drac-card);
+    margin: 5% auto;
+    padding: 0;
+    border: 1px solid var(--drac-comment);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(-50px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--drac-purple), var(--drac-pink));
+    color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.close {
+    color: white;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.close:hover {
+    color: var(--drac-orange);
+}
+
+.modal-body {
+    padding: 2rem;
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.qr-section {
+    flex: 1;
+    text-align: center;
+}
+
+.qr-section h3 {
+    margin-bottom: 1rem;
+    color: var(--drac-purple);
+    font-size: 1.2rem;
+}
+
+.qr-code {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: inline-block;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.qr-code img {
+    width: 200px;
+    height: 200px;
+    display: block;
+}
+
+.qr-placeholder {
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--drac-comment);
+    font-size: 1.1rem;
+    border: 2px dashed var(--drac-comment);
+    border-radius: 8px;
+}
+
+.upi-id {
+    font-size: 0.9rem;
+    color: var(--drac-comment);
+    margin-top: 0.5rem;
+}
+
+#balanceForm {
+    flex: 1;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--drac-foreground);
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--drac-comment);
+    border-radius: 8px;
+    background: var(--drac-bg);
+    color: var(--drac-foreground);
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--drac-purple);
+    box-shadow: 0 0 0 3px rgba(189, 147, 249, 0.1);
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin-right: 0.5rem;
+    width: auto;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--drac-purple), var(--drac-pink));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(189, 147, 249, 0.3);
+}
+
+.submit-btn:disabled {
+    background: var(--drac-comment);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Pay Now Button */
+.pay-now-btn {
+    background: linear-gradient(135deg, var(--drac-green), var(--drac-cyan));
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: 1rem;
+}
+
+.pay-now-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(80, 250, 123, 0.3);
+}
+
+.pay-now-btn i {
+    font-size: 0.8rem;
+}
+
+@media (max-width: 768px) {
+    .modern-plans-container {
+        padding: 1rem;
+    }
+    
+    .plans-main-title {
+        font-size: 2rem;
+    }
+    
+    .plans-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .benefits-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .modal-body {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .qr-code img,
+    .qr-placeholder {
+        width: 150px;
+        height: 150px;
+    }
+}
+</style>
+
+<script>
+// Trial countdown functionality
+{% if current_plan == 'trial' and trial_active and trial_remaining %}
+let trialTimeRemaining = {{ trial_remaining }};
+const countdownElement = document.getElementById('trial-countdown');
+
+function updateCountdown() {
+    if (trialTimeRemaining <= 0) {
+        // Trial expired, redirect to subscription page
+        window.location.reload();
+        return;
+    }
+    
+    countdownElement.textContent = trialTimeRemaining;
+    trialTimeRemaining--;
+}
+
+// Update countdown every second
+const countdownInterval = setInterval(updateCountdown, 1000);
+
+// Initial update
+updateCountdown();
+{% endif %}
+
+// Balance Modal Functions
+function openBalanceModal() {
+    document.getElementById('balanceModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeBalanceModal() {
+    document.getElementById('balanceModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+    // Reset form
+    document.getElementById('balanceForm').reset();
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('balanceModal');
+    if (event.target == modal) {
+        closeBalanceModal();
+    }
+}
+
+// Handle balance payment submission
+async function submitBalancePayment(event) {
+    event.preventDefault();
+    
+    const submitBtn = document.querySelector('.submit-btn');
+    const originalText = submitBtn.textContent;
+    
+    // Disable button and show loading
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+    
+    try {
+        const formData = new FormData(document.getElementById('balanceForm'));
+        const data = {
+            amount: parseInt(formData.get('amount')),
+            transactionId: formData.get('transactionId').trim(),
+            userMessage: formData.get('userMessage').trim(),
+            emailReceipt: formData.get('emailReceipt') === 'on'
+        };
+        
+        const response = await fetch('/doctor/add-balance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Balance top-up request submitted successfully! Your payment will be verified by admin within 24 hours.');
+            closeBalanceModal();
+        } else {
+            alert('Error: ' + result.message);
+        }
+        
+    } catch (error) {
+        console.error('Error submitting balance payment:', error);
+        alert('An error occurred. Please try again.');
+    } finally {
+        // Re-enable button
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+}
+</script>
+{% endblock %}

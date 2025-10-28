@@ -1,0 +1,57 @@
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #282a36;
+    color: #f8f8f2;
+    margin: 0;
+    padding: 0;
+}
+.container {
+    background: #44475a;
+    margin: 40px auto;
+    padding: 32px;
+    border-radius: 12px;
+    max-width: 800px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+}
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+.logo {
+    height: 60px;
+}
+.title {
+    font-size: 2.2em;
+    font-weight: bold;
+    color: #bd93f9;
+}
+.section {
+    margin-bottom: 24px;
+}
+.section-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #50fa7b;
+    margin-bottom: 8px;
+}
+.field {
+    margin-bottom: 8px;
+}
+.label {
+    font-weight: bold;
+    color: #ffb86c;
+}
+.value {
+    margin-left: 8px;
+    color: #f8f8f2;
+}
+.signature {
+    margin-top: 40px;
+    text-align: right;
+}
+.signature-label {
+    color: #ff79c6;
+    font-weight: bold;
+}

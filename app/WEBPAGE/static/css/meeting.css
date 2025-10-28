@@ -1,0 +1,40 @@
+body {
+	height: 100vh;
+	overflow: hidden;
+	display: grid;
+}
+
+div.div {
+	display: flex;
+	justify-content: space-between;
+	flex-direction: column;
+	top: 10vh;
+	position: absolute;
+	width: 100vw;
+	height: 60vh;
+}
+
+div.container-video {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-evenly;
+}
+
+#local-video,
+#remote-video {
+	width: 35vw;
+	height: 50vh;
+	background-color: black;
+}
+
+div.call-div {
+	display: flex;
+	align-self: last baseline;
+	flex-direction: row;
+	justify-content: space-around;
+	align-content: center;
+	right: 2vw;
+	position: absolute;
+	bottom: 5vh;
+	width: 40vw;
+}

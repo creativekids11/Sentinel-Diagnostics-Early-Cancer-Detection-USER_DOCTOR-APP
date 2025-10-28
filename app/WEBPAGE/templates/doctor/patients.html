@@ -1,0 +1,623 @@
+{% extends "layouts/doctor.html" %}
+{% block title %}My Patients{% endblock %}
+{% block content %}
+
+<style>
+    .patient-card {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 4px solid var(--drac-cyan);
+        transition: all 0.3s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .patient-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .patient-name {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: var(--drac-cyan);
+        margin: 0;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .patient-id {
+        background: rgba(139, 233, 253, 0.2);
+        color: var(--drac-cyan);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-left: auto;
+    }
+
+    .btn-view-history {
+        background: linear-gradient(135deg, var(--drac-cyan) 0%, #8be9fd 100%);
+        color: var(--drac-bg);
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-view-history:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(139, 233, 253, 0.3);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--drac-comment);
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+    }
+
+    .search-container {
+        margin-bottom: 25px;
+        width: 100%;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 12px 15px;
+        background: var(--drac-bg-header);
+        border: 1px solid rgba(139, 233, 253, 0.3);
+        border-radius: 10px;
+        color: var(--drac-fg);
+        font-size: 1rem;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--drac-cyan);
+        box-shadow: 0 0 0 2px rgba(139, 233, 253, 0.2);
+    }
+
+    .stats-summary {
+        background: linear-gradient(135deg, var(--metric-gradient-1) 0%, var(--metric-gradient-2) 100%);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+        border: 1px solid rgba(139, 233, 253, 0.2);
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .summary-item {
+        text-align: center;
+        padding: 15px;
+        background: rgba(68, 71, 90, 0.2);
+        border-radius: 8px;
+        border: 1px solid rgba(139, 233, 253, 0.1);
+    }
+
+    .summary-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--drac-cyan);
+        margin-bottom: 5px;
+    }
+
+    .summary-label {
+        font-size: 0.9rem;
+        color: var(--drac-comment);
+        font-weight: 500;
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .modal-content {
+        background: linear-gradient(135deg, #282a36 0%, #44475a 100%);
+        margin: 5% auto;
+        padding: 0;
+        border: 1px solid rgba(139, 233, 253, 0.3);
+        border-radius: 12px;
+        width: 90%;
+        max-width: 800px;
+        max-height: 80vh;
+        overflow-y: auto;
+        animation: slideIn 0.3s ease-out;
+        position: relative;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, var(--drac-cyan) 0%, #8be9fd 100%);
+        color: var(--drac-bg);
+        padding: 20px;
+        border-radius: 12px 12px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .close {
+        color: var(--drac-bg);
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .close:hover {
+        color: var(--drac-comment);
+    }
+
+    .modal-body {
+        padding: 25px;
+    }
+
+    .patient-details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+
+    .detail-section {
+        background: rgba(68, 71, 90, 0.3);
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(139, 233, 253, 0.1);
+    }
+
+    .detail-section h4 {
+        margin: 0 0 15px 0;
+        color: var(--drac-cyan);
+        font-size: 1.1rem;
+        border-bottom: 2px solid var(--drac-cyan);
+        padding-bottom: 8px;
+    }
+
+    .detail-item {
+        margin-bottom: 12px;
+        font-size: 0.9rem;
+        color: var(--drac-fg);
+    }
+
+    .detail-label {
+        font-weight: bold;
+        color: var(--drac-comment);
+        display: inline-block;
+        min-width: 120px;
+    }
+
+    .stat-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .stat-badge {
+        background: rgba(80, 250, 123, 0.1);
+        border: 1px solid var(--drac-green);
+        color: var(--drac-green);
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-weight: 500;
+        font-size: 0.8rem;
+    }
+
+    .stat-badge.appointments {
+        background: rgba(255, 121, 198, 0.1);
+        border-color: var(--drac-pink);
+        color: var(--drac-pink);
+    }
+
+    .stat-badge.cases {
+        background: rgba(241, 250, 140, 0.1);
+        border-color: var(--drac-yellow);
+        color: var(--drac-yellow);
+    }
+
+    .stat-badge.reports {
+        background: rgba(189, 147, 249, 0.1);
+        border-color: var(--drac-purple);
+        color: var(--drac-purple);
+    }
+
+    .stat-badge.cancelled {
+        background: rgba(255, 85, 85, 0.1);
+        border-color: #ff5555;
+        color: #ff5555;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        padding-top: 20px;
+        border-top: 1px solid var(--drac-card-alt);
+    }
+
+    .btn-modal-action {
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+
+    .btn-send-message {
+        background: linear-gradient(135deg, var(--drac-purple) 0%, #bd93f9 100%);
+        color: white;
+    }
+
+    .btn-send-message:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(189, 147, 249, 0.3);
+    }
+
+    .btn-generate-report {
+        background: linear-gradient(135deg, var(--drac-green) 0%, #50fa7b 100%);
+        color: var(--drac-bg);
+    }
+
+    .btn-generate-report:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(80, 250, 123, 0.3);
+    }
+
+    .btn-view-appointments {
+        background: linear-gradient(135deg, var(--drac-pink) 0%, #ff79c6 100%);
+        color: var(--drac-bg);
+    }
+
+    .btn-view-appointments:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(255, 121, 198, 0.3);
+    }
+</style>
+
+<div class="data-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h2 style="margin: 0;">My Patients</h2>
+        <span style="color: var(--drac-comment); font-size: 0.9rem;">
+            Total Patients: {{ patients|length if patients else 0 }}
+        </span>
+    </div>
+
+    {% if patients %}
+        <!-- Statistics Summary -->
+        <div class="stats-summary">
+            <h3 style="margin: 0 0 15px 0; color: var(--drac-green);">Practice Overview</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-value">{{ patients|length }}</div>
+                    <div class="summary-label">Total Patients</div>
+                </div>
+                {% if patients and patients[0].total_appointments_created is defined %}
+                <div class="summary-item">
+                    <div class="summary-value">{{ patients|sum(attribute='total_appointments_created') }}</div>
+                    <div class="summary-label">Total Appointments Ever</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">{{ patients|sum(attribute='total_appointments_completed') }}</div>
+                    <div class="summary-label">Completed Appointments</div>
+                </div>
+                {% else %}
+                <div class="summary-item">
+                    <div class="summary-value">{{ patients|sum(attribute='appointment_count') if patients else 0 }}</div>
+                    <div class="summary-label">Total Appointments</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">{{ patients|sum(attribute='case_count') if patients else 0 }}</div>
+                    <div class="summary-label">Total Cases</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">{{ patients|sum(attribute='report_count') if patients else 0 }}</div>
+                    <div class="summary-label">Total Reports</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="search-container">
+            <input type="text" class="search-input" id="patientSearch" placeholder="Search by name or User ID">
+        </div>
+
+        <div id="patientsContainer">
+            {% for patient in patients %}
+            <div class="patient-card" data-patient-name="{{ patient.fullname|lower }}" data-patient-email="{{ patient.email|lower }}" data-patient-phone="{{ patient.phone or '' }}" data-patient-id="{{ (patient.user_id if patient.user_id is defined else patient.id)|string }}">
+                <h3 class="patient-name">
+                    {{ patient.fullname }}
+                    <span class="patient-id">ID: {{ patient.user_id if patient.user_id is defined else patient.id }}</span>
+                </h3>
+                <button class="btn-view-history" data-patient-id="{{ patient.user_id if patient.user_id is defined else patient.id }}" data-patient-name="{{ patient.fullname }}" data-patient-email="{{ patient.email }}" data-patient-phone="{{ patient.phone or 'Not provided' }}" data-patient-since="{{ patient.patient_since[:10] if patient.patient_since else (patient.created_at[:10] if patient.created_at else 'N/A') }}" data-first-visit="{{ patient.first_consultation_date[:10] if patient.first_consultation_date else 'N/A' }}" data-last-visit="{{ patient.last_consultation_date[:10] if patient.last_consultation_date else 'N/A' }}" data-doctor-appointments="{{ patient.doctor_appointments if patient.doctor_appointments is defined else patient.appointment_count }}" data-doctor-cases="{{ patient.doctor_cases if patient.doctor_cases is defined else patient.case_count }}" data-doctor-reports="{{ patient.doctor_reports if patient.doctor_reports is defined else patient.report_count }}" data-total-appointments="{{ patient.total_appointments_created if patient.total_appointments_created is defined else 0 }}" data-total-completed="{{ patient.total_appointments_completed if patient.total_appointments_completed is defined else 0 }}" data-total-cancelled="{{ patient.total_appointments_cancelled if patient.total_appointments_cancelled is defined else 0 }}" data-total-cases="{{ patient.total_cases_created if patient.total_cases_created is defined else 0 }}" data-total-reports="{{ patient.total_reports_generated if patient.total_reports_generated is defined else 0 }}" data-last-activity="{{ patient.last_activity[:10] if patient.last_activity else 'N/A' }}" onclick="openPatientModal(this)">
+                    View History
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- No Results Message -->
+        <div id="noResultsMessage" class="empty-state" style="display: none;">
+            <div class="empty-state-icon">No Results</div>
+            <h3>No Patients Found</h3>
+            <p>No patients match your search criteria. Try searching by name or patient ID.</p>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">No Patients</div>
+            <h3>No Patients Yet</h3>
+            <p>You haven't consulted with any patients yet. Patients will appear here after appointments, cases, or reports.</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Patient History Modal -->
+<div id="patientModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title" id="modalPatientName">Patient History</h2>
+            <span class="close" onclick="closePatientModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="patient-details-grid">
+                <div class="detail-section">
+                    <h4>Contact Information</h4>
+                    <div class="detail-item">
+                        <span class="detail-label">Email:</span>
+                        <span id="modalPatientEmail"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Phone:</span>
+                        <span id="modalPatientPhone"></span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h4>Patient Timeline</h4>
+                    <div class="detail-item">
+                        <span class="detail-label">Patient Since:</span>
+                        <span id="modalPatientSince"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">First Visit:</span>
+                        <span id="modalFirstVisit"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Last Visit:</span>
+                        <span id="modalLastVisit"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Last Activity:</span>
+                        <span id="modalLastActivity"></span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h4>With You</h4>
+                    <div class="detail-item">
+                        <span class="detail-label">Appointments:</span>
+                        <span id="modalDoctorAppointments"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Cases:</span>
+                        <span id="modalDoctorCases"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Reports:</span>
+                        <span id="modalDoctorReports"></span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h4>Overall Statistics</h4>
+                    <div class="stat-badges" id="modalStatsBadges">
+                        <!-- Stats badges will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <a id="modalMessageBtn" href="#" class="btn-modal-action btn-send-message">Send Message</a>
+                <a id="modalReportBtn" href="#" class="btn-modal-action btn-generate-report">Generate Report</a>
+                <a id="modalAppointmentsBtn" href="#" class="btn-modal-action btn-view-appointments">View Appointments</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('patientSearch');
+    const patientsContainer = document.getElementById('patientsContainer');
+    const noResultsMessage = document.getElementById('noResultsMessage');
+
+    if (searchInput && patientsContainer) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const patientCards = patientsContainer.querySelectorAll('.patient-card');
+            let visibleCount = 0;
+
+            patientCards.forEach(card => {
+                const name = card.dataset.patientName || '';
+                const patientId = card.dataset.patientId || '';
+
+                let matches = false;
+
+                if (searchTerm === '') {
+                    // Show all cards when search is empty
+                    matches = true;
+                } else {
+                    // Check if search term is a number (ID search) or text (name search)
+                    const isNumeric = /^\d+$/.test(searchTerm);
+
+                    if (isNumeric) {
+                        // For numeric search: check if patient ID starts with the search term
+                        matches = patientId.startsWith(searchTerm);
+                    } else {
+                        // For text search: check if patient name starts with the search term
+                        matches = name.startsWith(searchTerm);
+                    }
+                }
+
+                if (matches) {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Show/hide no results message
+            if (noResultsMessage) {
+                noResultsMessage.style.display = (searchTerm !== '' && visibleCount === 0) ? 'block' : 'none';
+            }
+        });
+    }
+});
+
+function openPatientModal(button) {
+    const patientId = button.dataset.patientId;
+    const name = button.dataset.patientName;
+    const email = button.dataset.patientEmail;
+    const phone = button.dataset.patientPhone;
+    const patientSince = button.dataset.patientSince;
+    const firstVisit = button.dataset.firstVisit;
+    const lastVisit = button.dataset.lastVisit;
+    const doctorAppointments = button.dataset.doctorAppointments;
+    const doctorCases = button.dataset.doctorCases;
+    const doctorReports = button.dataset.doctorReports;
+    const totalAppointments = button.dataset.totalAppointments;
+    const totalCompleted = button.dataset.totalCompleted;
+    const totalCancelled = button.dataset.totalCancelled;
+    const totalCases = button.dataset.totalCases;
+    const totalReports = button.dataset.totalReports;
+    const lastActivity = button.dataset.lastActivity;
+
+    // Update modal content
+    document.getElementById('modalPatientName').textContent = name + ' - History';
+    document.getElementById('modalPatientEmail').textContent = email;
+    document.getElementById('modalPatientPhone').textContent = phone;
+    document.getElementById('modalPatientSince').textContent = patientSince;
+    document.getElementById('modalFirstVisit').textContent = firstVisit;
+    document.getElementById('modalLastVisit').textContent = lastVisit;
+    document.getElementById('modalLastActivity').textContent = lastActivity;
+    document.getElementById('modalDoctorAppointments').textContent = doctorAppointments;
+    document.getElementById('modalDoctorCases').textContent = doctorCases;
+    document.getElementById('modalDoctorReports').textContent = doctorReports;
+
+    // Generate stats badges
+    const statsContainer = document.getElementById('modalStatsBadges');
+    statsContainer.innerHTML = '';
+
+    if (parseInt(totalAppointments) > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'stat-badge appointments';
+        badge.textContent = totalAppointments + ' Total Appointments';
+        statsContainer.appendChild(badge);
+    }
+
+    if (parseInt(totalCompleted) > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'stat-badge';
+        badge.textContent = totalCompleted + ' Completed';
+        statsContainer.appendChild(badge);
+    }
+
+    if (parseInt(totalCancelled) > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'stat-badge cancelled';
+        badge.textContent = totalCancelled + ' Cancelled';
+        statsContainer.appendChild(badge);
+    }
+
+    if (parseInt(totalCases) > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'stat-badge cases';
+        badge.textContent = totalCases + ' Cases';
+        statsContainer.appendChild(badge);
+    }
+
+    if (parseInt(totalReports) > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'stat-badge reports';
+        badge.textContent = totalReports + ' Reports';
+        statsContainer.appendChild(badge);
+    }
+
+    // Update action buttons
+    document.getElementById('modalMessageBtn').href = '/messages?other_id=' + patientId;
+    document.getElementById('modalReportBtn').href = '/doctor/reports?patient_id=' + patientId;
+    document.getElementById('modalAppointmentsBtn').href = '/doctor/appointments?patient_id=' + patientId;
+
+    // Show modal
+    document.getElementById('patientModal').style.display = 'block';
+}
+
+function closePatientModal() {
+    document.getElementById('patientModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('patientModal');
+    if (event.target == modal) {
+        closePatientModal();
+    }
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closePatientModal();
+    }
+});
+</script>
+
+{% endblock %}

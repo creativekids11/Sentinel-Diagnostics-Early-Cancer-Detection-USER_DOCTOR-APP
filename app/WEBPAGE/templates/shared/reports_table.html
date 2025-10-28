@@ -1,0 +1,20 @@
+<!-- This is a shared template for displaying reports in both doctor and patient views -->
+<table class="patient-table">
+    <thead>
+        <tr>
+            <th>Report ID</th>
+            <th>Patient Name</th>
+            <th>Type</th>
+            <th>AI Score</th>
+            <th>Date Generated</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody id="reports-table-body">
+        <!-- Content will be dynamically populated by JavaScript -->
+    </tbody>
+</table>
+
+<div id="no-reports-message" style="text-align: center; padding: 20px; color: var(--drac-comment); display: none;">
+    No reports found.
+</div>

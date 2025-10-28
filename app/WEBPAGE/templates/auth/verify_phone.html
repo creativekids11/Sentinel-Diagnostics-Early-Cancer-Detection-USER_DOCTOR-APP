@@ -1,0 +1,220 @@
+{% extends "layouts/base.html" %}
+{% block title %}Verify Phone{% endblock %}
+
+{% block head %}
+<style>
+    .verify-container {
+        max-width: 500px;
+        margin: 50px auto;
+        padding: 40px;
+        background: var(--drac-card);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    
+    .verify-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .verify-header h1 {
+        color: var(--drac-purple);
+        margin-bottom: 10px;
+        font-size: 2rem;
+    }
+    
+    .verify-header p {
+        color: var(--drac-comment);
+        margin-bottom: 0;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--drac-foreground);
+        font-weight: 500;
+    }
+    
+    .form-group input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid var(--drac-selection);
+        border-radius: 6px;
+        background: var(--drac-card-alt);
+        color: var(--drac-foreground);
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+    
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--drac-purple);
+    }
+    
+    .otp-input {
+        text-align: center;
+        font-size: 1.5rem;
+        letter-spacing: 0.5rem;
+        font-weight: bold;
+    }
+    
+    .btn {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-bottom: 15px;
+    }
+    
+    .btn-primary {
+        background: var(--drac-purple);
+        color: var(--drac-bg);
+    }
+    
+    .btn-primary:hover {
+        background: var(--drac-pink);
+        transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+        background: var(--drac-card-alt);
+        color: var(--drac-comment);
+        border: 1px solid var(--drac-selection);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--drac-selection);
+        color: var(--drac-foreground);
+    }
+    
+    .resend-section {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 1px solid var(--drac-selection);
+        margin-top: 20px;
+    }
+    
+    .resend-section p {
+        color: var(--drac-comment);
+        margin-bottom: 15px;
+    }
+    
+    .phone-display {
+        background: var(--drac-card-alt);
+        padding: 10px;
+        border-radius: 6px;
+        color: var(--drac-cyan);
+        font-weight: 500;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    .instructions {
+        background: var(--drac-bg-alt);
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 25px;
+        border-left: 4px solid var(--drac-green);
+    }
+    
+    .instructions p {
+        margin: 0;
+        color: var(--drac-comment);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="verify-container">
+    <div class="verify-header">
+        <h1>📱 Verify Your Phone</h1>
+        <p>We've sent a verification code to your phone number</p>
+    </div>
+    
+    <div class="phone-display">
+        {{ phone }}
+    </div>
+    
+    <div class="instructions">
+        <p>
+            <strong>📱 Check your messages</strong><br>
+            Enter the 6-digit verification code we sent to your phone number via SMS. 
+            The code will expire in 10 minutes.
+        </p>
+    </div>
+    
+    <form method="POST" action="{{ url_for('verify_phone') }}">
+        <input type="hidden" name="phone" value="{{ phone }}">
+        
+        <div class="form-group">
+            <label for="otp_code">Verification Code</label>
+            <input 
+                type="text" 
+                id="otp_code" 
+                name="otp_code" 
+                class="otp-input"
+                placeholder="000000"
+                maxlength="6"
+                pattern="[0-9]{6}"
+                required
+                autocomplete="off"
+            >
+        </div>
+        
+        <button type="submit" class="btn btn-primary">
+            ✅ Verify Phone
+        </button>
+    </form>
+    
+    <div class="resend-section">
+        <p>Didn't receive the code?</p>
+        <form method="POST" action="{{ url_for('resend_otp') }}" style="display: inline;">
+            <input type="hidden" name="phone" value="{{ phone }}">
+            <input type="hidden" name="method" value="sms">
+            <button type="submit" class="btn btn-secondary">
+                📤 Resend SMS Code
+            </button>
+        </form>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="{{ url_for('signup_page') }}" style="color: var(--drac-comment); text-decoration: none;">
+            ← Back to Signup
+        </a>
+    </div>
+</div>
+
+<script>
+// Auto-format OTP input
+document.getElementById('otp_code').addEventListener('input', function(e) {
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+
+// Auto-submit when 6 digits are entered
+document.getElementById('otp_code').addEventListener('input', function(e) {
+    if (this.value.length === 6) {
+        // Optional: auto-submit after a short delay
+        setTimeout(() => {
+            if (this.value.length === 6) {
+                this.form.submit();
+            }
+        }, 500);
+    }
+});
+
+// Focus the OTP input on page load
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('otp_code').focus();
+});
+</script>
+{% endblock %}

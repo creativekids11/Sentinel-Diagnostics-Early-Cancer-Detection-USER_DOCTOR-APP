@@ -1,0 +1,121 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<div class="dashboard-container">
+    <!-- Header Section -->
+    <div class="admin-card">
+        <h2>Doctor Verifications</h2>
+        <p>Review and manage pending doctor applications. Approve qualified doctors or reject incomplete applications.</p>
+    </div>
+
+    {% if pending_doctors %}
+        <!-- Statistics Card -->
+        <div class="admin-card">
+            <h3>Verification Summary</h3>
+            <div style="display: flex; gap: 24px; flex-wrap: wrap; margin-top: 16px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 12px; height: 12px; border-radius: 50%; background: #ffb86c;"></div>
+                    <span style="color: var(--drac-foreground);">{{ pending_doctors|length }} Pending Applications</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 12px; height: 12px; border-radius: 50%; background: #4ade80;"></div>
+                    <span style="color: var(--drac-foreground);">{{ total_doctors - pending_doctors|length }} Approved Doctors</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Doctor Applications Table -->
+        <div class="admin-card">
+            <h3>Pending Applications</h3>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Doctor Details</th>
+                        <th>Contact Information</th>
+                        <th>Qualifications</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doctor in pending_doctors %}
+                    <tr>
+                        <td>
+                            <div style="font-weight: 600; color: var(--drac-foreground); margin-bottom: 4px;">{{ doctor.fullname }}</div>
+                            <div style="color: var(--drac-comment); font-size: 0.85rem;">ID: {{ doctor.id }}</div>
+                        </td>
+                        <td>
+                            <div style="color: var(--drac-foreground);">{{ doctor.email }}</div>
+                            {% if doctor.phone %}
+                            <div style="color: var(--drac-comment); font-size: 0.85rem;">{{ doctor.phone }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if doctor.qualifications %}
+                                <div style="color: var(--drac-foreground); margin-bottom: 8px;">{{ doctor.qualifications }}</div>
+                            {% endif %}
+                            {% if doctor.qualification_pdf_filename %}
+                                <a href="{{ url_for('download_qualification', filename=doctor.qualification_pdf_filename) }}"
+                                   target="_blank" class="admin-link">
+                                    View Qualification PDF
+                                </a>
+                            {% else %}
+                                <span style="color: var(--drac-comment); font-style: italic;">No PDF uploaded</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="status-badge status-{{ doctor.status }}">{{ doctor.status.title() }}</span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 8px; flex-direction: column;">
+                                <form method="post" action="{{ url_for('admin_approve_doctor', doctor_id=doctor.id) }}" style="display: inline;">
+                                    <button type="submit" name="action" value="approve" class="btn-admin btn-admin-success">
+                                        Approve
+                                    </button>
+                                </form>
+                                <form method="post" action="{{ url_for('admin_approve_doctor', doctor_id=doctor.id) }}" style="display: inline;">
+                                    <button type="submit" name="action" value="reject" class="btn-admin btn-admin-danger">
+                                        Reject
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <!-- No Pending Applications -->
+        <div class="admin-card">
+            <div style="text-align: center; padding: 40px 20px;">
+                <div style="font-size: 3rem; margin-bottom: 16px;">✅</div>
+                <h3 style="margin: 0 0 12px 0; color: var(--drac-foreground);">All Caught Up!</h3>
+                <p style="color: var(--drac-comment); margin: 0; font-size: 1rem;">
+                    No pending doctor applications to review at this time.
+                </p>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Guidelines Card -->
+    <div class="admin-card">
+        <h3>Verification Guidelines</h3>
+        <div style="color: var(--drac-foreground); line-height: 1.6;">
+            <p><strong>Before approving a doctor:</strong></p>
+            <ul style="margin: 12px 0; padding-left: 20px;">
+                <li>Verify the qualification PDF is legitimate and matches the doctor's specialty</li>
+                <li>Check that all required information is provided</li>
+                <li>Ensure the email and phone number are valid</li>
+                <li>Review any additional qualifications or certifications mentioned</li>
+            </ul>
+            <p><strong>Rejection reasons may include:</strong></p>
+            <ul style="margin: 12px 0; padding-left: 20px;">
+                <li>Missing or invalid qualification documents</li>
+                <li>Incomplete application information</li>
+                <li>Suspicious or fraudulent documentation</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,205 @@
+/* Patient Dashboard Styles - Dark modern UI */
+
+:root {
+  --card-radius: 16px;
+}
+
+.patient-dashboard .dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 22px;
+}
+
+/* Reusable card */
+.patient-dashboard .card {
+  background: var(--drac-card);
+  border-radius: var(--card-radius);
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+}
+
+.patient-dashboard .card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.patient-dashboard .card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.patient-dashboard .card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.patient-dashboard .icon-btn {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  color: var(--drac-foreground);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: .85rem;
+  cursor: pointer;
+}
+
+.patient-dashboard .icon-btn:hover { filter: brightness(1.05); }
+
+/* Snapshot gradient card */
+.patient-dashboard .snapshot-card {
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 60%, #f97316 120%);
+  position: relative;
+  overflow: hidden;
+  color: white;
+}
+
+.patient-dashboard .snapshot-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.patient-dashboard .snapshot-stat {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.patient-dashboard .snapshot-big {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: .5px;
+}
+
+.patient-dashboard .sparkline {
+  height: 54px;
+  margin-top: 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,0));
+  mask: radial-gradient(80px 40px at 10% 50%, black 60%, transparent 61%) repeat-x 0 0 / 80px 100%;
+  opacity: .25;
+  border-radius: 8px;
+}
+
+/* Calendar */
+.patient-dashboard .calendar-card { padding: 0; overflow: hidden; }
+
+.patient-dashboard .calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  background: var(--drac-card-alt);
+}
+
+.patient-dashboard .calendar-month {
+  font-weight: 700;
+}
+
+.patient-dashboard .calendar-controls { display: flex; gap: 8px; }
+
+.patient-dashboard .calendar-grid {
+  padding: 14px 14px 18px 14px;
+}
+
+.patient-dashboard .calendar-weekdays, .patient-dashboard .calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.patient-dashboard .calendar-weekdays span {
+  color: var(--drac-comment);
+  font-size: .8rem;
+  text-align: center;
+}
+
+.patient-dashboard .day {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.06);
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .15s ease;
+}
+
+.patient-dashboard .day:hover { filter: brightness(1.1); }
+.patient-dashboard .day.muted { opacity: .35; }
+.patient-dashboard .day.today { border-color: var(--drac-cyan); box-shadow: inset 0 0 0 2px var(--drac-cyan); }
+.patient-dashboard .day.selected { background: var(--drac-purple); border-color: var(--drac-purple); }
+
+/* Quick messages */
+.patient-dashboard .message-list { display: grid; gap: 10px; }
+.patient-dashboard .message-item {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.06);
+}
+.patient-dashboard .avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 700; color: var(--drac-bg);
+}
+.patient-dashboard .badge { background: var(--drac-purple); color: var(--drac-foreground); font-size: .7rem; padding: 2px 8px; border-radius: 999px; }
+
+.patient-dashboard .compose-btn { width: 100%; margin-top: 10px; padding: 10px 14px; border-radius: 12px; background: linear-gradient(135deg, var(--drac-pink), var(--drac-purple)); color: #fff; border: 0; cursor: pointer; font-weight: 700; }
+
+/* Upcoming appointments */
+.patient-dashboard .section-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 10px; }
+
+.patient-dashboard .appt-list { display: grid; gap: 8px; }
+.patient-dashboard .appt-item {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+.patient-dashboard .appt-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--drac-orange); display: grid; place-items: center; color: var(--drac-bg); font-weight: 900; }
+.patient-dashboard .chip { background: rgba(139,233,253,.25); border: 1px solid var(--drac-cyan); color: var(--drac-foreground); padding: 4px 10px; border-radius: 999px; font-size: .75rem; }
+
+/* Segmentation tool */
+.patient-dashboard .segmentation-card .row { display: flex; gap: 10px; }
+.patient-dashboard .segmentation-card .row > * { flex: 1; }
+.patient-dashboard .select-input, .patient-dashboard .file-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  color: var(--drac-foreground);
+}
+
+/* Healing resources */
+.patient-dashboard .resources-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.patient-dashboard .resource {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px; padding: 12px;
+}
+.patient-dashboard .resource h4 { font-size: .95rem; margin-bottom: 6px; }
+.patient-dashboard .resource p { font-size: .84rem; color: var(--drac-comment); }
+
+/* Avatar background helpers */
+.patient-dashboard .bg-blue { background: #60a5fa; }
+.patient-dashboard .bg-pink { background: #f472b6; }
+.patient-dashboard .bg-violet { background: #a78bfa; }
+.patient-dashboard .bg-green { background: #34d399; }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .patient-dashboard .dashboard-grid { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,215 @@
+{% extends "layouts/patient.html" %}{% block title%}Nutrition{% endblock %} {%
+block content %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+	.Nutrition-Container {
+		max-width: auto;
+		margin: 0;
+		padding: 20px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		border-radius: 8px;
+		align-items: flex-start;
+	}
+
+	.left-col,
+	.right-col {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		width: 38vw;
+	}
+
+	input {
+		background-color: var(--drac-bg);
+		border: 1px solid #44475a;
+		width: 80%;
+		color: var(--drac-foreground);
+	}
+
+	label {
+		color: var(--drac-pink);
+	}
+
+	.Nutrition-Container h1 {
+		text-align: center;
+		margin-bottom: 10px;
+	}
+
+	.Nutrition-Container form {
+		display: flex;
+		flex-direction: row;
+		gap: 20px;
+		transition: all 0.3s ease;
+	}
+
+	.Nutrition-Container input {
+		margin-bottom: 15px;
+		padding: 10px;
+		max-width: 80%;
+		font-size: 16px;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+	}
+
+	.Nutrition-Container button {
+		padding: 10px;
+		font-size: 16px;
+		background-color: #28a745;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		width: 69%;
+		bottom: 7vh;
+		left: 21vw;
+		position: absolute;
+		transition: all 0.3s ease;
+	}
+
+	.Nutrition-Container button:hover {
+		background-color: var(--drac-green);
+		transition: all 0.3s ease;
+	}
+	.loader {
+		width: 50px;
+		height: 50px;
+		aspect-ratio: 1;
+		border-radius: 50%;
+		border: 8px solid #ffffff03;
+		border-right-color: #6272a4;
+		position: absolute;
+		top: 50vh;
+		left: 50vw;
+		animation: l2 1s infinite linear;
+		transition: all 0.3s ease;
+	}
+	@keyframes l2 {
+		to {
+			transform: rotate(1turn);
+		}
+	}
+</style>
+<div class="Nutrition-Container">
+	<h1>Nutrition Planner</h1>
+	<form
+		id="dietForm"
+		style="
+			opacity: 1;
+			pointer-events: auto;
+			height: 60vh;
+			transition: all 0.3s ease;
+		">
+		<div class="left-col">
+			<label for="age">Age:</label>
+			<input type="number" name="age" placeholder="Age" required />
+			<label for="height">Height (cm):</label>
+			<input type="number" name="height" placeholder="Height (cm)" required />
+			<label for="weight">Weight (kg):</label>
+			<input type="number" name="weight" placeholder="Weight (kg)" required />
+			<label for="additional-info">Additional Information:</label>
+			<input
+				type="text"
+				name="additional-info"
+				placeholder="Additional Information" />
+		</div>
+		<div class="right-col">
+			<label for="gender">Gender:</label>
+			<input type="text" name="gender" placeholder="Gender" required />
+			<label for="goal">Goal:</label>
+			<input
+				type="text"
+				name="goal"
+				placeholder="Goal (e.g. recovery)"
+				required />
+			<label for="diet">Diet:</label>
+			<input
+				type="text"
+				name="diet"
+				placeholder="Diet (e.g. vegetarian)"
+				required />
+		</div>
+		<button type="submit">Generate Plan</button>
+	</form>
+	<div id="loader" class="loader"></div>
+	<div
+		id="result"
+		style="
+			opacity: 0;
+			pointer-events: none;
+			height: 0;
+			margin-bottom: auto;
+			transition: all 0.3s ease;
+		"></div>
+</div>
+
+<script>
+	document.addEventListener("DOMContentLoaded", () => {
+		const form = document.getElementById("dietForm");
+		const result = document.getElementById("result");
+		const loader = document.getElementById("loader");
+
+		form.style.opacity = 1;
+		form.style.pointerEvents = "auto";
+		form.style.height = "60vh";
+		result.style.opacity = 0;
+		result.style.pointerEvents = "none";
+		result.style.height = 0;
+		loader.style.opacity = 0;
+		loader.style.pointerEvents = "none";
+
+		form.addEventListener("submit", async (e) => {
+			e.preventDefault();
+
+			form.style.opacity = 0;
+			form.style.pointerEvents = "none";
+			form.style.height = 0;
+			loader.style.opacity = 1;
+			loader.style.pointerEvents = "auto";
+			result.innerHTML = "";
+
+			// Collect form data
+			const formData = new FormData(form);
+			const userData = Object.fromEntries(formData.entries());
+
+			try {
+				const response = await fetch("/diet", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(userData),
+				});
+
+				if (!response.ok) {
+					throw new Error(`Server error: ${response.status}`);
+				}
+
+				const data = await response.json();
+				const format_data = marked.parse(data.diet_plan);
+
+				console.log(data);
+
+				result.innerHTML = format_data || "No plan generated.";
+
+				result.style.opacity = 1;
+				result.style.pointerEvents = "auto";
+				result.style.height = "auto";
+				loader.style.opacity = 0;
+				loader.style.pointerEvents = "none";
+				form.reset();
+			} catch (error) {
+				result.innerHTML = "Error generating plan. Please try again.";
+				console.error(error);
+				form.reset();
+			} finally {
+				loader.style.opacity = 0;
+				loader.style.pointerEvents = "none";
+				result.style.opacity = 1;
+				result.style.pointerEvents = "auto";
+				result.style.height = "auto";
+				form.reset();
+			}
+		});
+	});
+</script>
+{% endblock %}
