@@ -101,7 +101,7 @@ If you encounter issues:
 ## 🏆 Team
 
 **Hackathon 2.0 Development Team:**
-- **Devansh Madake** - Lead Developer, Medical AI Models, DevOps & Deployment & Data Science
+- **Devansh Madake** - Lead Developer, Medical AI Models, UI/UX, DevOps & Deployment & Data Science
 - **Jay Hatapaki** - UI/UX Devlopment, Frontend and Backend Development & Integration
 - **Ujjwal Arora** - Model Training and Computational Resources
 - **Pranad Nair** - Money contribution
