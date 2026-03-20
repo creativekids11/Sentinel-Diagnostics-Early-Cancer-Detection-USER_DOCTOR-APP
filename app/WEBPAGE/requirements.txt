@@ -17,7 +17,7 @@ google-generativeai==0.8.3
 python-dotenv==1.0.0
 pytesseract==0.3.10
 catboost==1.2.2
-pydicom==2.4.4
+pydicom==2.4.5
 requests==2.32.4
 # stripe==7.6.0  # REMOVED: Payment processing disabled
 inference-sdk
